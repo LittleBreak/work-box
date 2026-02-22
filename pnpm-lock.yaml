@@ -14,6 +14,9 @@ importers:
       '@electron-toolkit/utils':
         specifier: ^4.0.0
         version: 4.0.0(electron@39.6.1)
+      '@workbox/plugin-api':
+        specifier: workspace:*
+        version: link:packages/plugin-api
     devDependencies:
       '@electron-toolkit/eslint-config-prettier':
         specifier: ^3.0.0
@@ -81,6 +84,8 @@ importers:
       vitest:
         specifier: ^3.1.0
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.11)(jiti@2.6.1)(jsdom@26.1.0)
+
+  packages/plugin-api: {}
 
 packages:
 

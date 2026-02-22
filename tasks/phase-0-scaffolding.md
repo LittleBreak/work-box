@@ -153,7 +153,7 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 ---
 
-## 0.2 配置 pnpm workspace (monorepo)
+## 0.2 配置 pnpm workspace (monorepo) ✅ DONE
 
 **目标**：配置 monorepo 结构，支持多包管理。
 
@@ -178,9 +178,9 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 **TDD 要求**：
 
-- [ ] Red：先编写测试文件（在 `src/main/` 下），测试 `import { definePlugin } from '@workbox/plugin-api'` 能正常导入、`definePlugin` 可调用并返回预期结构、`PluginManifest` 类型可正确使用。运行 `pnpm test`，确认全部失败。
-- [ ] Green：创建 workspace 配置、`packages/plugin-api/` 包骨架和占位实现，使测试通过。
-- [ ] Refactor：统一导出风格，测试保持通过。
+- [x] Red：先编写测试文件（在 `src/main/` 下），测试 `import { definePlugin } from '@workbox/plugin-api'` 能正常导入、`definePlugin` 可调用并返回预期结构、`PluginManifest` 类型可正确使用。运行 `pnpm test`，确认全部失败。
+- [x] Green：创建 workspace 配置、`packages/plugin-api/` 包骨架和占位实现，使测试通过。
+- [x] Refactor：统一导出风格，测试保持通过。
 
 **执行步骤**：
 
@@ -211,19 +211,19 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 **验收标准**：
 
-- [ ] `pnpm-workspace.yaml` 存在，包含 `packages/*` 和 `plugins/*`
-- [ ] `packages/plugin-api/` 包骨架完整（`package.json` + `tsconfig.json` + `src/index.ts` + `src/types.ts`）
-- [ ] `pnpm install` 成功，无报错
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] 验证测试通过：主项目中 `import { definePlugin } from '@workbox/plugin-api'` 可正常执行
-- [ ] `tsc --noEmit` 无类型错误（验证类型引用正确）
-- [ ] 提供可复核证据：`pnpm install` 日志 + `pnpm test` 输出 + `tsc --noEmit` 输出
+- [x] `pnpm-workspace.yaml` 存在，包含 `packages/*` 和 `plugins/*`
+- [x] `packages/plugin-api/` 包骨架完整（`package.json` + `tsconfig.json` + `src/index.ts` + `src/types.ts`）
+- [x] `pnpm install` 成功，无报错
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] 验证测试通过：主项目中 `import { definePlugin } from '@workbox/plugin-api'` 可正常执行
+- [x] `tsc --noEmit` 无类型错误（验证类型引用正确）
+- [x] 提供可复核证据：`pnpm install` 日志 + `pnpm test` 输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `pnpm-workspace.yaml`
-- [ ] `packages/plugin-api/*` 初始骨架（含 `tsconfig.json` 和占位导出）
-- [ ] workspace 引用验证测试（含正常路径、边界条件、类型验证）
+- [x] `pnpm-workspace.yaml`
+- [x] `packages/plugin-api/*` 初始骨架（含 `tsconfig.json` 和占位导出）
+- [x] workspace 引用验证测试（含正常路径、边界条件、类型验证）
 
 ---
 
