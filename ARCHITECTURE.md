@@ -20,21 +20,21 @@ Work-Box 是一款面向开发者的桌面端提效工具，采用插件式架�
 
 ## 二、技术选型
 
-| 层级 | 技术 | 版本 | 选型理由 |
-|------|------|------|----------|
-| 桌面框架 | Electron | v33+ | 成熟稳定，系统权限完整，生态丰富 |
-| 前端框架 | React | v19+ | 生态最大，组件库丰富，适合复杂 UI |
-| 构建工具 | Vite | v6+ | 极速 HMR，Electron 集成方案成熟 |
-| 脚手架 | electron-vite | latest | 开箱即用的 Electron + Vite 集成方案 |
-| UI 组件库 | shadcn/ui | latest | 非黑盒依赖，源码级组件，完全可定制，基于 Radix UI + Tailwind |
-| 样式方案 | Tailwind CSS | v4+ | 原子化 CSS，快速开发 |
-| 状态管理 | Zustand | v5+ | 轻量、直觉式、TypeScript 友好 |
-| AI SDK | Vercel AI SDK | latest | 统一多模型接入，流式响应支持好 |
-| 数据存储 | SQLite (better-sqlite3) | latest | 本地嵌入式数据库，无需额外服务 |
-| ORM | Drizzle ORM | latest | 类型安全、轻量、支持 SQLite |
-| 语言 | TypeScript | v5.5+ | 全栈类型安全 |
-| 包管理 | pnpm | v9+ | 速度快、磁盘占用小、monorepo 支持好 |
-| 测试 | Vitest | latest | 与 Vite 生态统一，速度快 |
+| 层级      | 技术                    | 版本   | 选型理由                                                     |
+| --------- | ----------------------- | ------ | ------------------------------------------------------------ |
+| 桌面框架  | Electron                | v33+   | 成熟稳定，系统权限完整，生态丰富                             |
+| 前端框架  | React                   | v19+   | 生态最大，组件库丰富，适合复杂 UI                            |
+| 构建工具  | Vite                    | v6+    | 极速 HMR，Electron 集成方案成熟                              |
+| 脚手架    | electron-vite           | latest | 开箱即用的 Electron + Vite 集成方案                          |
+| UI 组件库 | shadcn/ui               | latest | 非黑盒依赖，源码级组件，完全可定制，基于 Radix UI + Tailwind |
+| 样式方案  | Tailwind CSS            | v4+    | 原子化 CSS，快速开发                                         |
+| 状态管理  | Zustand                 | v5+    | 轻量、直觉式、TypeScript 友好                                |
+| AI SDK    | Vercel AI SDK           | latest | 统一多模型接入，流式响应支持好                               |
+| 数据存储  | SQLite (better-sqlite3) | latest | 本地嵌入式数据库，无需额外服务                               |
+| ORM       | Drizzle ORM             | latest | 类型安全、轻量、支持 SQLite                                  |
+| 语言      | TypeScript              | v5.5+  | 全栈类型安全                                                 |
+| 包管理    | pnpm                    | v9+    | 速度快、磁盘占用小、monorepo 支持好                          |
+| 测试      | Vitest                  | latest | 与 Vite 生态统一，速度快                                     |
 
 ---
 
@@ -159,7 +159,7 @@ plugins/
 ### 4.2 插件 API
 
 ```typescript
-import { definePlugin } from '@workbox/plugin-api';
+import { definePlugin } from '@workbox/plugin-api'
 
 export default definePlugin({
   name: 'git-helper',
@@ -168,32 +168,32 @@ export default definePlugin({
   async activate(ctx: PluginContext) {
     // 注册命令
     ctx.commands.register('quick-commit', async () => {
-      const status = await ctx.shell.exec('git status --porcelain');
+      const status = await ctx.shell.exec('git status --porcelain')
       if (status.stdout) {
-        await ctx.shell.exec('git add -A && git commit -m "quick commit"');
-        ctx.notification.success('Commit 成功');
+        await ctx.shell.exec('git add -A && git commit -m "quick commit"')
+        ctx.notification.success('Commit 成功')
       }
-    });
+    })
 
     // 注册 AI Tool（供 AI 对话时调用）
     ctx.ai.registerTool({
       name: 'git_status',
       description: '获取当前 Git 仓库状态',
       parameters: z.object({
-        path: z.string().optional().describe('仓库路径'),
+        path: z.string().optional().describe('仓库路径')
       }),
       handler: async ({ path }) => {
-        const cwd = path || ctx.workspace.rootPath;
-        return ctx.shell.exec('git status', { cwd });
-      },
-    });
+        const cwd = path || ctx.workspace.rootPath
+        return ctx.shell.exec('git status', { cwd })
+      }
+    })
   },
 
   // 插件停用时调用
   async deactivate() {
     // 清理资源
-  },
-});
+  }
+})
 ```
 
 ### 4.3 PluginContext API 清单
@@ -201,54 +201,54 @@ export default definePlugin({
 ```typescript
 interface PluginContext {
   // 插件元信息
-  plugin: { id: string; name: string; version: string; dataPath: string };
+  plugin: { id: string; name: string; version: string; dataPath: string }
 
   // 文件系统
   fs: {
-    readFile(path: string): Promise<Buffer>;
-    writeFile(path: string, data: Buffer | string): Promise<void>;
-    readDir(path: string): Promise<string[]>;
-    watch(path: string, callback: WatchCallback): Disposable;
-    stat(path: string): Promise<FileStat>;
-  };
+    readFile(path: string): Promise<Buffer>
+    writeFile(path: string, data: Buffer | string): Promise<void>
+    readDir(path: string): Promise<string[]>
+    watch(path: string, callback: WatchCallback): Disposable
+    stat(path: string): Promise<FileStat>
+  }
 
   // 命令执行
   shell: {
-    exec(command: string, options?: ExecOptions): Promise<ExecResult>;
-    spawn(command: string, args: string[], options?: SpawnOptions): ChildProcess;
-  };
+    exec(command: string, options?: ExecOptions): Promise<ExecResult>
+    spawn(command: string, args: string[], options?: SpawnOptions): ChildProcess
+  }
 
   // AI 能力
   ai: {
-    chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk>;
-    registerTool(tool: ToolDefinition): Disposable;
-  };
+    chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk>
+    registerTool(tool: ToolDefinition): Disposable
+  }
 
   // 命令注册
   commands: {
-    register(id: string, handler: CommandHandler): Disposable;
-  };
+    register(id: string, handler: CommandHandler): Disposable
+  }
 
   // UI 通知
   notification: {
-    success(message: string): void;
-    error(message: string): void;
-    info(message: string): void;
-  };
+    success(message: string): void
+    error(message: string): void
+    info(message: string): void
+  }
 
   // 工作区
   workspace: {
-    rootPath: string;
-    selectFolder(): Promise<string | null>;
-    selectFile(filters?: FileFilter[]): Promise<string | null>;
-  };
+    rootPath: string
+    selectFolder(): Promise<string | null>
+    selectFile(filters?: FileFilter[]): Promise<string | null>
+  }
 
   // 键值存储（插件私有）
   storage: {
-    get<T>(key: string): Promise<T | null>;
-    set<T>(key: string, value: T): Promise<void>;
-    delete(key: string): Promise<void>;
-  };
+    get<T>(key: string): Promise<T | null>
+    set<T>(key: string, value: T): Promise<void>
+    delete(key: string): Promise<void>
+  }
 }
 ```
 
@@ -277,15 +277,15 @@ interface PluginContext {
 
 插件需在清单中声明所需权限，未声明的权限调用会被拦截：
 
-| 权限标识 | 说明 | 风险等级 |
-|----------|------|----------|
-| `fs:read` | 读取文件系统 | 低 |
-| `fs:write` | 写入文件系统 | 中 |
-| `shell:exec` | 执行命令 | 高 |
-| `network:fetch` | 发起网络请求 | 中 |
-| `ai:chat` | 调用 AI 对话 | 低 |
-| `clipboard` | 读写剪贴板 | 低 |
-| `notification` | 发送系统通知 | 低 |
+| 权限标识        | 说明         | 风险等级 |
+| --------------- | ------------ | -------- |
+| `fs:read`       | 读取文件系统 | 低       |
+| `fs:write`      | 写入文件系统 | 中       |
+| `shell:exec`    | 执行命令     | 高       |
+| `network:fetch` | 发起网络请求 | 中       |
+| `ai:chat`       | 调用 AI 对话 | 低       |
+| `clipboard`     | 读写剪贴板   | 低       |
+| `notification`  | 发送系统通知 | 低       |
 
 高风险权限在插件首次激活时需用户确认。
 
@@ -324,18 +324,18 @@ interface PluginContext {
 
 ```typescript
 interface AIProvider {
-  id: string;
-  name: string;
-  models: ModelInfo[];
-  chat(params: ChatParams): AsyncIterable<StreamChunk>;
+  id: string
+  name: string
+  models: ModelInfo[]
+  chat(params: ChatParams): AsyncIterable<StreamChunk>
 }
 
 // 内置 Provider
 const providers = [
-  new OpenAIProvider({ apiKey, baseUrl }),    // 兼容 OpenAI 协议
-  new ClaudeProvider({ apiKey }),             // Anthropic Claude
-  new OllamaProvider({ host }),              // 本地模型
-];
+  new OpenAIProvider({ apiKey, baseUrl }), // 兼容 OpenAI 协议
+  new ClaudeProvider({ apiKey }), // Anthropic Claude
+  new OllamaProvider({ host }) // 本地模型
+]
 ```
 
 ### 5.3 AI Tool Calling 流程
@@ -368,48 +368,48 @@ export const IPC = {
   fs: {
     readFile: 'fs:readFile',
     writeFile: 'fs:writeFile',
-    readDir: 'fs:readDir',
+    readDir: 'fs:readDir'
   },
   shell: {
-    exec: 'shell:exec',
+    exec: 'shell:exec'
   },
   ai: {
-    chat: 'ai:chat',          // 双向流式通信
-    getModels: 'ai:getModels',
+    chat: 'ai:chat', // 双向流式通信
+    getModels: 'ai:getModels'
   },
   plugin: {
     list: 'plugin:list',
     enable: 'plugin:enable',
-    disable: 'plugin:disable',
-  },
-} as const;
+    disable: 'plugin:disable'
+  }
+} as const
 ```
 
 ### 6.2 Preload 安全暴露
 
 ```typescript
 // preload/index.ts
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('workbox', {
   fs: {
     readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
-    writeFile: (path: string, data: string) => ipcRenderer.invoke('fs:writeFile', path, data),
+    writeFile: (path: string, data: string) => ipcRenderer.invoke('fs:writeFile', path, data)
   },
   shell: {
-    exec: (cmd: string) => ipcRenderer.invoke('shell:exec', cmd),
+    exec: (cmd: string) => ipcRenderer.invoke('shell:exec', cmd)
   },
   ai: {
     chat: (messages: any[]) => ipcRenderer.invoke('ai:chat', messages),
     onStream: (cb: (chunk: any) => void) => {
-      ipcRenderer.on('ai:stream', (_, chunk) => cb(chunk));
-      return () => ipcRenderer.removeAllListeners('ai:stream');
-    },
+      ipcRenderer.on('ai:stream', (_, chunk) => cb(chunk))
+      return () => ipcRenderer.removeAllListeners('ai:stream')
+    }
   },
   plugin: {
-    list: () => ipcRenderer.invoke('plugin:list'),
-  },
-});
+    list: () => ipcRenderer.invoke('plugin:list')
+  }
+})
 ```
 
 ---
@@ -549,15 +549,15 @@ work-box/
 
 ### 9.1 内置插件（第一期）
 
-| 插件 | 功能 | 优先级 |
-|------|------|--------|
-| AI Chatbox | 多模型对话、上下文管理、Tool Calling | P0 |
-| Terminal | 内嵌终端、命令快捷执行 | P0 |
-| File Explorer | 文件浏览、快速打开、搜索 | P1 |
-| Git Helper | Git 状态查看、一键提交、分支管理 | P1 |
-| Snippet Manager | 代码片段收藏、搜索、一键复制 | P2 |
-| JSON Formatter | JSON 格式化、对比、转换 | P2 |
-| Regex Tester | 正则表达式在线测试 | P2 |
+| 插件            | 功能                                 | 优先级 |
+| --------------- | ------------------------------------ | ------ |
+| AI Chatbox      | 多模型对话、上下文管理、Tool Calling | P0     |
+| Terminal        | 内嵌终端、命令快捷执行               | P0     |
+| File Explorer   | 文件浏览、快速打开、搜索             | P1     |
+| Git Helper      | Git 状态查看、一键提交、分支管理     | P1     |
+| Snippet Manager | 代码片段收藏、搜索、一键复制         | P2     |
+| JSON Formatter  | JSON 格式化、对比、转换              | P2     |
+| Regex Tester    | 正则表达式在线测试                   | P2     |
 
 ### 9.2 AI Chatbox 功能细节
 
@@ -586,11 +586,11 @@ electron-vite (开发 & 构建)
 
 使用 `electron-builder` 进行多平台打包：
 
-| 平台 | 格式 | 说明 |
-|------|------|------|
-| macOS | `.dmg` / `.zip` | 支持 Apple Silicon & Intel |
-| Windows | `.exe` (NSIS) | 安装包 |
-| Linux | `.AppImage` / `.deb` | 通用发行 |
+| 平台    | 格式                 | 说明                       |
+| ------- | -------------------- | -------------------------- |
+| macOS   | `.dmg` / `.zip`      | 支持 Apple Silicon & Intel |
+| Windows | `.exe` (NSIS)        | 安装包                     |
+| Linux   | `.AppImage` / `.deb` | 通用发行                   |
 
 ### 10.3 自动更新
 

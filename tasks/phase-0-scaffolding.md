@@ -103,15 +103,15 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 **关键决策**：
 
-| 决策项 | 方案 |
-|--------|------|
-| 初始化方式 | 在临时目录执行 `pnpm create electron-vite`（选择 `react-ts` 模板），然后将生成文件合并到当前仓库根目录，保留已有的 `*.md` 和 `tasks/` |
-| electron-vite 版本 | 使用当前 latest（安装后锁定到 `pnpm-lock.yaml`） |
-| Electron 版本 | v33+（模板默认，确认 `package.json` 中版本满足） |
-| Vitest 环境 | 主进程测试用 `node` 环境；渲染进程测试用 `jsdom` 环境 |
-| Vitest 配置方式 | 使用 vitest workspace（`vitest.workspace.ts`），分别配置 main 和 renderer 两个项目 |
-| Electron mock | 测试中通过 `vi.mock('electron', ...)` mock electron 模块 |
-| 路径别名 | 在 `electron.vite.config.ts` 和 `tsconfig.json` 中配置 `@renderer`、`@main`、`@shared` 别名（供后续任务使用） |
+| 决策项             | 方案                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 初始化方式         | 在临时目录执行 `pnpm create electron-vite`（选择 `react-ts` 模板），然后将生成文件合并到当前仓库根目录，保留已有的 `*.md` 和 `tasks/` |
+| electron-vite 版本 | 使用当前 latest（安装后锁定到 `pnpm-lock.yaml`）                                                                                      |
+| Electron 版本      | v33+（模板默认，确认 `package.json` 中版本满足）                                                                                      |
+| Vitest 环境        | 主进程测试用 `node` 环境；渲染进程测试用 `jsdom` 环境                                                                                 |
+| Vitest 配置方式    | 使用 vitest workspace（`vitest.workspace.ts`），分别配置 main 和 renderer 两个项目                                                    |
+| Electron mock      | 测试中通过 `vi.mock('electron', ...)` mock electron 模块                                                                              |
+| 路径别名           | 在 `electron.vite.config.ts` 和 `tsconfig.json` 中配置 `@renderer`、`@main`、`@shared` 别名（供后续任务使用）                         |
 
 **执行步骤**：
 
@@ -169,12 +169,12 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 **关键决策**：
 
-| 决策项 | 方案 |
-|--------|------|
-| `plugin-api` 包名 | `@workbox/plugin-api` |
-| `plugin-api` 入口 | `"main": "./src/index.ts"`，`"types": "./src/index.ts"`（开发阶段直接引用源码，不需预编译） |
-| TypeScript 配置 | `packages/plugin-api/` 需有自己的 `tsconfig.json`，主项目 `tsconfig.json` 通过 `references` 或 `paths` 配置引用 |
-| 引用验证标准 | TypeScript 编译通过（`tsc --noEmit`）+ Vitest 测试中可 `import` 并调用导出函数 |
+| 决策项            | 方案                                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `plugin-api` 包名 | `@workbox/plugin-api`                                                                                           |
+| `plugin-api` 入口 | `"main": "./src/index.ts"`，`"types": "./src/index.ts"`（开发阶段直接引用源码，不需预编译）                     |
+| TypeScript 配置   | `packages/plugin-api/` 需有自己的 `tsconfig.json`，主项目 `tsconfig.json` 通过 `references` 或 `paths` 配置引用 |
+| 引用验证标准      | TypeScript 编译通过（`tsc --noEmit`）+ Vitest 测试中可 `import` 并调用导出函数                                  |
 
 **TDD 要求**：
 
@@ -227,7 +227,7 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 ---
 
-## 0.3 代码规范工具链
+## 0.3 代码规范工具链 ✅ DONE
 
 **目标**：配置代码规范和 Git 提交规范工具链。
 
@@ -244,14 +244,14 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 **关键决策**：
 
-| 决策项 | 方案 |
-|--------|------|
-| ESLint 版本 | v9+（flat config 格式：`eslint.config.mjs`） |
-| ESLint 配置基础 | `@electron-toolkit/eslint-config-ts` + `eslint-plugin-react` + `eslint-plugin-react-hooks` |
-| Prettier 集成 | 使用 `eslint-config-prettier` 禁用冲突规则（不用 `eslint-plugin-prettier`，避免性能问题） |
-| Husky 版本 | v9+（使用 `husky init` 初始化） |
-| lint-staged 配置位置 | `package.json` 中的 `"lint-staged"` 字段 |
-| Commitlint preset | `@commitlint/config-conventional` |
+| 决策项               | 方案                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| ESLint 版本          | v9+（flat config 格式：`eslint.config.mjs`）                                               |
+| ESLint 配置基础      | `@electron-toolkit/eslint-config-ts` + `eslint-plugin-react` + `eslint-plugin-react-hooks` |
+| Prettier 集成        | 使用 `eslint-config-prettier` 禁用冲突规则（不用 `eslint-plugin-prettier`，避免性能问题）  |
+| Husky 版本           | v9+（使用 `husky init` 初始化）                                                            |
+| lint-staged 配置位置 | `package.json` 中的 `"lint-staged"` 字段                                                   |
+| Commitlint preset    | `@commitlint/config-conventional`                                                          |
 
 **执行步骤**：
 
@@ -288,23 +288,23 @@ echo 'feat: add new feature' | npx commitlint  # 期望：通过
 
 **验收标准**：
 
-- [ ] `eslint.config.mjs` 存在，规则生效
-- [ ] `.prettierrc.json` 存在，格式化规则生效
-- [ ] `.husky/pre-commit` 和 `.husky/commit-msg` hook 文件存在
-- [ ] `lint-staged` 配置存在
-- [ ] `commitlint.config.ts` 存在
-- [ ] `pnpm lint` 可执行且当前代码无 lint 错误
-- [ ] 验证脚本全部通过（违规被拦截、合法通过）
-- [ ] `pnpm test` 回归通过（未破坏已有测试）
-- [ ] 提供可复核证据：`pnpm lint` 输出、commitlint 拦截/通过示例、hook 文件内容
+- [x] `eslint.config.mjs` 存在，规则生效
+- [x] `.prettierrc.json` 存在，格式化规则生效
+- [x] `.husky/pre-commit` 和 `.husky/commit-msg` hook 文件存在
+- [x] `lint-staged` 配置存在
+- [x] `commitlint.config.ts` 存在
+- [x] `pnpm lint` 可执行且当前代码无 lint 错误
+- [x] 验证脚本全部通过（违规被拦截、合法通过）
+- [x] `pnpm test` 回归通过（未破坏已有测试）
+- [x] 提供可复核证据：`pnpm lint` 输出、commitlint 拦截/通过示例、hook 文件内容
 
 **交付物**：
 
-- [ ] `eslint.config.mjs`
-- [ ] `.prettierrc.json`
-- [ ] `.husky/pre-commit`、`.husky/commit-msg`
-- [ ] `lint-staged` 配置（在 `package.json` 中）
-- [ ] `commitlint.config.ts`
+- [x] `eslint.config.mjs`
+- [x] `.prettierrc.json`
+- [x] `.husky/pre-commit`、`.husky/commit-msg`
+- [x] `lint-staged` 配置（在 `package.json` 中）
+- [x] `commitlint.config.ts`
 
 ---
 
@@ -322,13 +322,13 @@ echo 'feat: add new feature' | npx commitlint  # 期望：通过
 
 **关键决策**：
 
-| 决策项 | 方案 |
-|--------|------|
-| Tailwind 版本 | v4（使用 CSS `@import "tailwindcss"` 方式，不需要 `tailwind.config.js`） |
-| shadcn/ui 初始化 | 使用 `npx shadcn@latest init`，framework 选择 `Vite`（最接近 electron-vite renderer 环境） |
-| shadcn/ui init 选项 | style: `default`；base color: `neutral`；CSS variables: `yes`（其余保持默认） |
+| 决策项                     | 方案                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| Tailwind 版本              | v4（使用 CSS `@import "tailwindcss"` 方式，不需要 `tailwind.config.js`）                    |
+| shadcn/ui 初始化           | 使用 `npx shadcn@latest init`，framework 选择 `Vite`（最接近 electron-vite renderer 环境）  |
+| shadcn/ui init 选项        | style: `default`；base color: `neutral`；CSS variables: `yes`（其余保持默认）               |
 | `components.json` 路径别名 | `aliases.components` 设为 `@renderer/components`（匹配 electron-vite 的 renderer 路径别名） |
-| 测试方式 | 使用 `@testing-library/react` 在 jsdom 环境中渲染组件并断言 |
+| 测试方式                   | 使用 `@testing-library/react` 在 jsdom 环境中渲染组件并断言                                 |
 
 **Electron 适配注意事项**：
 
@@ -448,14 +448,14 @@ describe('Card', () => {
 
 **与 0.1 的边界划分**：
 
-| 范围 | 0.1 负责 | 0.6 负责 |
-|------|----------|----------|
-| `src/main/` | 入口文件 `index.ts` | 子目录：`ipc/`、`plugin/`、`ai/`、`storage/` + 占位导出 |
-| `src/preload/` | 入口文件 `index.ts` | 无额外操作 |
-| `src/renderer/` | 入口文件 `main.tsx`、`App.tsx` | 子目录：`components/`、`features/`、`stores/` + 占位导出 |
-| `src/shared/` | 不创建 | 目录 + `ipc-channels.ts`、`types.ts` 占位 |
-| `plugins/` | 不创建 | 目录骨架（空） |
-| 路径别名 | `@renderer`、`@main`、`@shared` 别名配置 | 不修改别名配置（使用 0.1 已配置的） |
+| 范围            | 0.1 负责                                 | 0.6 负责                                                 |
+| --------------- | ---------------------------------------- | -------------------------------------------------------- |
+| `src/main/`     | 入口文件 `index.ts`                      | 子目录：`ipc/`、`plugin/`、`ai/`、`storage/` + 占位导出  |
+| `src/preload/`  | 入口文件 `index.ts`                      | 无额外操作                                               |
+| `src/renderer/` | 入口文件 `main.tsx`、`App.tsx`           | 子目录：`components/`、`features/`、`stores/` + 占位导出 |
+| `src/shared/`   | 不创建                                   | 目录 + `ipc-channels.ts`、`types.ts` 占位                |
+| `plugins/`      | 不创建                                   | 目录骨架（空）                                           |
+| 路径别名        | `@renderer`、`@main`、`@shared` 别名配置 | 不修改别名配置（使用 0.1 已配置的）                      |
 
 **TDD 要求**：
 
@@ -482,7 +482,7 @@ describe('目录结构', () => {
     'src/renderer/features',
     'src/renderer/stores',
     'src/shared',
-    'plugins',
+    'plugins'
   ]
 
   it.each(requiredDirs)('目录 %s 存在', (dir) => {

@@ -7,15 +7,15 @@
 
 ## 阶段总览
 
-| 阶段 | 目标 | 核心交付 |
-|------|------|----------|
-| **Phase 0** | 项目脚手架 & 基建 | 可运行的 Electron 空壳 + 完整工具链 |
-| **Phase 1** | 核心框架 | IPC 通信 + 数据存储 + App Shell UI |
-| **Phase 2** | 插件系统 | 插件引擎 + Plugin API + 插件加载流程 |
-| **Phase 3** | AI 能力 | AI Service + 多 Provider + Chatbox UI |
-| **Phase 4** | 内置插件（P0） | Terminal + AI Chatbox 完整功能 |
+| 阶段        | 目标              | 核心交付                                        |
+| ----------- | ----------------- | ----------------------------------------------- |
+| **Phase 0** | 项目脚手架 & 基建 | 可运行的 Electron 空壳 + 完整工具链             |
+| **Phase 1** | 核心框架          | IPC 通信 + 数据存储 + App Shell UI              |
+| **Phase 2** | 插件系统          | 插件引擎 + Plugin API + 插件加载流程            |
+| **Phase 3** | AI 能力           | AI Service + 多 Provider + Chatbox UI           |
+| **Phase 4** | 内置插件（P0）    | Terminal + AI Chatbox 完整功能                  |
 | **Phase 5** | 内置插件（P1-P2） | File Explorer + Git Helper + Snippet Manager 等 |
-| **Phase 6** | 打包分发 & 完善 | 多平台构建 + 自动更新 + 安全加固 |
+| **Phase 6** | 打包分发 & 完善   | 多平台构建 + 自动更新 + 安全加固                |
 
 ---
 
@@ -450,24 +450,24 @@ Phase 6.4 (性能优化，收尾)
 
 ## 里程碑 Checklist
 
-| 里程碑 | 标志 | 对应阶段 |
-|--------|------|----------|
-| **M0 - 骨架就绪** | 空壳 Electron 应用可运行，工具链完整 | Phase 0 |
-| **M1 - 框架可用** | IPC 通信打通，App Shell 可导航，数据库可读写 | Phase 1 |
-| **M2 - 插件可用** | 插件可加载/卸载，Plugin API 可用 | Phase 2 |
-| **M3 - AI 可用** | 可与 AI 对话，流式响应，Tool Calling 工作 | Phase 3 |
-| **M4 - Alpha** | Terminal + AI Chatbox 功能完整，可日常使用 | Phase 4 |
-| **M5 - Beta** | 全部内置插件完成，基本可分发 | Phase 5 |
-| **M6 - Release** | 多平台打包，自动更新，安全审查通过 | Phase 6 |
+| 里程碑            | 标志                                         | 对应阶段 |
+| ----------------- | -------------------------------------------- | -------- |
+| **M0 - 骨架就绪** | 空壳 Electron 应用可运行，工具链完整         | Phase 0  |
+| **M1 - 框架可用** | IPC 通信打通，App Shell 可导航，数据库可读写 | Phase 1  |
+| **M2 - 插件可用** | 插件可加载/卸载，Plugin API 可用             | Phase 2  |
+| **M3 - AI 可用**  | 可与 AI 对话，流式响应，Tool Calling 工作    | Phase 3  |
+| **M4 - Alpha**    | Terminal + AI Chatbox 功能完整，可日常使用   | Phase 4  |
+| **M5 - Beta**     | 全部内置插件完成，基本可分发                 | Phase 5  |
+| **M6 - Release**  | 多平台打包，自动更新，安全审查通过           | Phase 6  |
 
 ---
 
 ## 技术风险 & 应对
 
-| 风险 | 影响 | 应对方案 |
-|------|------|----------|
-| `better-sqlite3` native 模块跨平台编译问题 | 安装/构建失败 | 使用 `electron-rebuild`，CI 分平台构建 |
-| `node-pty` 在 Windows 上兼容性问题 | Terminal 插件功能受限 | 提前在 Windows 上验证，备选 `@xterm/addon-attach` + WebSocket |
-| Electron 包体积过大 | 安装包 > 200MB | 精简 node_modules，使用 `asar` 打包，Tree-shaking |
-| 插件 API 设计不合理需要 breaking change | 已有插件需要修改 | Phase 2 阶段充分验证，API 设计预留扩展点 |
-| AI Provider API 限流或不兼容 | 对话功能不稳定 | 实现 retry + fallback 机制，支持多 Provider 切换 |
+| 风险                                       | 影响                  | 应对方案                                                      |
+| ------------------------------------------ | --------------------- | ------------------------------------------------------------- |
+| `better-sqlite3` native 模块跨平台编译问题 | 安装/构建失败         | 使用 `electron-rebuild`，CI 分平台构建                        |
+| `node-pty` 在 Windows 上兼容性问题         | Terminal 插件功能受限 | 提前在 Windows 上验证，备选 `@xterm/addon-attach` + WebSocket |
+| Electron 包体积过大                        | 安装包 > 200MB        | 精简 node_modules，使用 `asar` 打包，Tree-shaking             |
+| 插件 API 设计不合理需要 breaking change    | 已有插件需要修改      | Phase 2 阶段充分验证，API 设计预留扩展点                      |
+| AI Provider API 限流或不兼容               | 对话功能不稳定        | 实现 retry + fallback 机制，支持多 Provider 切换              |
