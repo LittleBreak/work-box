@@ -23,6 +23,7 @@ ROADMAP.md 中 Phase 0 原有 6 个任务（0.1–0.6），其中 **0.5（Vitest
 - [ ] 操作系统与架构（macOS / Windows / Linux，x64/arm64）
 - [ ] 包管理策略（仅使用 pnpm，禁止混用 npm/yarn lockfile）
 - [ ] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖
+- [ ] 执行任务后必须更新任务状态：任务成功完成时，将对应的验收标准和交付物清单项标记为 `[x]`（已完成）
 
 ---
 
@@ -434,7 +435,7 @@ describe('Card', () => {
 
 ---
 
-## 0.6 目录结构搭建
+## 0.6 目录结构搭建 ✅ DONE
 
 **目标**：按架构文档**扩展**业务子目录骨架（0.1 已创建 `src/main/`、`src/preload/`、`src/renderer/` 基础目录）。
 
@@ -459,9 +460,9 @@ describe('Card', () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：创建目录和占位导出文件使测试通过
-- [ ] Refactor：统一占位文件的导出风格，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：创建目录和占位导出文件使测试通过
+- [x] Refactor：统一占位文件的导出风格，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -515,7 +516,7 @@ describe('目录结构', () => {
 
 **验收标准**：
 
-- [ ] 以下子目录已创建且包含占位 `index.ts`（导出空对象或空函数）：
+- [x] 以下子目录已创建且包含占位 `index.ts`（导出空对象或空函数）：
   - `src/main/ipc/`
   - `src/main/plugin/`
   - `src/main/ai/`
@@ -523,15 +524,15 @@ describe('目录结构', () => {
   - `src/renderer/components/`
   - `src/renderer/features/`
   - `src/renderer/stores/`
-- [ ] `src/shared/` 目录已创建，包含 `ipc-channels.ts`（导出 `IPC_CHANNELS` 占位常量）和 `types.ts` 占位文件
-- [ ] `plugins/` 目录已创建（含 `.gitkeep`）
-- [ ] 目录结构与 `ARCHITECTURE.md` 第八节一致
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] 目录结构测试通过（采用显式断言检查文件/目录存在 + 导入可用）
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：`tree` 命令输出 + 测试结果
+- [x] `src/shared/` 目录已创建，包含 `ipc-channels.ts`（导出 `IPC_CHANNELS` 占位常量）和 `types.ts` 占位文件
+- [x] `plugins/` 目录已创建（含 `.gitkeep`）
+- [x] 目录结构与 `ARCHITECTURE.md` 第八节一致
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] 目录结构测试通过（采用显式断言检查文件/目录存在 + 导入可用）
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：`tree` 命令输出 + 测试结果
 
 **交付物**：
 
-- [ ] 与架构文档一致的业务子目录骨架（含占位导出）
-- [ ] 目录结构校验测试（含正常路径、边界条件测试用例）
+- [x] 与架构文档一致的业务子目录骨架（含占位导出）
+- [x] 目录结构校验测试（含正常路径、边界条件测试用例）
