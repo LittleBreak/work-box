@@ -84,7 +84,7 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 ---
 
-## 0.1 初始化 electron-vite 项目 + Vitest 测试框架
+## 0.1 初始化 electron-vite 项目 + Vitest 测试框架 ✅ DONE
 
 **目标**：使用 electron-vite 创建 React + TypeScript 项目模板，同时配置 Vitest 测试框架，为后续任务建立 TDD 基础。
 
@@ -134,22 +134,22 @@ Phase 0 的任务性质分为两类，应用不同的验证策略：
 
 **验收标准**：
 
-- [ ] 仓库根目录结构正确：`package.json`、`electron.vite.config.ts`、`src/main/`、`src/preload/`、`src/renderer/` 入口文件均存在
-- [ ] 已有文件（`ARCHITECTURE.md`、`ROADMAP.md`、`CLAUDE.md`、`tasks/`）未被覆盖
-- [ ] `pnpm dev` 启动无报错，Electron 窗口中可看到 React 页面（仅限本地有 GUI 环境验证，CI 中跳过此项）
-- [ ] `electron.vite.config.ts` 中已配置 `@renderer`、`@main`、`@shared` 路径别名
-- [ ] `tsconfig.json` 中 `paths` 配置与 `electron.vite.config.ts` 别名一致
-- [ ] `vitest.workspace.ts` 存在，区分 main（node）和 renderer（jsdom）环境
-- [ ] `pnpm test` 能执行并通过（至少 2 个示例测试：main 1 个 + renderer 1 个）
-- [ ] 示例测试覆盖：正常路径、边界条件、错误处理各 1 个样例
-- [ ] 提供可复核证据：执行命令日志、`pnpm test` 输出、`pnpm dev` 启动日志（无报错）
+- [x] 仓库根目录结构正确：`package.json`、`electron.vite.config.ts`、`src/main/`、`src/preload/`、`src/renderer/` 入口文件均存在
+- [x] 已有文件（`ARCHITECTURE.md`、`ROADMAP.md`、`CLAUDE.md`、`tasks/`）未被覆盖
+- [x] `pnpm dev` 启动无报错，Electron 窗口中可看到 React 页面（仅限本地有 GUI 环境验证，CI 中跳过此项）
+- [x] `electron.vite.config.ts` 中已配置 `@renderer`、`@main`、`@shared` 路径别名
+- [x] `tsconfig.json` 中 `paths` 配置与 `electron.vite.config.ts` 别名一致
+- [x] `vitest.workspace.ts` 存在，区分 main（node）和 renderer（jsdom）环境
+- [x] `pnpm test` 能执行并通过（至少 2 个示例测试：main 1 个 + renderer 1 个）
+- [x] 示例测试覆盖：正常路径、边界条件、错误处理各 1 个样例
+- [x] 提供可复核证据：执行命令日志、`pnpm test` 输出、`pnpm dev` 启动日志（无报错）
 
 **交付物**：
 
-- [ ] 初始化后的项目基础文件（`package.json`、`electron.vite.config.ts`、`tsconfig*.json`、`src/main/`、`src/preload/`、`src/renderer/` 入口）
-- [ ] `vitest.workspace.ts` + main/renderer 示例测试文件
-- [ ] `package.json` 中的 `test` / `test:watch` 脚本
-- [ ] 路径别名配置（`@renderer`、`@main`、`@shared`）
+- [x] 初始化后的项目基础文件（`package.json`、`electron.vite.config.ts`、`tsconfig*.json`、`src/main/`、`src/preload/`、`src/renderer/` 入口）
+- [x] `vitest.workspace.ts` + main/renderer 示例测试文件
+- [x] `package.json` 中的 `test` / `test:watch` 脚本
+- [x] 路径别名配置（`@renderer`、`@main`、`@shared`）
 
 ---
 
