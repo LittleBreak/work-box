@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { registerIPCHandlers } from './ipc/register'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -42,6 +43,8 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('ping', () => console.log('pong'))
+
+  registerIPCHandlers()
 
   createWindow()
 

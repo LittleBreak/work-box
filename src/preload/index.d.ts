@@ -1,8 +1,33 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
+import type { ExecResult, ExecOptions, FileStat } from '../shared/types'
+
+interface WorkboxAPI {
+  fs: {
+    readFile(path: string): Promise<string>
+    writeFile(path: string, data: string): Promise<void>
+    readDir(path: string): Promise<string[]>
+    stat(path: string): Promise<FileStat>
+  }
+  shell: {
+    exec(command: string, options?: ExecOptions): Promise<ExecResult>
+  }
+  ai: {
+    chat(params: unknown): Promise<unknown>
+    getModels(): Promise<unknown>
+  }
+  plugin: {
+    list(): Promise<unknown>
+    enable(id: string): Promise<void>
+    disable(id: string): Promise<void>
+  }
+  settings: {
+    get(): Promise<unknown>
+    update(settings: Record<string, unknown>): Promise<void>
+    reset(): Promise<void>
+  }
+}
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    workbox: WorkboxAPI
   }
 }

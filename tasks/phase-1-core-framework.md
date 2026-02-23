@@ -102,9 +102,9 @@ Phase 1 共 6 个任务（1.1–1.6），覆盖 IPC 通信基础设施、文件�
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 IPC 通道定义、共享类型、preload 桥接、主进程 handler 注册骨架，使测试通过
-- [ ] Refactor：统一导出风格和命名规范，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 IPC 通道定义、共享类型、preload 桥接、主进程 handler 注册骨架，使测试通过
+- [x] Refactor：统一导出风格和命名规范，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -294,26 +294,26 @@ describe('IPC Handler 注册', () => {
 
 **验收标准**：
 
-- [ ] `src/shared/ipc-channels.ts` 定义完整的 IPC 通道常量，包含 `fs`、`shell`、`ai`、`plugin`、`settings` 五个领域
-- [ ] `src/shared/types.ts` 定义 `ExecResult`、`ExecOptions`、`FileStat` 共享接口及对应运行时辅助函数（`Message`/`ChatParams`/`StreamChunk` 推迟到 Phase 3，`PluginInfo` 推迟到 Phase 2）
-- [ ] `src/preload/index.ts` 移除 `@electron-toolkit/preload` 依赖和 `window.electron`/`window.api`，通过 `contextBridge` 暴露 `window.workbox` API（包含 fs.readFile/writeFile/readDir/stat、shell、ai、plugin、settings）
-- [ ] `src/preload/index.d.ts` 声明 `Window.workbox` 完整类型，renderer 端有类型提示
-- [ ] `src/main/ipc/register.ts` 存在，提供 `registerIPCHandlers()` 函数
-- [ ] `src/main/index.ts` 在 `app.whenReady()` 后调用 `registerIPCHandlers()`
-- [ ] 实现类型安全的 IPC invoke 封装（renderer 端调用时有类型提示）
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `tsc --noEmit` 无类型错误
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
+- [x] `src/shared/ipc-channels.ts` 定义完整的 IPC 通道常量，包含 `fs`、`shell`、`ai`、`plugin`、`settings` 五个领域
+- [x] `src/shared/types.ts` 定义 `ExecResult`、`ExecOptions`、`FileStat` 共享接口及对应运行时辅助函数（`Message`/`ChatParams`/`StreamChunk` 推迟到 Phase 3，`PluginInfo` 推迟到 Phase 2）
+- [x] `src/preload/index.ts` 移除 `@electron-toolkit/preload` 依赖和 `window.electron`/`window.api`，通过 `contextBridge` 暴露 `window.workbox` API（包含 fs.readFile/writeFile/readDir/stat、shell、ai、plugin、settings）
+- [x] `src/preload/index.d.ts` 声明 `Window.workbox` 完整类型，renderer 端有类型提示
+- [x] `src/main/ipc/register.ts` 存在，提供 `registerIPCHandlers()` 函数
+- [x] `src/main/index.ts` 在 `app.whenReady()` 后调用 `registerIPCHandlers()`
+- [x] 实现类型安全的 IPC invoke 封装（renderer 端调用时有类型提示）
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `tsc --noEmit` 无类型错误
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `src/shared/ipc-channels.ts`（完整通道定义）
-- [ ] `src/shared/types.ts`（ExecResult/ExecOptions/FileStat 共享类型 + 辅助函数）
-- [ ] `src/preload/index.ts`（workbox API 桥接）
-- [ ] `src/preload/index.d.ts`（Window.workbox 类型声明）
-- [ ] `src/main/ipc/register.ts`（IPC 注册入口）
-- [ ] 对应的测试文件
+- [x] `src/shared/ipc-channels.ts`（完整通道定义）
+- [x] `src/shared/types.ts`（ExecResult/ExecOptions/FileStat 共享类型 + 辅助函数）
+- [x] `src/preload/index.ts`（workbox API 桥接）
+- [x] `src/preload/index.d.ts`（Window.workbox 类型声明）
+- [x] `src/main/ipc/register.ts`（IPC 注册入口）
+- [x] 对应的测试文件
 
 ---
 
