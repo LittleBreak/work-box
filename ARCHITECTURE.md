@@ -364,11 +364,12 @@ const providers = [
 
 ```typescript
 // shared/ipc-channels.ts — 统一定义所有 IPC 通道
-export const IPC = {
+export const IPC_CHANNELS = {
   fs: {
     readFile: 'fs:readFile',
     writeFile: 'fs:writeFile',
-    readDir: 'fs:readDir'
+    readDir: 'fs:readDir',
+    stat: 'fs:stat'
   },
   shell: {
     exec: 'shell:exec'
@@ -381,6 +382,11 @@ export const IPC = {
     list: 'plugin:list',
     enable: 'plugin:enable',
     disable: 'plugin:disable'
+  },
+  settings: {
+    get: 'settings:get',
+    update: 'settings:update',
+    reset: 'settings:reset'
   }
 } as const
 ```
@@ -394,20 +400,24 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('workbox', {
   fs: {
     readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
-    writeFile: (path: string, data: string) => ipcRenderer.invoke('fs:writeFile', path, data)
+    writeFile: (path: string, data: string) => ipcRenderer.invoke('fs:writeFile', path, data),
+    readDir: (path: string) => ipcRenderer.invoke('fs:readDir', path),
+    stat: (path: string) => ipcRenderer.invoke('fs:stat', path)
   },
   shell: {
     exec: (cmd: string) => ipcRenderer.invoke('shell:exec', cmd)
   },
   ai: {
-    chat: (messages: any[]) => ipcRenderer.invoke('ai:chat', messages),
-    onStream: (cb: (chunk: any) => void) => {
-      ipcRenderer.on('ai:stream', (_, chunk) => cb(chunk))
-      return () => ipcRenderer.removeAllListeners('ai:stream')
-    }
+    chat: (messages: any[]) => ipcRenderer.invoke('ai:chat', messages)
+    // onStream 事件监听模式推迟到 Phase 3 AI 任务中实现
   },
   plugin: {
     list: () => ipcRenderer.invoke('plugin:list')
+  },
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    update: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:update', settings),
+    reset: () => ipcRenderer.invoke('settings:reset')
   }
 })
 ```

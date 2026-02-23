@@ -88,15 +88,17 @@ Phase 1 共 6 个任务（1.1–1.6），覆盖 IPC 通信基础设施、文件�
 
 **关键决策**：
 
-| 决策项                | 方案                                                                                                                                                |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| IPC 通道命名          | `domain:action` 格式（如 `fs:readFile`、`shell:exec`），统一在 `IPC_CHANNELS` 常量对象中定义                                                        |
-| 通道分组              | 按领域分组：`fs`（文件系统）、`shell`（命令执行）、`ai`（AI 服务）、`plugin`（插件管理）、`settings`（设置）                                        |
-| 共享类型定义          | `ExecResult`、`ExecOptions`、`FileStat`、`Message`、`ChatParams`、`StreamChunk`、`PluginInfo` 等在 `src/shared/types.ts` 中定义                     |
-| Preload 暴露 API 名称 | 使用 `window.workbox`（而非模板默认的 `window.api`），与 `ARCHITECTURE.md` 一致                                                                     |
-| 类型安全方案          | 通过 `src/preload/index.d.ts` 声明 `Window.workbox` 类型，renderer 端调用时有完整类型提示                                                           |
-| IPC Handler 注册方式  | 主进程使用 `ipcMain.handle(channel, handler)` 注册，各领域 handler 独立文件，通过统一的 `registerIPCHandlers()` 函数在 `app.whenReady()` 后批量注册 |
-| electron mock 策略    | 测试中通过 `vi.mock('electron', ...)` mock `ipcMain` 和 `ipcRenderer`，验证 handler 注册和调用逻辑                                                  |
+| 决策项                | 方案                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IPC 通道命名          | `domain:action` 格式（如 `fs:readFile`、`shell:exec`），统一在 `IPC_CHANNELS` 常量对象中定义                                                                                                                                                                                                                                                                        |
+| 通道分组              | 按领域分组：`fs`（文件系统）、`shell`（命令执行）、`ai`（AI 服务）、`plugin`（插件管理）、`settings`（设置）                                                                                                                                                                                                                                                        |
+| 共享类型定义          | Task 1.1 只定义 `ExecResult`、`ExecOptions`、`FileStat` 三个类型（含工厂函数和类型守卫）；`Message`、`ChatParams`、`StreamChunk` 推迟到 Phase 3（AI 任务）；`PluginInfo` 推迟到 Phase 2（插件系统）                                                                                                                                                                 |
+| Preload 暴露 API 名称 | 使用 `window.workbox`，**替换**模板默认的 `window.electron` 和 `window.api`，移除 `@electron-toolkit/preload` 依赖，与 `ARCHITECTURE.md` 一致                                                                                                                                                                                                                       |
+| 类型安全方案          | 通过 `src/preload/index.d.ts` 声明 `Window.workbox` 类型，renderer 端调用时有完整类型提示                                                                                                                                                                                                                                                                           |
+| IPC Handler 注册方式  | 主进程使用 `ipcMain.handle(channel, handler)` 注册，通过统一的 `registerIPCHandlers()` 函数在 `app.whenReady()` 后批量注册。**Task 1.1 阶段 `register.ts` 内联空壳 handler（`async () => { throw new Error('Not implemented') }`），不 import 各领域 handler 文件**（`fs.handler.ts`、`shell.handler.ts` 等在后续 Task 1.2/1.3 中创建，届时替换对应的空壳 handler） |
+| electron mock 策略    | 测试中通过 `vi.mock('electron', ...)` mock `ipcMain` 和 `ipcRenderer`，验证 handler 注册和调用逻辑                                                                                                                                                                                                                                                                  |
+| AI 流式通信           | Task 1.1 preload 中 **不实现** `ai.onStream` 事件监听模式，仅暴露 `ai.chat` 的 invoke 封装；流式通信推迟到 Phase 3 AI 任务中实现                                                                                                                                                                                                                                    |
+| 重复注册策略          | `registerIPCHandlers()` 被重复调用时**抛出错误**，标识已注册通道，防止重复绑定                                                                                                                                                                                                                                                                                      |
 
 **TDD 要求**：
 
@@ -134,6 +136,12 @@ describe('IPC_CHANNELS', () => {
     expect(IPC_CHANNELS.plugin.disable).toBe('plugin:disable')
   })
 
+  it('定义 settings 领域通道', () => {
+    expect(IPC_CHANNELS.settings.get).toBe('settings:get')
+    expect(IPC_CHANNELS.settings.update).toBe('settings:update')
+    expect(IPC_CHANNELS.settings.reset).toBe('settings:reset')
+  })
+
   // 边界条件：通道对象是 as const（只读）
   it('IPC_CHANNELS 是只读的', () => {
     // TypeScript 层面的 as const 保证，运行时验证 frozen
@@ -152,35 +160,68 @@ describe('IPC_CHANNELS', () => {
 })
 
 // === src/shared/types.test.ts ===
-describe('共享类型定义', () => {
-  // 正常路径：类型可以被导入和使用
-  it('ExecResult 类型可正确实例化', async () => {
-    const { ExecResult } = await import('./types')
-    // 使用类型守卫验证结构
-    const result: ExecResult = { stdout: '', stderr: '', exitCode: 0 }
-    expect(result).toHaveProperty('stdout')
-    expect(result).toHaveProperty('stderr')
-    expect(result).toHaveProperty('exitCode')
+// 注意：TypeScript interface 编译后不存在于 JavaScript 中，无法通过 import 解构获取。
+// 因此不测试类型本身，而是导出**运行时辅助函数**（如工厂函数或类型守卫），测试这些函数的行为。
+// 纯类型正确性由 `tsc --noEmit` 保证。
+import { createExecResult, createFileStat, isExecResult } from './types'
+
+describe('共享类型辅助函数', () => {
+  describe('createExecResult', () => {
+    // 正常路径：工厂函数创建符合结构的对象
+    it('创建包含 stdout/stderr/exitCode 的结果对象', () => {
+      const result = createExecResult({ stdout: 'hello', stderr: '', exitCode: 0 })
+      expect(result.stdout).toBe('hello')
+      expect(result.stderr).toBe('')
+      expect(result.exitCode).toBe(0)
+    })
+
+    // 边界条件：支持可选 signal 字段
+    it('支持可选 signal 字段', () => {
+      const result = createExecResult({ stdout: '', stderr: '', exitCode: 1, signal: 'SIGTERM' })
+      expect(result.signal).toBe('SIGTERM')
+    })
+
+    // 边界条件：未传 signal 时为 undefined
+    it('未传 signal 时为 undefined', () => {
+      const result = createExecResult({ stdout: '', stderr: '', exitCode: 0 })
+      expect(result.signal).toBeUndefined()
+    })
   })
 
-  it('FileStat 类型可正确实例化', async () => {
-    const mod = await import('./types')
-    const stat: mod.FileStat = { size: 0, isDirectory: false, isFile: true, mtime: 0 }
-    expect(stat).toHaveProperty('size')
-    expect(stat).toHaveProperty('isDirectory')
+  describe('createFileStat', () => {
+    it('创建文件元信息对象', () => {
+      const stat = createFileStat({
+        size: 1024,
+        isDirectory: false,
+        isFile: true,
+        mtime: 1700000000
+      })
+      expect(stat.size).toBe(1024)
+      expect(stat.isFile).toBe(true)
+      expect(stat.isDirectory).toBe(false)
+      expect(stat.mtime).toBe(1700000000)
+    })
   })
 
-  // 边界条件：ExecResult 包含可选 signal 字段
-  it('ExecResult 支持可选 signal 字段', async () => {
-    const mod = await import('./types')
-    const result: mod.ExecResult = { stdout: '', stderr: '', exitCode: 1, signal: 'SIGTERM' }
-    expect(result.signal).toBe('SIGTERM')
+  describe('isExecResult（类型守卫）', () => {
+    it('合法 ExecResult 返回 true', () => {
+      expect(isExecResult({ stdout: '', stderr: '', exitCode: 0 })).toBe(true)
+    })
+
+    it('缺少必要字段返回 false', () => {
+      expect(isExecResult({ stdout: '' })).toBe(false)
+      expect(isExecResult(null)).toBe(false)
+      expect(isExecResult('string')).toBe(false)
+    })
   })
 })
 
 // === src/main/ipc/register.test.ts ===
 // 测试 IPC Handler 注册机制（mock electron）
-import { vi, describe, it, expect } from 'vitest'
+// 注意：每个测试必须通过 vi.resetModules() 清除模块缓存，
+// 确保 registerIPCHandlers 内部的「已注册」状态被重置，
+// 否则动态 import 会复用同一模块实例导致重复注册测试误判。
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 vi.mock('electron', () => ({
   ipcMain: {
@@ -190,19 +231,48 @@ vi.mock('electron', () => ({
 }))
 
 describe('IPC Handler 注册', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    // 重新设置 mock，因为 resetModules 会清除 mock 缓存
+    vi.mock('electron', () => ({
+      ipcMain: {
+        handle: vi.fn(),
+        on: vi.fn()
+      }
+    }))
+  })
+
   it('registerIPCHandlers 注册所有领域 handler', async () => {
     const { ipcMain } = await import('electron')
     const { registerIPCHandlers } = await import('./register')
 
     registerIPCHandlers()
 
-    // 验证 ipcMain.handle 被调用，至少注册了 fs 和 shell 通道
-    expect(ipcMain.handle).toHaveBeenCalled()
+    // 验证注册了具体的通道名（空壳 handler）
+    const registeredChannels = (ipcMain.handle as any).mock.calls.map((c: any[]) => c[0])
+    // Task 1.1 阶段注册所有已定义通道的空壳 handler
+    expect(registeredChannels).toContain('fs:readFile')
+    expect(registeredChannels).toContain('fs:writeFile')
+    expect(registeredChannels).toContain('fs:readDir')
+    expect(registeredChannels).toContain('fs:stat')
+    expect(registeredChannels).toContain('shell:exec')
+    expect(registeredChannels).toContain('ai:chat')
+    expect(registeredChannels).toContain('ai:getModels')
+    expect(registeredChannels).toContain('plugin:list')
+    expect(registeredChannels).toContain('plugin:enable')
+    expect(registeredChannels).toContain('plugin:disable')
+    expect(registeredChannels).toContain('settings:get')
+    expect(registeredChannels).toContain('settings:update')
+    expect(registeredChannels).toContain('settings:reset')
   })
 
-  // 错误处理：重复注册应抛错或跳过
+  // 错误处理：重复注册应抛错
   it('不允许重复注册同一通道', async () => {
-    // 验证注册逻辑的幂等性或重复检测
+    const { registerIPCHandlers } = await import('./register')
+    // 第一次注册成功
+    registerIPCHandlers()
+    // 第二次注册同样通道应抛出错误
+    expect(() => registerIPCHandlers()).toThrow(/already registered|duplicate/i)
   })
 })
 ```
@@ -210,14 +280,14 @@ describe('IPC Handler 注册', () => {
 **执行步骤**：
 
 1. **（Red）** 编写 `src/shared/ipc-channels.test.ts`：测试通道常量定义、命名格式验证
-2. **（Red）** 编写 `src/shared/types.test.ts`：测试共享类型的结构（`ExecResult`、`FileStat`、`ExecOptions` 等）
+2. **（Red）** 编写 `src/shared/types.test.ts`：测试共享类型的**运行时辅助函数**（工厂函数 `createExecResult`/`createFileStat`、类型守卫 `isExecResult`），纯 interface 正确性由 `tsc --noEmit` 保证
 3. **（Red）** 编写 `src/main/ipc/register.test.ts`：测试 IPC handler 注册机制（mock electron）
 4. 运行 `pnpm test`，确认全部失败
 5. **（Green）** 实现 `src/shared/ipc-channels.ts`：按 `ARCHITECTURE.md` 6.1 定义所有通道常量
-6. **（Green）** 实现 `src/shared/types.ts`：定义 `ExecResult`、`ExecOptions`、`FileStat`、`Message`、`ChatParams`、`StreamChunk`、`PluginInfo` 等接口
-7. **（Green）** 实现 `src/preload/index.ts`：将 `window.api` 改为 `window.workbox`，通过 `contextBridge` 暴露 fs/shell/ai/plugin API
+6. **（Green）** 实现 `src/shared/types.ts`：定义 `ExecResult`、`ExecOptions`、`FileStat` 三个接口；同时导出运行时辅助函数 `createExecResult()`、`createFileStat()`、`isExecResult()` 供测试和业务代码使用（`Message`/`ChatParams`/`StreamChunk` 推迟到 Phase 3，`PluginInfo` 推迟到 Phase 2）
+7. **（Green）** 实现 `src/preload/index.ts`：移除 `@electron-toolkit/preload` 依赖和 `window.electron`/`window.api`，改为 `window.workbox`，通过 `contextBridge` 暴露 fs（readFile/writeFile/readDir/stat）/shell/ai/plugin/settings API
 8. **（Green）** 更新 `src/preload/index.d.ts`：声明 `Window.workbox` 类型
-9. **（Green）** 创建 `src/main/ipc/register.ts`：统一的 IPC handler 注册入口（骨架，handler 函数为空实现或 TODO）
+9. **（Green）** 创建 `src/main/ipc/register.ts`：统一的 IPC handler 注册入口。**1.1 阶段所有 handler 直接在 `register.ts` 中内联为空壳函数**（如 `async () => { throw new Error('Not implemented') }`），不 import `fs.handler.ts`/`shell.handler.ts` 等尚不存在的领域 handler 文件；后续 Task 1.2/1.3/1.6 实现具体 handler 后再替换对应的空壳
 10. **（Green）** 更新 `src/main/index.ts`：在 `app.whenReady()` 后调用 `registerIPCHandlers()`
 11. 运行 `pnpm test`，确认测试通过
 12. **（Refactor）** 统一导出风格，整理类型组织结构，再次运行 `pnpm test` 确认通过
@@ -225,8 +295,8 @@ describe('IPC Handler 注册', () => {
 **验收标准**：
 
 - [ ] `src/shared/ipc-channels.ts` 定义完整的 IPC 通道常量，包含 `fs`、`shell`、`ai`、`plugin`、`settings` 五个领域
-- [ ] `src/shared/types.ts` 定义 `ExecResult`、`ExecOptions`、`FileStat`、`Message`、`ChatParams`、`StreamChunk`、`PluginInfo` 等共享接口
-- [ ] `src/preload/index.ts` 通过 `contextBridge` 暴露 `window.workbox` API（替代默认的 `window.api`）
+- [ ] `src/shared/types.ts` 定义 `ExecResult`、`ExecOptions`、`FileStat` 共享接口及对应运行时辅助函数（`Message`/`ChatParams`/`StreamChunk` 推迟到 Phase 3，`PluginInfo` 推迟到 Phase 2）
+- [ ] `src/preload/index.ts` 移除 `@electron-toolkit/preload` 依赖和 `window.electron`/`window.api`，通过 `contextBridge` 暴露 `window.workbox` API（包含 fs.readFile/writeFile/readDir/stat、shell、ai、plugin、settings）
 - [ ] `src/preload/index.d.ts` 声明 `Window.workbox` 完整类型，renderer 端有类型提示
 - [ ] `src/main/ipc/register.ts` 存在，提供 `registerIPCHandlers()` 函数
 - [ ] `src/main/index.ts` 在 `app.whenReady()` 后调用 `registerIPCHandlers()`
@@ -239,7 +309,7 @@ describe('IPC Handler 注册', () => {
 **交付物**：
 
 - [ ] `src/shared/ipc-channels.ts`（完整通道定义）
-- [ ] `src/shared/types.ts`（完整共享类型）
+- [ ] `src/shared/types.ts`（ExecResult/ExecOptions/FileStat 共享类型 + 辅助函数）
 - [ ] `src/preload/index.ts`（workbox API 桥接）
 - [ ] `src/preload/index.d.ts`（Window.workbox 类型声明）
 - [ ] `src/main/ipc/register.ts`（IPC 注册入口）
@@ -261,14 +331,14 @@ describe('IPC Handler 注册', () => {
 
 **关键决策**：
 
-| 决策项           | 方案                                                                                                   |
-| ---------------- | ------------------------------------------------------------------------------------------------------ |
-| Handler 文件命名 | `src/main/ipc/fs.handler.ts`（遵循 `ARCHITECTURE.md` 第八节目录结构）                                  |
-| 路径安全策略     | 校验规则：① 必须是绝对路径 ② 不允许 `..` 路径穿越 ③ `resolve` 后必须位于用户 home 目录下               |
-| 文件读取编码     | 默认 UTF-8 字符串返回，后续可扩展 Buffer 模式                                                          |
-| 错误处理         | 文件不存在抛 `FileNotFoundError`，权限不足抛 `PermissionDeniedError`，路径不安全抛 `PathSecurityError` |
-| Node.js API 选择 | 使用 `fs/promises`（异步），不使用 `fs` 同步方法                                                       |
-| 导出方式         | 导出 `setupFSHandlers(ipcMain)` 函数，由 `register.ts` 统一调用                                        |
+| 决策项           | 方案                                                                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Handler 文件命名 | `src/main/ipc/fs.handler.ts`（遵循 `ARCHITECTURE.md` 第八节目录结构）                                                                                                                                            |
+| 路径安全策略     | 校验规则：① 必须是绝对路径 ② `resolve` 后的路径不允许包含 `..` 分段（防路径穿越） ③ 可配置允许访问的目录白名单（`allowedPaths`），默认包含用户 home 目录；测试中通过注入 `tmpdir()` 到白名单来避免与测试环境冲突 |
+| 文件读取编码     | 默认 UTF-8 字符串返回，后续可扩展 Buffer 模式                                                                                                                                                                    |
+| 错误处理         | 文件不存在抛 `FileNotFoundError`，权限不足抛 `PermissionDeniedError`，路径不安全抛 `PathSecurityError`                                                                                                           |
+| Node.js API 选择 | 使用 `fs/promises`（异步），不使用 `fs` 同步方法                                                                                                                                                                 |
+| 导出方式         | 导出 `setupFSHandlers(ipcMain)` 函数，由 `register.ts` 统一调用                                                                                                                                                  |
 
 **TDD 要求**：
 
@@ -281,12 +351,17 @@ describe('IPC Handler 注册', () => {
 ```typescript
 // === src/main/ipc/fs.handler.test.ts ===
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'fs'
-import { join } from 'path'
-import { tmpdir } from 'os'
+import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync } from 'fs'
+import { join, resolve } from 'path'
+import { tmpdir, homedir } from 'os'
+// 注意：readFile/writeFile/readDir/stat/validatePath 从 fs.handler.ts 导入，
+// 它们是不绑定 IPC 的纯业务逻辑函数，IPC 注册由 setupFSHandlers 完成。
+import { readFile, writeFile, readDir, stat, validatePath } from './fs.handler'
 
 describe('fs.handler', () => {
   let testDir: string
+  // 获取 resolve 后的真实 tmpdir 路径（macOS 上 /tmp → /private/tmp）
+  const resolvedTmpBase = resolve(tmpdir())
 
   beforeEach(() => {
     testDir = mkdtempSync(join(tmpdir(), 'workbox-test-'))
@@ -301,7 +376,8 @@ describe('fs.handler', () => {
     it('读取文件返回 UTF-8 字符串内容', async () => {
       const filePath = join(testDir, 'test.txt')
       writeFileSync(filePath, 'hello world')
-      const content = await readFile(filePath)
+      // 传入 allowedPaths 将 tmpdir 加入白名单，使测试路径通过校验
+      const content = await readFile(filePath, { allowedPaths: [resolvedTmpBase] })
       expect(content).toBe('hello world')
     })
 
@@ -309,18 +385,23 @@ describe('fs.handler', () => {
     it('读取空文件返回空字符串', async () => {
       const filePath = join(testDir, 'empty.txt')
       writeFileSync(filePath, '')
-      const content = await readFile(filePath)
+      const content = await readFile(filePath, { allowedPaths: [resolvedTmpBase] })
       expect(content).toBe('')
     })
 
     // 错误处理：文件不存在
     it('文件不存在时抛出错误', async () => {
-      await expect(readFile(join(testDir, 'nonexistent.txt'))).rejects.toThrow()
+      await expect(
+        readFile(join(testDir, 'nonexistent.txt'), { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow()
     })
 
     // 安全：路径穿越攻击
-    it('拒绝包含 .. 的路径穿越', async () => {
-      await expect(readFile('/tmp/../etc/passwd')).rejects.toThrow(/path/i)
+    it('拒绝 resolve 后包含 .. 的路径穿越', async () => {
+      // 即使 /tmp 在白名单内，穿越到 /etc 也应拒绝
+      await expect(
+        readFile('/tmp/../etc/passwd', { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(/path/i)
     })
 
     // 安全：非绝对路径
@@ -333,7 +414,7 @@ describe('fs.handler', () => {
     // 正常路径
     it('写入字符串内容到文件', async () => {
       const filePath = join(testDir, 'output.txt')
-      await writeFile(filePath, 'written content')
+      await writeFile(filePath, 'written content', { allowedPaths: [resolvedTmpBase] })
       const content = readFileSync(filePath, 'utf-8')
       expect(content).toBe('written content')
     })
@@ -342,13 +423,15 @@ describe('fs.handler', () => {
     it('覆盖已有文件内容', async () => {
       const filePath = join(testDir, 'existing.txt')
       writeFileSync(filePath, 'old content')
-      await writeFile(filePath, 'new content')
+      await writeFile(filePath, 'new content', { allowedPaths: [resolvedTmpBase] })
       expect(readFileSync(filePath, 'utf-8')).toBe('new content')
     })
 
     // 安全：路径穿越
     it('拒绝路径穿越写入', async () => {
-      await expect(writeFile('/tmp/../etc/evil', 'data')).rejects.toThrow(/path/i)
+      await expect(
+        writeFile('/tmp/../etc/evil', 'data', { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(/path/i)
     })
   })
 
@@ -357,7 +440,7 @@ describe('fs.handler', () => {
     it('返回目录下的文件名列表', async () => {
       writeFileSync(join(testDir, 'a.txt'), '')
       writeFileSync(join(testDir, 'b.txt'), '')
-      const list = await readDir(testDir)
+      const list = await readDir(testDir, { allowedPaths: [resolvedTmpBase] })
       expect(list).toContain('a.txt')
       expect(list).toContain('b.txt')
     })
@@ -366,7 +449,7 @@ describe('fs.handler', () => {
     it('空目录返回空数组', async () => {
       const emptyDir = join(testDir, 'empty')
       mkdirSync(emptyDir)
-      const list = await readDir(emptyDir)
+      const list = await readDir(emptyDir, { allowedPaths: [resolvedTmpBase] })
       expect(list).toEqual([])
     })
 
@@ -374,7 +457,7 @@ describe('fs.handler', () => {
     it('路径不是目录时抛出错误', async () => {
       const filePath = join(testDir, 'file.txt')
       writeFileSync(filePath, '')
-      await expect(readDir(filePath)).rejects.toThrow()
+      await expect(readDir(filePath, { allowedPaths: [resolvedTmpBase] })).rejects.toThrow()
     })
   })
 
@@ -383,7 +466,7 @@ describe('fs.handler', () => {
     it('返回文件元信息', async () => {
       const filePath = join(testDir, 'info.txt')
       writeFileSync(filePath, 'data')
-      const info = await stat(filePath)
+      const info = await stat(filePath, { allowedPaths: [resolvedTmpBase] })
       expect(info.isFile).toBe(true)
       expect(info.isDirectory).toBe(false)
       expect(info.size).toBeGreaterThan(0)
@@ -392,27 +475,35 @@ describe('fs.handler', () => {
 
     // 正常路径：目录
     it('返回目录元信息', async () => {
-      const info = await stat(testDir)
+      const info = await stat(testDir, { allowedPaths: [resolvedTmpBase] })
       expect(info.isDirectory).toBe(true)
       expect(info.isFile).toBe(false)
     })
 
     // 错误处理
     it('路径不存在时抛出错误', async () => {
-      await expect(stat(join(testDir, 'nope'))).rejects.toThrow()
+      await expect(
+        stat(join(testDir, 'nope'), { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow()
     })
   })
 
   describe('validatePath（路径安全校验）', () => {
-    it('允许用户 home 目录下的绝对路径', () => {
+    it('允许用户 home 目录下的绝对路径（默认白名单）', () => {
       expect(() => validatePath(join(homedir(), 'Documents/test.txt'))).not.toThrow()
     })
 
-    it('拒绝 home 目录外的路径', () => {
+    it('允许显式白名单目录下的路径', () => {
+      const tmpBase = resolve(tmpdir())
+      expect(() => validatePath(join(tmpBase, 'some-file.txt'), [tmpBase])).not.toThrow()
+    })
+
+    it('拒绝白名单外的路径', () => {
       expect(() => validatePath('/etc/passwd')).toThrow()
     })
 
-    it('拒绝含 .. 的路径', () => {
+    it('拒绝 resolve 后逃逸白名单的路径穿越', () => {
+      // resolve(homedir(), '..', 'etc', 'passwd') 实际指向 home 外，应拒绝
       expect(() => validatePath(join(homedir(), '..', 'etc', 'passwd'))).toThrow()
     })
 
@@ -428,7 +519,7 @@ describe('fs.handler', () => {
 1. **（Red）** 编写 `src/main/ipc/fs.handler.test.ts`：覆盖 readFile/writeFile/readDir/stat 的正常路径、边界条件、错误处理、安全校验
 2. 运行 `pnpm test`，确认全部失败
 3. **（Green）** 创建 `src/main/ipc/fs.handler.ts`：
-   - 实现 `validatePath(path)` 路径安全校验函数
+   - 实现 `validatePath(path, allowedPaths?)` 路径安全校验函数（`allowedPaths` 默认 `[homedir()]`，测试中注入 `tmpdir()`）
    - 实现 `readFile(path)` → 返回 UTF-8 字符串
    - 实现 `writeFile(path, data)` → 写入文件
    - 实现 `readDir(path)` → 返回目录列表
@@ -445,7 +536,7 @@ describe('fs.handler', () => {
 - [ ] 实现 `writeFile(path, data)` → 写入文件
 - [ ] 实现 `readDir(path)` → 返回目录列表（`string[]`）
 - [ ] 实现 `stat(path)` → 返回 `FileStat`（size、isDirectory、isFile、mtime）
-- [ ] 路径安全校验通过：拒绝相对路径、拒绝 `..` 穿越、拒绝 home 目录外路径
+- [ ] 路径安全校验通过：拒绝相对路径、拒绝 resolve 后逃逸白名单的穿越、默认仅允许 home 目录、支持 `allowedPaths` 白名单扩展（测试中注入 `tmpdir()`）
 - [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
 - [ ] renderer 可通过 `window.workbox.fs.readFile()` 调用（集成测试可选，单元测试必须）
 - [ ] `pnpm test` 回归通过
@@ -615,16 +706,16 @@ describe('shell.handler', () => {
 
 **关键决策**：
 
-| 决策项         | 方案                                                                                               |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| 数据库引擎     | `better-sqlite3`（同步 API，性能好，Electron 兼容性好）                                            |
-| ORM            | `drizzle-orm`（类型安全、轻量）+ `drizzle-kit`（migration 工具）                                   |
-| 数据库文件位置 | `~/.workbox/data.db`（使用 `app.getPath('home')` 获取 home 目录）                                  |
-| Migration 策略 | 使用 `drizzle-kit` 生成 migration SQL，应用启动时自动执行                                          |
-| 测试数据库     | 测试中使用内存数据库（`:memory:`）或临时文件，避免污染用户数据                                     |
-| Schema 定义    | 4 张表：`conversations`、`messages`、`plugin_storage`、`settings`（与 `ARCHITECTURE.md` 7.1 一致） |
-| ID 生成策略    | 使用 UUID（`crypto.randomUUID()`）                                                                 |
-| 时间戳格式     | Unix 毫秒时间戳（`integer` 类型），存储 `Date.now()` 值                                            |
+| 决策项         | 方案                                                                                                                                                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 数据库引擎     | `better-sqlite3`（**同步 API**，性能好，Electron 兼容性好）。注意：better-sqlite3 和 drizzle-orm 的 better-sqlite3 driver 均为同步 API，CRUD 函数应定义为**同步函数**（不使用 async/await），测试断言也相应使用同步写法 |
+| ORM            | `drizzle-orm`（类型安全、轻量）+ `drizzle-kit`（migration 工具）                                                                                                                                                        |
+| 数据库文件位置 | `~/.workbox/data.db`（使用 `app.getPath('home')` 获取 home 目录）                                                                                                                                                       |
+| Migration 策略 | 使用 `drizzle-kit` 生成 migration SQL，应用启动时自动执行                                                                                                                                                               |
+| 测试数据库     | 测试中使用内存数据库（`:memory:`）或临时文件，避免污染用户数据                                                                                                                                                          |
+| Schema 定义    | 4 张表：`conversations`、`messages`、`plugin_storage`、`settings`（与 `ARCHITECTURE.md` 7.1 一致）                                                                                                                      |
+| ID 生成策略    | 使用 UUID（`crypto.randomUUID()`）                                                                                                                                                                                      |
+| 时间戳格式     | Unix 毫秒时间戳（`integer` 类型），存储 `Date.now()` 值                                                                                                                                                                 |
 
 **TDD 要求**：
 
@@ -667,81 +758,129 @@ describe('Database', () => {
 })
 
 // === src/main/storage/schema.test.ts ===
+// 注意：better-sqlite3 + drizzle-orm 的 better-sqlite3 driver 均为同步 API，
+// 所有 CRUD 函数为同步函数，测试中不使用 async/await。
+// 初始化时必须执行 PRAGMA foreign_keys = ON 以启用外键约束。
+import {
+  insertConversation,
+  getConversation,
+  updateConversation,
+  deleteConversation,
+  insertMessage,
+  getMessagesByConversation,
+  getSetting,
+  setSetting,
+  getPluginData,
+  setPluginData
+} from './crud'
+
 describe('Schema CRUD 操作', () => {
+  // beforeEach/afterEach 中初始化内存数据库（参见 database.test.ts）
+  // 初始化时需确保 PRAGMA foreign_keys = ON
+
   describe('conversations 表', () => {
     // 正常路径：创建对话
-    it('创建对话并查询', async () => {
+    it('创建对话并查询', () => {
       const id = 'conv-001'
-      await insertConversation({
+      insertConversation({
         id,
         title: 'Test Chat',
         createdAt: Date.now(),
         updatedAt: Date.now()
       })
-      const conv = await getConversation(id)
+      const conv = getConversation(id)
       expect(conv).toBeDefined()
       expect(conv!.title).toBe('Test Chat')
     })
 
     // 正常路径：更新对话标题
-    it('更新对话标题', async () => {
+    it('更新对话标题', () => {
       const id = 'conv-002'
-      await insertConversation({ id, title: 'Old', createdAt: Date.now(), updatedAt: Date.now() })
-      await updateConversation(id, { title: 'New Title' })
-      const conv = await getConversation(id)
+      insertConversation({ id, title: 'Old', createdAt: Date.now(), updatedAt: Date.now() })
+      updateConversation(id, { title: 'New Title' })
+      const conv = getConversation(id)
       expect(conv!.title).toBe('New Title')
     })
 
     // 正常路径：删除对话
-    it('删除对话', async () => {
+    it('删除对话', () => {
       const id = 'conv-003'
-      await insertConversation({
+      insertConversation({
         id,
         title: 'To Delete',
         createdAt: Date.now(),
         updatedAt: Date.now()
       })
-      await deleteConversation(id)
-      const conv = await getConversation(id)
+      deleteConversation(id)
+      const conv = getConversation(id)
       expect(conv).toBeUndefined()
     })
 
     // 边界条件：查询不存在的对话
-    it('查询不存在的对话返回 undefined', async () => {
-      const conv = await getConversation('nonexistent')
+    it('查询不存在的对话返回 undefined', () => {
+      const conv = getConversation('nonexistent')
       expect(conv).toBeUndefined()
     })
   })
 
   describe('messages 表', () => {
     // 正常路径：创建消息
-    it('创建消息并查询', async () => {
-      await insertConversation({
+    it('创建消息并查询', () => {
+      insertConversation({
         id: 'conv-msg',
         title: 'Chat',
         createdAt: Date.now(),
         updatedAt: Date.now()
       })
-      await insertMessage({
+      insertMessage({
         id: 'msg-001',
         conversationId: 'conv-msg',
         role: 'user',
         content: 'Hello',
         createdAt: Date.now()
       })
-      const messages = await getMessagesByConversation('conv-msg')
+      const messages = getMessagesByConversation('conv-msg')
       expect(messages).toHaveLength(1)
       expect(messages[0].content).toBe('Hello')
     })
 
     // 正常路径：按时间排序
-    it('消息按创建时间排序', async () => {
-      // 插入多条消息，验证排序
+    it('消息按创建时间排序', () => {
+      insertConversation({
+        id: 'conv-sort',
+        title: 'Sort Test',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      })
+      const now = Date.now()
+      insertMessage({
+        id: 'msg-1',
+        conversationId: 'conv-sort',
+        role: 'user',
+        content: 'first',
+        createdAt: now
+      })
+      insertMessage({
+        id: 'msg-2',
+        conversationId: 'conv-sort',
+        role: 'assistant',
+        content: 'second',
+        createdAt: now + 100
+      })
+      insertMessage({
+        id: 'msg-3',
+        conversationId: 'conv-sort',
+        role: 'user',
+        content: 'third',
+        createdAt: now + 200
+      })
+      const messages = getMessagesByConversation('conv-sort')
+      expect(messages.map((m) => m.content)).toEqual(['first', 'second', 'third'])
     })
 
-    // 错误处理：外键约束
-    it('引用不存在的 conversationId 抛错', async () => {
-      await expect(
+    // 错误处理：外键约束（需要 PRAGMA foreign_keys = ON）
+    it('引用不存在的 conversationId 抛错', () => {
+      expect(() =>
         insertMessage({
           id: 'msg-bad',
           conversationId: 'nonexistent',
@@ -749,55 +888,55 @@ describe('Schema CRUD 操作', () => {
           content: 'x',
           createdAt: Date.now()
         })
-      ).rejects.toThrow()
+      ).toThrow()
     })
   })
 
   describe('settings 表', () => {
     // 正常路径：设置和获取
-    it('保存和获取设置值', async () => {
-      await setSetting('theme', 'dark')
-      const value = await getSetting('theme')
+    it('保存和获取设置值', () => {
+      setSetting('theme', 'dark')
+      const value = getSetting('theme')
       expect(value).toBe('dark')
     })
 
     // 正常路径：更新已有设置
-    it('更新已有设置值', async () => {
-      await setSetting('theme', 'light')
-      await setSetting('theme', 'dark')
-      const value = await getSetting('theme')
+    it('更新已有设置值', () => {
+      setSetting('theme', 'light')
+      setSetting('theme', 'dark')
+      const value = getSetting('theme')
       expect(value).toBe('dark')
     })
 
     // 边界条件：获取不存在的设置
-    it('获取不存在的设置返回 null', async () => {
-      const value = await getSetting('nonexistent')
+    it('获取不存在的设置返回 null', () => {
+      const value = getSetting('nonexistent')
       expect(value).toBeNull()
     })
 
     // 正常路径：JSON 序列化的复杂值
-    it('支持 JSON 序列化的复杂值', async () => {
+    it('支持 JSON 序列化的复杂值', () => {
       const config = { provider: 'openai', model: 'gpt-4', temperature: 0.7 }
-      await setSetting('ai', JSON.stringify(config))
-      const value = JSON.parse(await getSetting('ai')!)
+      setSetting('ai', JSON.stringify(config))
+      const value = JSON.parse(getSetting('ai')!)
       expect(value.provider).toBe('openai')
     })
   })
 
   describe('plugin_storage 表', () => {
     // 正常路径：按插件 ID + key 存取
-    it('按 pluginId + key 保存和获取', async () => {
-      await setPluginData('git-helper', 'lastCommit', '"abc123"')
-      const value = await getPluginData('git-helper', 'lastCommit')
+    it('按 pluginId + key 保存和获取', () => {
+      setPluginData('git-helper', 'lastCommit', '"abc123"')
+      const value = getPluginData('git-helper', 'lastCommit')
       expect(value).toBe('"abc123"')
     })
 
     // 边界条件：不同插件相同 key 不冲突
-    it('不同插件的相同 key 互不干扰', async () => {
-      await setPluginData('plugin-a', 'config', '"a"')
-      await setPluginData('plugin-b', 'config', '"b"')
-      expect(await getPluginData('plugin-a', 'config')).toBe('"a"')
-      expect(await getPluginData('plugin-b', 'config')).toBe('"b"')
+    it('不同插件的相同 key 互不干扰', () => {
+      setPluginData('plugin-a', 'config', '"a"')
+      setPluginData('plugin-b', 'config', '"b"')
+      expect(getPluginData('plugin-a', 'config')).toBe('"a"')
+      expect(getPluginData('plugin-b', 'config')).toBe('"b"')
     })
   })
 })
@@ -811,12 +950,13 @@ describe('Schema CRUD 操作', () => {
 4. **（Green）** 安装依赖：`pnpm add better-sqlite3 drizzle-orm && pnpm add -D drizzle-kit @types/better-sqlite3`
 5. **（Green）** 创建 `src/main/storage/database.ts`：
    - 封装 Database 类，支持 `:memory:` 和文件路径
-   - `initialize()` 方法：创建 `~/.workbox/` 目录 + 打开数据库 + 运行 migration
+   - `initialize()` 方法：创建 `~/.workbox/` 目录 + 打开数据库 + 执行 `PRAGMA foreign_keys = ON`（SQLite 默认不启用外键约束） + 运行 migration
    - `close()` 方法：关闭连接
 6. **（Green）** 创建 `src/main/storage/schema.ts`：
    - 定义 `conversations`、`messages`、`plugin_storage`、`settings` 四张表（Drizzle 语法）
    - Schema 与 `ARCHITECTURE.md` 7.1 SQL 定义完全一致
 7. **（Green）** 创建 `src/main/storage/crud.ts`（或在 schema 中导出）：
+   - 所有 CRUD 函数均为**同步函数**（better-sqlite3 是同步 API，不使用 async/await）
    - `insertConversation / getConversation / updateConversation / deleteConversation`
    - `insertMessage / getMessagesByConversation`
    - `getSetting / setSetting`
@@ -832,8 +972,8 @@ describe('Schema CRUD 操作', () => {
 - [ ] `src/main/storage/schema.ts` 存在：Drizzle schema 定义 4 张表（`conversations`、`messages`、`plugin_storage`、`settings`）
 - [ ] Schema 与 `ARCHITECTURE.md` 第七节 SQL 定义一致（字段名、类型、约束完全匹配）
 - [ ] 数据库文件默认存放在 `~/.workbox/data.db`（测试中使用 `:memory:`）
-- [ ] 应用启动时自动创建目录和数据库文件、运行 migration
-- [ ] 4 张表的 CRUD 测试全部通过（含正常路径、边界条件、外键约束）
+- [ ] 应用启动时自动创建目录和数据库文件、执行 `PRAGMA foreign_keys = ON`、运行 migration
+- [ ] 4 张表的 CRUD 测试全部通过（含正常路径、边界条件、外键约束）；CRUD 函数为同步 API（与 better-sqlite3 一致）
 - [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
 - [ ] `pnpm test` 回归通过
 - [ ] 提供可复核证据：测试输出 + `pnpm test` 全量结果
