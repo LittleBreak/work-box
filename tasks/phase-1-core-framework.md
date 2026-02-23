@@ -656,15 +656,15 @@ describe('fs.handler', () => {
 
 **关键决策**：
 
-| 决策项           | 方案                                                                                                  |
-| ---------------- | ----------------------------------------------------------------------------------------------------- |
-| Handler 文件命名 | `src/main/ipc/shell.handler.ts`                                                                       |
-| Node.js API 选择 | 使用 `child_process.exec` 的 Promise 封装（`util.promisify(exec)`）                                   |
-| 超时默认值       | 30 秒（30000ms），可通过 `ExecOptions.timeout` 覆盖                                                   |
-| 危险命令黑名单   | 正则匹配：`rm -rf /`、`dd`、`mkfs`、`format`、`sudo`、`shutdown`、`reboot` 等                         |
-| 返回结构         | `ExecResult { stdout, stderr, exitCode, signal? }`（使用 1.1 定义的共享类型）                         |
-| CWD 处理         | `options.cwd` 可选，默认为用户 home 目录                                                              |
-| 环境变量过滤     | 不传递 `process.env` 中的敏感变量（如 `API_KEY`、`SECRET` 等），仅传递 `options.env` 中显式指定的变量 |
+| 决策项           | 方案                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Handler 文件命名 | `src/main/ipc/shell.handler.ts`                                                                                                                                                                                                                                                                                      |
+| Node.js API 选择 | 使用 `child_process.exec` 的 Promise 封装（`util.promisify(exec)`）                                                                                                                                                                                                                                                  |
+| 超时默认值       | 30 秒（30000ms），可通过 `ExecOptions.timeout` 覆盖                                                                                                                                                                                                                                                                  |
+| 危险命令黑名单   | 使用**词边界**正则匹配（`\b`），避免子串误判（如 `adding` 不会匹配 `dd`）。拦截规则：① `rm\s+-[^\s]*r[^\s]*f\s+/` 匹配 `rm -rf /` 及其变体（`rm -rf /*`、`rm -rfi /`），但**不拦截** `rm -rf ./dir` 等非根路径 ② `\bsudo\b`、`\bdd\b`、`\bmkfs\b`、`\bformat\b`、`\bshutdown\b`、`\breboot\b` 作为独立单词出现时拦截 |
+| 返回结构         | `ExecResult { stdout, stderr, exitCode, signal? }`（使用 1.1 定义的共享类型）。**超时和命令失败统一返回 `ExecResult`**（不 throw），通过 `exitCode !== 0` 判断失败；仅在**危险命令拦截**和**空命令**等前置校验失败时 throw Error                                                                                     |
+| CWD 处理         | `options.cwd` 可选，默认为用户 home 目录                                                                                                                                                                                                                                                                             |
+| 环境变量过滤     | **继承** `process.env` 但过滤掉名称中包含 `KEY`、`SECRET`、`TOKEN`、`PASSWORD`、`CREDENTIAL` 的变量（大小写不敏感）；若 `options.env` 存在则**合并覆盖**到过滤后的环境变量（`{ ...filteredProcessEnv, ...options.env }`）                                                                                            |
 
 **TDD 要求**：
 
@@ -676,6 +676,10 @@ describe('fs.handler', () => {
 
 ```typescript
 // === src/main/ipc/shell.handler.test.ts ===
+import * as cp from 'child_process'
+import { vi, describe, it, expect } from 'vitest'
+import { exec, isDangerousCommand, filterEnv, setupShellHandlers } from './shell.handler'
+
 describe('shell.handler', () => {
   describe('exec', () => {
     // 正常路径：执行简单命令
@@ -685,7 +689,7 @@ describe('shell.handler', () => {
       expect(result.exitCode).toBe(0)
     })
 
-    // 正常路径：命令失败返回非零 exitCode
+    // 正常路径：命令失败返回非零 exitCode（不 throw）
     it('命令失败时返回非零 exitCode 和 stderr', async () => {
       const result = await exec('ls /nonexistent_path_12345')
       expect(result.exitCode).not.toBe(0)
@@ -705,16 +709,24 @@ describe('shell.handler', () => {
   })
 
   describe('超时保护', () => {
-    // 正常路径：超时后终止
-    it('命令超时后抛出超时错误', async () => {
-      await expect(exec('sleep 10', { timeout: 500 })).rejects.toThrow(/timeout/i)
+    // 正常路径：超时后返回非零 exitCode 和 signal
+    it('命令超时后返回非零 exitCode 和 SIGTERM signal', async () => {
+      const result = await exec('sleep 10', { timeout: 500 })
+      expect(result.exitCode).not.toBe(0)
+      expect(result.signal).toBe('SIGTERM')
+      expect(result.stderr).toBeTruthy() // 包含超时相关信息
     }, 5000)
 
-    // 正常路径：默认超时 30s
+    // 正常路径：默认超时 30s（通过 spy 验证传递给 child_process 的参数）
     it('默认超时为 30 秒', async () => {
-      // 验证默认配置，不实际等待 30s
-      const result = await exec('echo fast')
-      expect(result.exitCode).toBe(0)
+      const cpExecSpy = vi.spyOn(cp, 'exec')
+      await exec('echo fast')
+      expect(cpExecSpy).toHaveBeenCalledWith(
+        'echo fast',
+        expect.objectContaining({ timeout: 30000 }),
+        expect.any(Function)
+      )
+      cpExecSpy.mockRestore()
     })
   })
 
@@ -729,12 +741,12 @@ describe('shell.handler', () => {
       await expect(exec('sudo rm file')).rejects.toThrow(/dangerous/i)
     })
 
-    // 安全：拦截 dd
+    // 安全：拦截 dd（词边界匹配）
     it('拒绝 dd 命令', async () => {
       await expect(exec('dd if=/dev/zero of=/dev/sda')).rejects.toThrow(/dangerous/i)
     })
 
-    // 安全：拦截 mkfs
+    // 安全：拦截 mkfs（词边界匹配，含子命令如 mkfs.ext4）
     it('拒绝 mkfs 命令', async () => {
       await expect(exec('mkfs.ext4 /dev/sda1')).rejects.toThrow(/dangerous/i)
     })
@@ -747,8 +759,81 @@ describe('shell.handler', () => {
 
     // 边界条件：rm 非根目录不拦截
     it('允许 rm 非根目录命令', async () => {
-      // rm 普通文件不应被拦截（只拦截 rm -rf /）
-      // 不实际执行删除，仅验证不抛 dangerous 错误
+      // rm -rf ./tmp 不应被拦截（只拦截 rm -rf / 根路径）
+      await expect(exec('rm -rf ./tmp')).resolves.not.toThrow()
+    })
+
+    // 边界条件：包含黑名单子串但非独立命令的不拦截
+    it('不误拦含黑名单子串的安全命令', async () => {
+      // "adding" 包含 "dd"，但不应被拦截
+      const result = await exec('echo adding')
+      expect(result.exitCode).toBe(0)
+    })
+  })
+
+  describe('环境变量过滤', () => {
+    it('过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量', () => {
+      const env = filterEnv({
+        PATH: '/usr/bin',
+        HOME: '/home/user',
+        API_KEY: 'secret123',
+        DB_PASSWORD: 'pass',
+        MY_TOKEN: 'tok',
+        AWS_SECRET_ACCESS_KEY: 'aws',
+        NORMAL_VAR: 'ok'
+      })
+      expect(env.PATH).toBe('/usr/bin')
+      expect(env.HOME).toBe('/home/user')
+      expect(env.NORMAL_VAR).toBe('ok')
+      expect(env).not.toHaveProperty('API_KEY')
+      expect(env).not.toHaveProperty('DB_PASSWORD')
+      expect(env).not.toHaveProperty('MY_TOKEN')
+      expect(env).not.toHaveProperty('AWS_SECRET_ACCESS_KEY')
+    })
+
+    it('options.env 合并覆盖到过滤后的环境变量', () => {
+      const env = filterEnv(
+        { PATH: '/usr/bin', API_KEY: 'secret' },
+        { CUSTOM: 'value', PATH: '/custom/bin' }
+      )
+      expect(env.PATH).toBe('/custom/bin') // options.env 覆盖
+      expect(env.CUSTOM).toBe('value')
+      expect(env).not.toHaveProperty('API_KEY')
+    })
+  })
+
+  describe('isDangerousCommand', () => {
+    it('使用词边界匹配，不误判子串', () => {
+      expect(isDangerousCommand('echo adding')).toBe(false)
+      expect(isDangerousCommand('dd if=/dev/zero of=/dev/sda')).toBe(true)
+    })
+
+    it('拦截 rm -rf / 及其变体但不拦截非根路径', () => {
+      expect(isDangerousCommand('rm -rf /')).toBe(true)
+      expect(isDangerousCommand('rm -rf /*')).toBe(true)
+      expect(isDangerousCommand('rm -rf ./dir')).toBe(false)
+    })
+  })
+
+  describe('setupShellHandlers', () => {
+    it('注册 shell:exec channel', () => {
+      const handleFn = vi.fn()
+      const mockIpcMain = { handle: handleFn } as unknown as Electron.IpcMain
+      setupShellHandlers(mockIpcMain)
+      expect(handleFn).toHaveBeenCalledWith('shell:exec', expect.any(Function))
+    })
+
+    it('handler wrapper 正确传递参数给 exec', async () => {
+      let registeredHandler: Function | undefined
+      const mockIpcMain = {
+        handle: vi.fn((_channel: string, handler: Function) => {
+          registeredHandler = handler
+        })
+      } as unknown as Electron.IpcMain
+      setupShellHandlers(mockIpcMain)
+      const result = await registeredHandler!({}, 'echo test')
+      expect(result.stdout.trim()).toBe('test')
+      expect(result.exitCode).toBe(0)
     })
   })
 })
@@ -756,31 +841,37 @@ describe('shell.handler', () => {
 
 **执行步骤**：
 
-1. **（Red）** 编写 `src/main/ipc/shell.handler.test.ts`：覆盖正常执行、超时、危险命令拦截
+1. **（Red）** 编写 `src/main/ipc/shell.handler.test.ts`：覆盖正常执行、超时、危险命令拦截、环境变量过滤、`isDangerousCommand` 边界、`setupShellHandlers` 注册
 2. 运行 `pnpm test`，确认全部失败
 3. **（Green）** 创建 `src/main/ipc/shell.handler.ts`：
-   - 实现 `isDangerousCommand(command)` 危险命令检测
-   - 实现 `exec(command, options?)` 带超时的命令执行
-   - 导出 `setupShellHandlers(ipcMain)` 注册函数
-4. 在 `src/main/ipc/register.ts` 中注册 shell handler
+   - 实现并导出 `isDangerousCommand(command: string): boolean` 危险命令检测（使用词边界正则）
+   - 实现并导出 `filterEnv(processEnv: NodeJS.ProcessEnv, extraEnv?: Record<string, string>): Record<string, string>` 环境变量过滤（过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量，合并 extraEnv）
+   - 实现并导出 `exec(command: string, options?: ExecOptions): Promise<ExecResult>` 带超时的命令执行。**仅在前置校验失败（空命令、危险命令）时 throw Error**，命令执行失败（含超时）统一返回 `ExecResult`
+   - 导出 `setupShellHandlers(ipcMain)` 注册函数：内部调用 `ipcMain.handle(IPC_CHANNELS.shell.exec, (_event, command, options) => exec(command, options))`
+4. 更新 `src/main/ipc/register.ts`：将 shell 领域的 `ipcMain.handle(IPC_CHANNELS.shell.exec, notImplemented)` 空壳替换为 `import { setupShellHandlers } from './shell.handler'` + `setupShellHandlers(ipcMain)` 调用
 5. 运行 `pnpm test`，确认测试通过
 6. **（Refactor）** 整理危险命令正则列表，测试保持通过
 
 **验收标准**：
 
-- [ ] `src/main/ipc/shell.handler.ts` 存在，导出 `setupShellHandlers` 函数
-- [ ] `exec(command, options?)` 执行命令返回 `ExecResult { stdout, stderr, exitCode }`
-- [ ] 超时机制生效：默认 30s，可配置，超时后终止进程并抛错
-- [ ] 危险命令黑名单检测：`rm -rf /`、`dd`、`mkfs`、`sudo`、`shutdown`、`reboot` 被拦截
+- [ ] `src/main/ipc/shell.handler.ts` 存在，导出 `setupShellHandlers`、`exec`、`isDangerousCommand`、`filterEnv` 函数
+- [ ] `exec(command, options?)` 执行命令返回 `ExecResult { stdout, stderr, exitCode, signal? }`；命令失败或超时**不 throw**，通过 `exitCode !== 0` 判断；仅前置校验失败（空命令、危险命令）时 throw
+- [ ] 超时机制生效：默认 30s（通过 spy 验证），可配置，超时后终止进程返回 `ExecResult`（含 `signal: 'SIGTERM'`）
+- [ ] 危险命令黑名单检测（词边界匹配）：`rm -rf /`、`dd`、`mkfs`、`sudo`、`shutdown`、`reboot` 被拦截；`rm -rf ./dir`、含黑名单子串的安全命令（如 `adding`）不被误拦
+- [ ] 环境变量过滤：继承 `process.env` 但过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量，`options.env` 合并覆盖
+- [ ] `setupShellHandlers(ipcMain)` 有独立测试验证：注册 `shell:exec` channel、handler wrapper 可调用
+- [ ] `register.ts` 中 shell 领域空壳已替换为 `setupShellHandlers(ipcMain)` 调用，`register.test.ts` 回归通过
+- [ ] Preload 层已就绪（`src/preload/index.ts` 中 `shell.exec` 已通过 `ipcRenderer.invoke` 桥接，**本任务无需修改**）
 - [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
 - [ ] `pnpm test` 回归通过
+- [ ] `pnpm lint` 回归通过
 - [ ] 提供可复核证据：测试输出
 
 **交付物**：
 
-- [ ] `src/main/ipc/shell.handler.ts`
-- [ ] `src/main/ipc/shell.handler.test.ts`
-- [ ] `src/main/ipc/register.ts` 更新（注册 shell handler）
+- [ ] `src/main/ipc/shell.handler.ts`（含 `setupShellHandlers`、`exec`、`isDangerousCommand`、`filterEnv`）
+- [ ] `src/main/ipc/shell.handler.test.ts`（含 `setupShellHandlers` 注册测试）
+- [ ] `src/main/ipc/register.ts` 更新（shell 空壳替换为 `setupShellHandlers(ipcMain)` 调用）
 
 ---
 
