@@ -1,12 +1,13 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { setupFSHandlers } from './fs.handler'
 
 let registered = false
 
 /**
  * 统一注册所有 IPC handler。
- * Task 1.1 阶段所有 handler 为空壳实现（抛出 Not implemented）。
- * 后续 Task 1.2/1.3/1.6 实现具体 handler 后替换对应空壳。
+ * 已实现的领域通过各自的 setup 函数注册，
+ * 未实现的领域使用空壳 handler（抛出 Not implemented）。
  */
 export function registerIPCHandlers(): void {
   if (registered) {
@@ -17,11 +18,8 @@ export function registerIPCHandlers(): void {
     throw new Error('Not implemented')
   }
 
-  // fs 领域
-  ipcMain.handle(IPC_CHANNELS.fs.readFile, notImplemented)
-  ipcMain.handle(IPC_CHANNELS.fs.writeFile, notImplemented)
-  ipcMain.handle(IPC_CHANNELS.fs.readDir, notImplemented)
-  ipcMain.handle(IPC_CHANNELS.fs.stat, notImplemented)
+  // fs 领域（Task 1.2 实现）
+  setupFSHandlers(ipcMain)
 
   // shell 领域
   ipcMain.handle(IPC_CHANNELS.shell.exec, notImplemented)

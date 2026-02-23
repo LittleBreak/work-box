@@ -89,7 +89,7 @@ plugins/         # 内置插件
 - Commit 遵循 Conventional Commits 规范
 - ESLint + Prettier 统一代码风格
 - 所有导出的函数/类型必须有 JSDoc 注释
-- 不使用 `any` 类型，必须显式定义类型
+- 禁止使用 `any` 类型，必须显式定义类型
 - 优先使用 `interface` 而非 `type`（除非需要联合类型或映射类型）
 
 ## 安全规范
