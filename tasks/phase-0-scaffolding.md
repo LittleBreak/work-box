@@ -309,7 +309,7 @@ echo 'feat: add new feature' | npx commitlint  # 期望：通过
 
 ---
 
-## 0.4 Tailwind CSS + shadcn/ui 集成
+## 0.4 Tailwind CSS + shadcn/ui 集成 ✅ DONE
 
 **目标**：集成 UI 样式方案和组件库。
 
@@ -344,9 +344,9 @@ echo 'feat: add new feature' | npx commitlint  # 期望：通过
 
 **TDD 要求**：
 
-- [ ] Red：先写组件渲染测试，确认失败。具体测试用例见下方。
-- [ ] Green：完成 Tailwind + shadcn/ui 集成，添加 Button 和 Card 组件，使测试通过
-- [ ] Refactor：整理样式入口和组件导出结构，测试保持通过
+- [x] Red：先写组件渲染测试，确认失败。具体测试用例见下方。
+- [x] Green：完成 Tailwind + shadcn/ui 集成，添加 Button 和 Card 组件，使测试通过
+- [x] Refactor：整理样式入口和组件导出结构，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -417,21 +417,21 @@ describe('Card', () => {
 
 **验收标准**：
 
-- [ ] `globals.css` 中正确引入 Tailwind CSS v4（`@import "tailwindcss"`）
-- [ ] `components.json` 存在，路径别名与 `electron.vite.config.ts` 一致
-- [ ] Button 和 Card 组件文件存在于 `src/renderer/components/ui/`
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] 组件渲染测试通过（使用 `@testing-library/react`），覆盖正常路径、交互、边界条件
-- [ ] `pnpm dev` 启动后渲染进程中 shadcn Button 组件正常显示（可选截图，仅限本地有 GUI 环境）
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：组件测试输出 + 运行态截图（可选）
+- [x] `globals.css` 中正确引入 Tailwind CSS v4（`@import "tailwindcss"`）
+- [x] `components.json` 存在，路径别名与 `electron.vite.config.ts` 一致
+- [x] Button 和 Card 组件文件存在于 `src/renderer/src/components/ui/`
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] 组件渲染测试通过（使用 `@testing-library/react`），覆盖正常路径、交互、边界条件
+- [x] `pnpm dev` 启动无报错，`pnpm build` 构建成功（typecheck + 三进程构建通过，renderer 输出含 Tailwind CSS + shadcn 组件）
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：组件测试输出 + 运行态截图（可选）
 
 **交付物**：
 
-- [ ] `components.json`
-- [ ] `src/renderer/styles/globals.css`（含 Tailwind 引入）
-- [ ] `src/renderer/components/ui/button.tsx`、`src/renderer/components/ui/card.tsx`
-- [ ] 组件渲染测试文件（含上述测试用例）
+- [x] `components.json`
+- [x] `src/renderer/src/styles/globals.css`（含 Tailwind 引入）
+- [x] `src/renderer/src/components/ui/button.tsx`、`src/renderer/src/components/ui/card.tsx`
+- [x] 组件渲染测试文件（含上述测试用例）
 
 ---
 

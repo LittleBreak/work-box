@@ -25,7 +25,8 @@ export default defineWorkspace([
     test: {
       name: 'renderer',
       include: ['src/renderer/**/*.test.ts', 'src/renderer/**/*.test.tsx'],
-      environment: 'jsdom'
+      environment: 'jsdom',
+      setupFiles: ['src/renderer/src/vitest.setup.ts']
     }
   }
 ])
