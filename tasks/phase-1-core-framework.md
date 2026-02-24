@@ -889,16 +889,41 @@ describe('shell.handler', () => {
 
 **关键决策**：
 
-| 决策项         | 方案                                                                                                                                                                                                                    |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 数据库引擎     | `better-sqlite3`（**同步 API**，性能好，Electron 兼容性好）。注意：better-sqlite3 和 drizzle-orm 的 better-sqlite3 driver 均为同步 API，CRUD 函数应定义为**同步函数**（不使用 async/await），测试断言也相应使用同步写法 |
-| ORM            | `drizzle-orm`（类型安全、轻量）+ `drizzle-kit`（migration 工具）                                                                                                                                                        |
-| 数据库文件位置 | `~/.workbox/data.db`（使用 `app.getPath('home')` 获取 home 目录）                                                                                                                                                       |
-| Migration 策略 | 使用 `drizzle-kit` 生成 migration SQL，应用启动时自动执行                                                                                                                                                               |
-| 测试数据库     | 测试中使用内存数据库（`:memory:`）或临时文件，避免污染用户数据                                                                                                                                                          |
-| Schema 定义    | 4 张表：`conversations`、`messages`、`plugin_storage`、`settings`（与 `ARCHITECTURE.md` 7.1 一致）                                                                                                                      |
-| ID 生成策略    | 使用 UUID（`crypto.randomUUID()`）                                                                                                                                                                                      |
-| 时间戳格式     | Unix 毫秒时间戳（`integer` 类型），存储 `Date.now()` 值                                                                                                                                                                 |
+| 决策项          | 方案                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | -------- | -------------------- |
+| 数据库引擎      | `better-sqlite3`（**同步 API**，性能好，Electron 兼容性好）。注意：better-sqlite3 和 drizzle-orm 的 better-sqlite3 driver 均为同步 API，CRUD 函数应定义为**同步函数**（不使用 async/await），测试断言也相应使用同步写法                                                                                                                                                                                                                                                                                            |
+| ORM             | `drizzle-orm`（类型安全、轻量）+ `drizzle-kit`（migration 工具）                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 数据库文件位置  | `~/.workbox/data.db`（使用 `app.getPath('home')` 获取 home 目录）                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Migration 策略  | **本任务仅实现 schema 推导建表**：`Database.initialize()` 通过 `better-sqlite3` 原生 `exec()` 执行从 Drizzle schema 手动编写的 `CREATE TABLE IF NOT EXISTS` SQL 语句来建表（生产和测试使用同一条代码路径）。`drizzle-kit` 仅作为 devDependency 安装备用，**本任务不生成 migration 文件，不使用 `migrate()` 函数**。Migration 流程（`drizzle-kit generate` + `migrate()`）将在后续应用集成任务中引入，届时替换 `initialize()` 中的手动建表逻辑                                                                      |
+| 测试数据库      | 测试中使用内存数据库（`:memory:`），通过 `createTestDatabase()` 工具函数创建，避免污染用户数据                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Schema 定义     | 4 张表：`conversations`、`messages`、`plugin_storage`、`settings`（与 `ARCHITECTURE.md` 7.1 一致）                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ID 生成策略     | 使用 UUID（`crypto.randomUUID()`）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 时间戳格式      | Unix 毫秒时间戳（`integer` 类型），存储 `Date.now()` 值                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 字段命名映射    | 数据库列名使用 `snake_case`（与 `ARCHITECTURE.md` SQL 一致：`conversation_id`、`created_at` 等），Drizzle schema 及 TypeScript 代码中使用 `camelCase`（`conversationId`、`createdAt` 等），通过 Drizzle 列定义函数参数指定 DB 列名实现映射（如 `conversationId: text('conversation_id')`）                                                                                                                                                                                                                         |
+| 外键级联策略    | `messages` 表的 `conversation_id` 外键设置 `ON DELETE CASCADE`，删除对话时自动删除关联消息（需配合 `PRAGMA foreign_keys = ON`）。注意：这比 ARCHITECTURE.md 7.1 的 SQL 多了 CASCADE 约束，属于合理增强                                                                                                                                                                                                                                                                                                             |
+| 值序列化约定    | `settings.value` 和 `plugin_storage.value` 存储 **原始字符串**，JSON 序列化/反序列化由**调用者负责**，CRUD 函数不做自动转换                                                                                                                                                                                                                                                                                                                                                                                        |
+| Schema 双源职责 | 表结构存在**两处定义**，职责不同：① `database.ts` 中的手写 `CREATE TABLE IF NOT EXISTS` SQL 是**建表的唯一执行路径**（即 source of truth），包含 CHECK 约束、外键、CASCADE 等所有 DDL 细节；② `schema.ts` 中的 Drizzle schema **仅用于类型安全的查询构建**，不参与建表。两者的一致性通过以下方式保证：`schema.ts` 顶部添加注释 `// ⚠️ 表结构以 database.ts 中的 CREATE TABLE SQL 为准，修改字段时需同步两处`，并在 `database.test.ts` 中增加一条测试，验证实际数据库的列名集合与 Drizzle schema 导出的列名集合一致 |
+| CHECK 约束      | `messages.role` 的 `CHECK(role IN ('user','assistant','system','tool'))` 约束**仅在 `database.ts` 的手写建表 SQL 中定义**。Drizzle schema 中 `role` 字段定义为普通 `text` 类型（Drizzle 不原生支持 CHECK），类型层面的约束通过 TypeScript 类型 `'user'                                                                                                                                                                                                                                                             | 'assistant' | 'system' | 'tool'` 在应用层保证 |
+| 未找到返回约定  | 所有"查询单条记录未找到"的场景统一返回 **`undefined`**（与 Drizzle `.get()` 原生返回值一致，无需额外转换）。包括：`getConversation`、`getSetting`、`getPluginData`                                                                                                                                                                                                                                                                                                                                                 |
+
+**架构设计：Database 类与 CRUD 函数的关系**：
+
+```
+Database 类（database.ts）
+  ├── 构造函数：仅保存路径参数，不打开连接。内部状态标记为「未初始化」
+  ├── initialize()：打开 better-sqlite3 连接 → PRAGMA foreign_keys = ON → 执行建表 → 创建 Drizzle 实例 → 标记为「已初始化」
+  ├── close()：关闭 better-sqlite3 连接，标记为「已关闭」
+  ├── 暴露 drizzle 实例属性：db.drizzle（类型为 BetterSQLite3Database）— 未初始化时访问抛出 Error
+  └── 暴露原生连接属性：db.raw（类型为 BetterSqlite3.Database）— 未初始化时访问抛出 Error
+
+CRUD 函数（crud.ts）
+  ├── createCrud(drizzle: BetterSQLite3Database) 工厂函数
+  │   └── 返回对象包含所有 CRUD 方法，内部闭包引用传入的 drizzle 实例
+  └── 这种依赖注入模式使测试可以传入 :memory: 数据库的 drizzle 实例
+
+测试工具（test-utils.ts，仅测试使用）
+  └── createTestDatabase()：创建 :memory: Database 实例 + 返回 { database, crud } 对象
+```
 
 **TDD 要求**：
 
@@ -909,23 +934,43 @@ describe('shell.handler', () => {
 **测试用例设计**（Red 阶段编写）：
 
 ```typescript
+// === src/main/storage/test-utils.ts ===
+// 测试专用工具函数，不计入生产代码
+import { Database } from './database'
+import { createCrud } from './crud'
+
+/**
+ * 创建用于测试的内存数据库和 CRUD 实例。
+ * 自动初始化表结构和 PRAGMA foreign_keys = ON。
+ */
+export function createTestDatabase() {
+  const database = new Database(':memory:')
+  database.initialize()
+  const crud = createCrud(database.drizzle)
+  return { database, crud }
+}
+
 // === src/main/storage/database.test.ts ===
+import { Database } from './database'
+
 describe('Database', () => {
-  let db: Database
+  let database: Database
 
   beforeEach(() => {
-    db = new Database(':memory:') // 使用内存数据库测试
-    db.initialize()
+    database = new Database(':memory:')
+    database.initialize()
   })
 
   afterEach(() => {
-    db.close()
+    database.close()
   })
 
   describe('初始化', () => {
-    // 正常路径：数据库初始化成功
+    // 正常路径：数据库初始化成功，4 张表全部存在
     it('初始化后表结构存在', () => {
-      const tables = db.query("SELECT name FROM sqlite_master WHERE type='table'")
+      const tables = database.raw
+        .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+        .all() as Array<{ name: string }>
       const tableNames = tables.map((t) => t.name)
       expect(tableNames).toContain('conversations')
       expect(tableNames).toContain('messages')
@@ -933,138 +978,208 @@ describe('Database', () => {
       expect(tableNames).toContain('settings')
     })
 
+    // 正常路径：外键约束已启用
+    it('PRAGMA foreign_keys 已开启', () => {
+      const result = database.raw.pragma('foreign_keys') as Array<{ foreign_keys: number }>
+      expect(result[0].foreign_keys).toBe(1)
+    })
+
     // 边界条件：重复初始化不抛错
     it('重复初始化不报错', () => {
-      expect(() => db.initialize()).not.toThrow()
+      expect(() => database.initialize()).not.toThrow()
     })
   })
 })
 
-// === src/main/storage/schema.test.ts ===
+// === src/main/storage/crud.test.ts ===
 // 注意：better-sqlite3 + drizzle-orm 的 better-sqlite3 driver 均为同步 API，
 // 所有 CRUD 函数为同步函数，测试中不使用 async/await。
-// 初始化时必须执行 PRAGMA foreign_keys = ON 以启用外键约束。
-import {
-  insertConversation,
-  getConversation,
-  updateConversation,
-  deleteConversation,
-  insertMessage,
-  getMessagesByConversation,
-  getSetting,
-  setSetting,
-  getPluginData,
-  setPluginData
-} from './crud'
+import { createTestDatabase } from './test-utils'
+import type { Database } from './database'
 
 describe('Schema CRUD 操作', () => {
-  // beforeEach/afterEach 中初始化内存数据库（参见 database.test.ts）
-  // 初始化时需确保 PRAGMA foreign_keys = ON
+  let database: Database
+  let crud: ReturnType<typeof import('./crud').createCrud>
+
+  beforeEach(() => {
+    const testDb = createTestDatabase()
+    database = testDb.database
+    crud = testDb.crud
+  })
+
+  afterEach(() => {
+    database.close()
+  })
 
   describe('conversations 表', () => {
     // 正常路径：创建对话
     it('创建对话并查询', () => {
       const id = 'conv-001'
-      insertConversation({
+      crud.insertConversation({
         id,
         title: 'Test Chat',
         createdAt: Date.now(),
         updatedAt: Date.now()
       })
-      const conv = getConversation(id)
+      const conv = crud.getConversation(id)
       expect(conv).toBeDefined()
       expect(conv!.title).toBe('Test Chat')
     })
 
-    // 正常路径：更新对话标题
-    it('更新对话标题', () => {
+    // 正常路径：更新对话标题和 updatedAt
+    it('更新对话标题和 updatedAt', () => {
       const id = 'conv-002'
-      insertConversation({ id, title: 'Old', createdAt: Date.now(), updatedAt: Date.now() })
-      updateConversation(id, { title: 'New Title' })
-      const conv = getConversation(id)
+      const now = Date.now()
+      crud.insertConversation({ id, title: 'Old', createdAt: now, updatedAt: now })
+      const later = now + 5000
+      crud.updateConversation(id, { title: 'New Title', updatedAt: later })
+      const conv = crud.getConversation(id)
       expect(conv!.title).toBe('New Title')
+      expect(conv!.updatedAt).toBe(later)
     })
 
-    // 正常路径：删除对话
+    // 正常路径：删除对话（无关联消息）
     it('删除对话', () => {
       const id = 'conv-003'
-      insertConversation({
+      crud.insertConversation({
         id,
         title: 'To Delete',
         createdAt: Date.now(),
         updatedAt: Date.now()
       })
-      deleteConversation(id)
-      const conv = getConversation(id)
+      crud.deleteConversation(id)
+      const conv = crud.getConversation(id)
       expect(conv).toBeUndefined()
+    })
+
+    // 正常路径：删除对话时级联删除关联消息（ON DELETE CASCADE）
+    it('删除对话时级联删除关联消息', () => {
+      crud.insertConversation({
+        id: 'conv-cascade',
+        title: 'Cascade Test',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      })
+      crud.insertMessage({
+        id: 'msg-cascade-1',
+        conversationId: 'conv-cascade',
+        role: 'user',
+        content: 'Hello',
+        createdAt: Date.now()
+      })
+      crud.insertMessage({
+        id: 'msg-cascade-2',
+        conversationId: 'conv-cascade',
+        role: 'assistant',
+        content: 'Hi',
+        createdAt: Date.now()
+      })
+      crud.deleteConversation('conv-cascade')
+      const messages = crud.getMessagesByConversation('conv-cascade')
+      expect(messages).toHaveLength(0)
     })
 
     // 边界条件：查询不存在的对话
     it('查询不存在的对话返回 undefined', () => {
-      const conv = getConversation('nonexistent')
+      const conv = crud.getConversation('nonexistent')
       expect(conv).toBeUndefined()
     })
   })
 
   describe('messages 表', () => {
-    // 正常路径：创建消息
-    it('创建消息并查询', () => {
-      insertConversation({
+    // 每个 messages 测试前先创建所需的 conversation
+    beforeEach(() => {
+      crud.insertConversation({
         id: 'conv-msg',
         title: 'Chat',
         createdAt: Date.now(),
         updatedAt: Date.now()
       })
-      insertMessage({
+    })
+
+    // 正常路径：创建消息（仅必填字段）
+    it('创建消息并查询', () => {
+      crud.insertMessage({
         id: 'msg-001',
         conversationId: 'conv-msg',
         role: 'user',
         content: 'Hello',
         createdAt: Date.now()
       })
-      const messages = getMessagesByConversation('conv-msg')
+      const messages = crud.getMessagesByConversation('conv-msg')
       expect(messages).toHaveLength(1)
       expect(messages[0].content).toBe('Hello')
+      // toolCalls 和 toolResult 为可选字段，未传入时应为 null
+      expect(messages[0].toolCalls).toBeNull()
+      expect(messages[0].toolResult).toBeNull()
+    })
+
+    // 正常路径：创建带 toolCalls 和 toolResult 的消息
+    it('创建带 tool 字段的消息', () => {
+      const toolCalls = JSON.stringify([{ id: 'call-1', name: 'readFile', args: { path: '/tmp' } }])
+      const toolResult = JSON.stringify({ content: 'file content' })
+      crud.insertMessage({
+        id: 'msg-tool',
+        conversationId: 'conv-msg',
+        role: 'assistant',
+        content: 'Let me read that file.',
+        toolCalls,
+        toolResult,
+        createdAt: Date.now()
+      })
+      const messages = crud.getMessagesByConversation('conv-msg')
+      expect(messages[0].toolCalls).toBe(toolCalls)
+      expect(messages[0].toolResult).toBe(toolResult)
+    })
+
+    // 正常路径：role 枚举校验（system、tool 角色）
+    it('支持所有 role 值：user, assistant, system, tool', () => {
+      const roles = ['user', 'assistant', 'system', 'tool'] as const
+      roles.forEach((role, i) => {
+        crud.insertMessage({
+          id: `msg-role-${i}`,
+          conversationId: 'conv-msg',
+          role,
+          content: `${role} message`,
+          createdAt: Date.now() + i
+        })
+      })
+      const messages = crud.getMessagesByConversation('conv-msg')
+      expect(messages).toHaveLength(4)
     })
 
     // 正常路径：按时间排序
     it('消息按创建时间排序', () => {
-      insertConversation({
-        id: 'conv-sort',
-        title: 'Sort Test',
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      })
       const now = Date.now()
-      insertMessage({
+      crud.insertMessage({
         id: 'msg-1',
-        conversationId: 'conv-sort',
+        conversationId: 'conv-msg',
         role: 'user',
         content: 'first',
         createdAt: now
       })
-      insertMessage({
+      crud.insertMessage({
         id: 'msg-2',
-        conversationId: 'conv-sort',
+        conversationId: 'conv-msg',
         role: 'assistant',
         content: 'second',
         createdAt: now + 100
       })
-      insertMessage({
+      crud.insertMessage({
         id: 'msg-3',
-        conversationId: 'conv-sort',
+        conversationId: 'conv-msg',
         role: 'user',
         content: 'third',
         createdAt: now + 200
       })
-      const messages = getMessagesByConversation('conv-sort')
+      const messages = crud.getMessagesByConversation('conv-msg')
       expect(messages.map((m) => m.content)).toEqual(['first', 'second', 'third'])
     })
 
     // 错误处理：外键约束（需要 PRAGMA foreign_keys = ON）
     it('引用不存在的 conversationId 抛错', () => {
       expect(() =>
-        insertMessage({
+        crud.insertMessage({
           id: 'msg-bad',
           conversationId: 'nonexistent',
           role: 'user',
@@ -1078,48 +1193,99 @@ describe('Schema CRUD 操作', () => {
   describe('settings 表', () => {
     // 正常路径：设置和获取
     it('保存和获取设置值', () => {
-      setSetting('theme', 'dark')
-      const value = getSetting('theme')
+      crud.setSetting('theme', 'dark')
+      const value = crud.getSetting('theme')
       expect(value).toBe('dark')
     })
 
-    // 正常路径：更新已有设置
+    // 正常路径：更新已有设置（upsert 语义）
     it('更新已有设置值', () => {
-      setSetting('theme', 'light')
-      setSetting('theme', 'dark')
-      const value = getSetting('theme')
+      crud.setSetting('theme', 'light')
+      crud.setSetting('theme', 'dark')
+      const value = crud.getSetting('theme')
       expect(value).toBe('dark')
+    })
+
+    // 正常路径：删除设置（删除整行记录）
+    it('删除设置', () => {
+      crud.setSetting('theme', 'dark')
+      crud.deleteSetting('theme')
+      const value = crud.getSetting('theme')
+      expect(value).toBeUndefined()
     })
 
     // 边界条件：获取不存在的设置
-    it('获取不存在的设置返回 null', () => {
-      const value = getSetting('nonexistent')
-      expect(value).toBeNull()
+    it('获取不存在的设置返回 undefined', () => {
+      const value = crud.getSetting('nonexistent')
+      expect(value).toBeUndefined()
     })
 
-    // 正常路径：JSON 序列化的复杂值
+    // 正常路径：JSON 序列化的复杂值（由调用者负责序列化）
     it('支持 JSON 序列化的复杂值', () => {
       const config = { provider: 'openai', model: 'gpt-4', temperature: 0.7 }
-      setSetting('ai', JSON.stringify(config))
-      const value = JSON.parse(getSetting('ai')!)
+      crud.setSetting('ai', JSON.stringify(config))
+      const value = JSON.parse(crud.getSetting('ai')!)
       expect(value.provider).toBe('openai')
+    })
+
+    // 边界条件：删除不存在的设置不抛错
+    it('删除不存在的设置不抛错', () => {
+      expect(() => crud.deleteSetting('nonexistent')).not.toThrow()
     })
   })
 
   describe('plugin_storage 表', () => {
-    // 正常路径：按插件 ID + key 存取
+    // 正常路径：按插件 ID + key 存取（value 为原始字符串，调用者负责 JSON 序列化）
     it('按 pluginId + key 保存和获取', () => {
-      setPluginData('git-helper', 'lastCommit', '"abc123"')
-      const value = getPluginData('git-helper', 'lastCommit')
+      crud.setPluginData('git-helper', 'lastCommit', '"abc123"')
+      const value = crud.getPluginData('git-helper', 'lastCommit')
       expect(value).toBe('"abc123"')
+    })
+
+    // 正常路径：更新已有 key 的值（upsert 语义）
+    it('更新已有 key 的值', () => {
+      crud.setPluginData('plugin-a', 'config', '"old"')
+      crud.setPluginData('plugin-a', 'config', '"new"')
+      expect(crud.getPluginData('plugin-a', 'config')).toBe('"new"')
     })
 
     // 边界条件：不同插件相同 key 不冲突
     it('不同插件的相同 key 互不干扰', () => {
-      setPluginData('plugin-a', 'config', '"a"')
-      setPluginData('plugin-b', 'config', '"b"')
-      expect(getPluginData('plugin-a', 'config')).toBe('"a"')
-      expect(getPluginData('plugin-b', 'config')).toBe('"b"')
+      crud.setPluginData('plugin-a', 'config', '"a"')
+      crud.setPluginData('plugin-b', 'config', '"b"')
+      expect(crud.getPluginData('plugin-a', 'config')).toBe('"a"')
+      expect(crud.getPluginData('plugin-b', 'config')).toBe('"b"')
+    })
+
+    // 正常路径：删除单条插件数据
+    it('删除指定 pluginId + key 的数据', () => {
+      crud.setPluginData('plugin-a', 'config', '"val"')
+      crud.deletePluginData('plugin-a', 'config')
+      expect(crud.getPluginData('plugin-a', 'config')).toBeUndefined()
+    })
+
+    // 正常路径：删除插件全部数据
+    it('删除插件全部数据', () => {
+      crud.setPluginData('plugin-a', 'k1', '"v1"')
+      crud.setPluginData('plugin-a', 'k2', '"v2"')
+      crud.setPluginData('plugin-b', 'k1', '"other"')
+      crud.deleteAllPluginData('plugin-a')
+      expect(crud.getPluginData('plugin-a', 'k1')).toBeUndefined()
+      expect(crud.getPluginData('plugin-a', 'k2')).toBeUndefined()
+      // 不影响其他插件
+      expect(crud.getPluginData('plugin-b', 'k1')).toBe('"other"')
+    })
+
+    // 边界条件：删除不存在的插件数据不抛错
+    it('删除不存在的插件数据不抛错', () => {
+      expect(() => crud.deletePluginData('unknown', 'missing')).not.toThrow()
+      expect(() => crud.deleteAllPluginData('unknown')).not.toThrow()
+    })
+
+    // 边界条件：获取不存在的 key 返回 undefined
+    it('获取不存在的 key 返回 undefined', () => {
+      const value = crud.getPluginData('unknown', 'missing')
+      expect(value).toBeUndefined()
     })
   })
 })
@@ -1127,47 +1293,66 @@ describe('Schema CRUD 操作', () => {
 
 **执行步骤**：
 
-1. **（Red）** 编写 `src/main/storage/database.test.ts`：测试数据库初始化
-2. **（Red）** 编写 `src/main/storage/schema.test.ts`：测试 4 张表的 CRUD
-3. 运行 `pnpm test`，确认全部失败
-4. **（Green）** 安装依赖：`pnpm add better-sqlite3 drizzle-orm && pnpm add -D drizzle-kit @types/better-sqlite3`
-5. **（Green）** 创建 `src/main/storage/database.ts`：
-   - 封装 Database 类，支持 `:memory:` 和文件路径
-   - `initialize()` 方法：创建 `~/.workbox/` 目录 + 打开数据库 + 执行 `PRAGMA foreign_keys = ON`（SQLite 默认不启用外键约束） + 运行 migration
-   - `close()` 方法：关闭连接
+1. **（Red）** 创建 `src/main/storage/test-utils.ts`：测试工具函数（`createTestDatabase`）
+2. **（Red）** 编写 `src/main/storage/database.test.ts`：测试数据库初始化和 PRAGMA
+3. **（Red）** 编写 `src/main/storage/crud.test.ts`：测试 4 张表的 CRUD（含级联删除、tool 字段、deleteSetting、deletePluginData、deleteAllPluginData、updateConversation 含 updatedAt）
+4. 运行 `pnpm test`，确认全部失败
+5. **（Green）** 安装依赖：`pnpm add better-sqlite3 drizzle-orm && pnpm add -D drizzle-kit @types/better-sqlite3`
 6. **（Green）** 创建 `src/main/storage/schema.ts`：
    - 定义 `conversations`、`messages`、`plugin_storage`、`settings` 四张表（Drizzle 语法）
-   - Schema 与 `ARCHITECTURE.md` 7.1 SQL 定义完全一致
-7. **（Green）** 创建 `src/main/storage/crud.ts`（或在 schema 中导出）：
-   - 所有 CRUD 函数均为**同步函数**（better-sqlite3 是同步 API，不使用 async/await）
+   - DB 列名 `snake_case`，TS 字段 `camelCase`，通过 Drizzle 列定义映射（如 `conversationId: text('conversation_id')`）
+   - `messages.conversationId` 外键添加 `ON DELETE CASCADE`
+   - `messages.toolCalls` 和 `messages.toolResult` 为可选 `text` 字段（可为 null）
+   - `messages.role` 定义为普通 `text` 类型（CHECK 约束仅在 `database.ts` 的建表 SQL 中定义，Drizzle 不原生支持 CHECK）；TypeScript 层通过联合类型 `'user' | 'assistant' | 'system' | 'tool'` 约束
+   - 文件顶部添加注释：`// ⚠️ 表结构以 database.ts 中的 CREATE TABLE SQL 为准，修改字段时需同步两处`
+7. **（Green）** 创建 `src/main/storage/database.ts`：
+   - 封装 `Database` 类，构造函数**仅保存路径参数**（`:memory:` 或文件路径），不打开连接
+   - `initialize()` 方法：打开 `better-sqlite3` 连接 → 执行 `PRAGMA foreign_keys = ON` → 通过 `exec()` 执行 `CREATE TABLE IF NOT EXISTS` 建表（生产和测试使用同一路径，本任务不涉及 migration） → 创建 Drizzle ORM 实例 → 标记为已初始化
+   - 暴露 `drizzle` 属性（`BetterSQLite3Database` 类型）— 未初始化时访问抛出 Error
+   - 暴露 `raw` 属性（`BetterSqlite3.Database` 类型）— 未初始化时访问抛出 Error
+   - `close()` 方法：关闭 `better-sqlite3` 连接
+8. **（Green）** 创建 `src/main/storage/crud.ts`：
+   - 导出 `createCrud(drizzle: BetterSQLite3Database)` 工厂函数（依赖注入模式）
+   - 返回包含所有 CRUD 方法的对象，所有方法均为**同步函数**
    - `insertConversation / getConversation / updateConversation / deleteConversation`
-   - `insertMessage / getMessagesByConversation`
-   - `getSetting / setSetting`
-   - `getPluginData / setPluginData`
-8. 在 `src/main/index.ts` 中添加应用启动时的数据库初始化
+     - `updateConversation(id, fields)` 的 `fields` 类型为 `Pick<Conversation, 'title' | 'updatedAt'>`（仅允许更新 `title` 和 `updatedAt`，`updatedAt` 由**调用者显式传入**，函数不自动填充）
+   - `insertMessage / getMessagesByConversation`（`insertMessage` 的 `toolCalls` 和 `toolResult` 参数可选）
+   - `getSetting / setSetting / deleteSetting`
+   - `getPluginData / setPluginData / deletePluginData / deleteAllPluginData`（upsert 语义：key 存在则更新，不存在则插入；`deletePluginData(pluginId, key)` 删除单条，`deleteAllPluginData(pluginId)` 删除该插件全部数据）
 9. 运行 `pnpm test`，确认测试通过
 10. **（Refactor）** 统一错误处理和类型导出，再次运行 `pnpm test` 确认通过
 
 **验收标准**：
 
 - [ ] 安装 `better-sqlite3` + `drizzle-orm` + `drizzle-kit`（版本锁定在 `pnpm-lock.yaml`）
-- [ ] `src/main/storage/database.ts` 存在：数据库初始化 & 连接管理
+- [ ] `src/main/storage/database.ts` 存在：`Database` 类封装初始化 & 连接管理，构造函数仅存路径不打开连接，`drizzle`/`raw` 属性在未初始化时访问抛出 Error
 - [ ] `src/main/storage/schema.ts` 存在：Drizzle schema 定义 4 张表（`conversations`、`messages`、`plugin_storage`、`settings`）
-- [ ] Schema 与 `ARCHITECTURE.md` 第七节 SQL 定义一致（字段名、类型、约束完全匹配）
+- [ ] Schema 与 `ARCHITECTURE.md` 第七节 SQL 定义一致（字段名、类型、约束完全匹配），额外增加 `messages` 的 `ON DELETE CASCADE`
+- [ ] DB 列名 `snake_case`，TS 代码 `camelCase`，通过 Drizzle 列映射转换
+- [ ] `messages` 表包含 `toolCalls`（可选）和 `toolResult`（可选）字段
 - [ ] 数据库文件默认存放在 `~/.workbox/data.db`（测试中使用 `:memory:`）
-- [ ] 应用启动时自动创建目录和数据库文件、执行 `PRAGMA foreign_keys = ON`、运行 migration
-- [ ] 4 张表的 CRUD 测试全部通过（含正常路径、边界条件、外键约束）；CRUD 函数为同步 API（与 better-sqlite3 一致）
+- [ ] `Database.initialize()` 执行 `PRAGMA foreign_keys = ON` 并完成建表
+- [ ] `crud.ts` 导出 `createCrud()` 工厂函数，接收 Drizzle 实例（依赖注入），返回所有 CRUD 方法
+- [ ] `updateConversation(id, fields)` 的 `fields` 类型为 `Pick<Conversation, 'title' | 'updatedAt'>`，`updatedAt` 由调用者显式传入
+- [ ] `plugin_storage` CRUD 包含 `deletePluginData(pluginId, key)` 和 `deleteAllPluginData(pluginId)` 方法
+- [ ] 所有"查询单条未找到"场景统一返回 `undefined`（`getConversation`、`getSetting`、`getPluginData`）
+- [ ] `schema.ts` 顶部包含同步维护注释，`database.test.ts` 包含列名一致性验证测试
+- [ ] `messages.role` 的 CHECK 约束仅在 `database.ts` 建表 SQL 中定义，Drizzle schema 中为普通 `text` + TypeScript 联合类型
+- [ ] 4 张表的 CRUD 测试全部通过（含正常路径、边界条件、外键约束、级联删除、tool 字段、deleteSetting、deletePluginData、deleteAllPluginData）；CRUD 函数为同步 API（与 better-sqlite3 一致）
 - [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
 - [ ] `pnpm test` 回归通过
 - [ ] 提供可复核证据：测试输出 + `pnpm test` 全量结果
+
+> **注意**：应用启动时的数据库初始化集成（在 `src/main/index.ts` 中调用 `Database` 类）不在本任务范围内，将在后续集成任务中处理。
 
 **交付物**：
 
 - [ ] `src/main/storage/database.ts`
 - [ ] `src/main/storage/schema.ts`
-- [ ] `src/main/storage/crud.ts`（CRUD 操作函数）
+- [ ] `src/main/storage/crud.ts`（`createCrud` 工厂函数 + 全部 CRUD 方法）
+- [ ] `src/main/storage/test-utils.ts`（测试工具函数）
 - [ ] `src/main/storage/database.test.ts`
-- [ ] `src/main/storage/schema.test.ts`
+- [ ] `src/main/storage/crud.test.ts`
 
 ---
 
