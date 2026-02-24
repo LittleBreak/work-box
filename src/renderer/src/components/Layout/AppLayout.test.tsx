@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AppLayout } from './AppLayout'
 import { useAppStore, initialAppState } from '../../stores/app.store'
@@ -6,6 +6,27 @@ import { useAppStore, initialAppState } from '../../stores/app.store'
 describe('AppLayout', () => {
   beforeEach(() => {
     useAppStore.setState(initialAppState)
+    // SettingsView 需要 window.workbox.settings
+    Object.defineProperty(window, 'workbox', {
+      value: {
+        settings: {
+          get: vi.fn().mockResolvedValue({
+            theme: 'dark',
+            language: 'zh',
+            aiProvider: 'openai',
+            aiApiKey: '',
+            aiBaseUrl: 'https://api.openai.com/v1',
+            aiModel: 'gpt-4o',
+            aiTemperature: 0.7,
+            pluginDir: '~/.workbox/plugins'
+          }),
+          update: vi.fn().mockResolvedValue(undefined),
+          reset: vi.fn().mockResolvedValue(undefined)
+        }
+      },
+      writable: true,
+      configurable: true
+    })
   })
 
   // 正常路径

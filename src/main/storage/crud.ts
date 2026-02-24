@@ -47,6 +47,8 @@ export interface Crud {
   getSetting(key: string): string | undefined
   setSetting(key: string, value: string): void
   deleteSetting(key: string): void
+  getAllSettings(): Array<{ key: string; value: string }>
+  deleteAllSettings(): void
   getPluginData(pluginId: string, key: string): string | undefined
   setPluginData(pluginId: string, key: string, value: string): void
   deletePluginData(pluginId: string, key: string): void
@@ -128,6 +130,16 @@ export function createCrud(db: BetterSQLite3Database): Crud {
     /** 删除设置 */
     deleteSetting(key: string): void {
       db.delete(settings).where(eq(settings.key, key)).run()
+    },
+
+    /** 获取所有设置 */
+    getAllSettings(): Array<{ key: string; value: string }> {
+      return db.select().from(settings).all()
+    },
+
+    /** 删除所有设置 */
+    deleteAllSettings(): void {
+      db.delete(settings).run()
     },
 
     // ---- plugin_storage ----

@@ -2,6 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIPCHandlers } from './ipc/register'
+import { Database } from './storage/database'
+import { createCrud } from './storage/crud'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -44,7 +46,13 @@ app.whenReady().then(() => {
 
   ipcMain.on('ping', () => console.log('pong'))
 
-  registerIPCHandlers()
+  // 初始化数据库
+  const dbPath = join(app.getPath('userData'), 'workbox.db')
+  const database = new Database(dbPath)
+  database.initialize()
+  const crud = createCrud(database.drizzle)
+
+  registerIPCHandlers({ crud })
 
   createWindow()
 

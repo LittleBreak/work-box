@@ -1,4 +1,4 @@
-import type { ExecResult, ExecOptions, FileStat } from '../shared/types'
+import type { ExecResult, ExecOptions, FileStat, AppSettings } from '../shared/types'
 
 interface WorkboxAPI {
   fs: {
@@ -20,8 +20,8 @@ interface WorkboxAPI {
     disable(id: string): Promise<void>
   }
   settings: {
-    get(): Promise<unknown>
-    update(settings: Record<string, unknown>): Promise<void>
+    get(): Promise<AppSettings>
+    update(settings: Partial<AppSettings>): Promise<void>
     reset(): Promise<void>
   }
 }

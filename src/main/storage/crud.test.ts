@@ -240,6 +240,35 @@ describe('Schema CRUD 操作', () => {
     it('删除不存在的设置不抛错', () => {
       expect(() => crud.deleteSetting('nonexistent')).not.toThrow()
     })
+
+    // 正常路径：获取所有设置
+    it('获取所有设置', () => {
+      crud.setSetting('theme', '"dark"')
+      crud.setSetting('language', '"zh"')
+      const all = crud.getAllSettings()
+      expect(all).toHaveLength(2)
+      expect(all.map((r) => r.key).sort()).toEqual(['language', 'theme'])
+    })
+
+    // 边界条件：无设置时返回空数组
+    it('无设置时 getAllSettings 返回空数组', () => {
+      const all = crud.getAllSettings()
+      expect(all).toHaveLength(0)
+    })
+
+    // 正常路径：删除所有设置
+    it('删除所有设置', () => {
+      crud.setSetting('theme', '"dark"')
+      crud.setSetting('language', '"zh"')
+      crud.deleteAllSettings()
+      expect(crud.getAllSettings()).toHaveLength(0)
+      expect(crud.getSetting('theme')).toBeUndefined()
+    })
+
+    // 边界条件：空表时 deleteAllSettings 不抛错
+    it('空表时 deleteAllSettings 不抛错', () => {
+      expect(() => crud.deleteAllSettings()).not.toThrow()
+    })
   })
 
   describe('plugin_storage 表', () => {

@@ -1582,7 +1582,7 @@ describe('Sidebar', () => {
 
 ## 1.6 设置页面 & 配置持久化
 
-**目标**：实现应用设置页面（主题、AI Provider、插件路径），配置可持久化存储到数据库。
+**目标**：实现应用设置页面（主题、AI Provider、插件路径只读展示），配置可持久化存储到数据库。
 
 **输入/前置条件**：
 
@@ -1606,7 +1606,7 @@ describe('Sidebar', () => {
 | 设置校验方案         | 在 `src/shared/types.ts` 中导出 `validateSettings(partial: Partial<AppSettings>): void` 校验函数（手写校验，不引入 Zod）。校验规则：`theme` 必须为 `'light' \| 'dark'`、`language` 必须为 `'en' \| 'zh'`、`aiProvider` 必须为 `'openai' \| 'claude' \| 'custom'`、`aiTemperature` 范围 `[0, 2]`、其余字符串字段仅做 `typeof === 'string'` 校验；校验不通过时 throw Error                  |
 | resetSettings 语义   | `resetSettings()` 语义为**删除 settings 表所有行**（调用 `crud.deleteAllSettings()`），之后 `getSettings()` 通过合并 `DEFAULT_SETTINGS` 自然返回默认值；不向表中写入默认值                                                                                                                                                                                                                |
 | Renderer 状态管理    | 设置页面使用组件内部 `useState` 管理表单状态（因为设置是独立表单，非全局共享数据）。页面 `useEffect` 初始化时调用 `window.workbox.settings.get()` 加载设置；保存按钮调用 `window.workbox.settings.update()` 后更新本地 state。**主题切换例外**：主题变更同时更新 `useAppStore` 的 `theme` 字段（已存在于 `app.store.ts`），`App.tsx` 根组件监听 `useAppStore.theme` 变化来切换 dark class |
-| Preload 类型更新     | 本任务需更新 `src/preload/index.d.ts` 中 `settings.get()` 返回类型为 `Promise<AppSettings>`、`settings.update()` 参数类型为 `Partial<AppSettings>`，替换现有的 `unknown` / `Record<string, unknown>`                                                                                                                                                                                      |
+| Preload 桥接更新     | 本任务需同时更新 `src/preload/index.ts` 和 `src/preload/index.d.ts`：运行时通过 `contextBridge` 暴露 `settings.get/update/reset`，并将类型声明中的 `settings.get()` 返回类型设为 `Promise<AppSettings>`、`settings.update()` 参数类型设为 `Partial<AppSettings>`（替换现有 `unknown` / `Record<string, unknown>`）                                                                        |
 | 语言设置说明         | `language` 设置项本阶段为**占位**，仅持久化用户选择，不引入 i18n 框架。实际多语言支持推迟到后续阶段                                                                                                                                                                                                                                                                                       |
 
 **`AppSettings` 接口完整定义**（放在 `src/shared/types.ts`）：
@@ -1682,9 +1682,9 @@ settings.handler.ts
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现设置页面 UI + 配置读写 IPC + 暗色模式切换，使测试通过
-- [ ] Refactor：统一设置数据结构和验证逻辑，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现设置页面 UI + 配置读写 IPC + 暗色模式切换，使测试通过
+- [x] Refactor：统一设置数据结构和验证逻辑，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -1871,6 +1871,16 @@ describe('SettingsView', () => {
     await user.click(saveBtn)
     expect(mockUpdate).toHaveBeenCalled()
   })
+
+  // 交互验证：重置按钮触发 settings.reset
+  it('点击重置调用 window.workbox.settings.reset()', async () => {
+    const user = userEvent.setup()
+    render(<SettingsView />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalled())
+    const resetBtn = screen.getByRole('button', { name: /重置|reset/i })
+    await user.click(resetBtn)
+    expect(mockReset).toHaveBeenCalled()
+  })
 })
 ```
 
@@ -1882,7 +1892,9 @@ describe('SettingsView', () => {
 4. **（Red）** 编写 `src/renderer/src/features/settings/SettingsView.test.tsx`：测试 UI 渲染和交互（mock `window.workbox.settings`）
 5. 运行 `pnpm test`，确认 Red 阶段新测试全部失败
 6. **（Green）** 在 `src/shared/types.ts` 中添加 `AppSettings` 接口、`DEFAULT_SETTINGS` 常量、`validateSettings()` 校验函数
-7. **（Green）** 更新 `src/preload/index.d.ts`：将 `settings.get()` 返回类型改为 `Promise<AppSettings>`，`settings.update()` 参数改为 `Partial<AppSettings>`（需 `import type { AppSettings }` ）
+7. **（Green）** 更新 preload 桥接：
+   - `src/preload/index.ts`：通过 `contextBridge` 暴露 `settings.get/update/reset`（调用对应 IPC 通道）
+   - `src/preload/index.d.ts`：将 `settings.get()` 返回类型改为 `Promise<AppSettings>`，`settings.update()` 参数改为 `Partial<AppSettings>`（需 `import type { AppSettings }` ）
 8. **（Green）** 创建 `src/main/ipc/settings.handler.ts`：
    - 导出 `createSettingsHandler(crud: Crud)` 工厂函数（依赖注入，便于测试）
    - `getSettings()` → `crud.getAllSettings()` + `JSON.parse` 反序列化 + shallow merge `DEFAULT_SETTINGS`
@@ -1897,6 +1909,7 @@ describe('SettingsView', () => {
     - 插件 Tab：插件目录路径只读显示
     - `useEffect` 初始化时调用 `window.workbox.settings.get()` 加载设置到组件 `useState`
     - 保存按钮：调用 `window.workbox.settings.update()` 后更新本地 state
+    - 重置按钮：调用 `window.workbox.settings.reset()` 后重新加载设置（或直接恢复为 `DEFAULT_SETTINGS`）
 11. **（Green）** 实现暗色模式切换逻辑：
     - 主题变更时同步调用 `useAppStore.getState().setTheme(newTheme)`
     - 在 `App.tsx` 根组件中 `useEffect` 监听 `useAppStore.theme` 变化，执行 `document.documentElement.classList.toggle('dark', theme === 'dark')`
@@ -1905,29 +1918,33 @@ describe('SettingsView', () => {
 
 **验收标准**：
 
-- [ ] 1.4 CRUD 层已补充 `getAllSettings()` 和 `deleteAllSettings()` 方法及测试
-- [ ] `src/shared/types.ts` 新增 `AppSettings` 接口（8 个字段）、`DEFAULT_SETTINGS` 常量、`validateSettings()` 函数
-- [ ] `src/preload/index.d.ts` 中 `settings.get()` 返回 `Promise<AppSettings>`，`settings.update()` 参数为 `Partial<AppSettings>`
-- [ ] `src/main/ipc/settings.handler.ts` 存在，导出 `createSettingsHandler` 工厂函数和 `setupSettingsHandlers` 注册函数
-- [ ] `getSettings()` 通过 `crud.getAllSettings()` + `JSON.parse` + shallow merge `DEFAULT_SETTINGS` 返回完整 `AppSettings`
-- [ ] `updateSettings(partial)` 先 `validateSettings()` 校验，再遍历 `JSON.stringify` + `crud.setSetting()` 逐条写入
-- [ ] `resetSettings()` 调用 `crud.deleteAllSettings()` 清空 settings 表
-- [ ] `src/renderer/src/features/settings/SettingsView.tsx` 存在，使用 shadcn/ui `Tabs` 组件，包含：
-  - [ ] 通用 Tab：主题切换（亮/暗 radio group）、语言选择（占位）
-  - [ ] AI Tab：Provider 下拉、API Key 密码框、Base URL 输入、模型输入、Temperature 滑块
-  - [ ] 插件 Tab：插件目录路径只读展示
-- [ ] 暗色模式切换生效：主题变更 → `useAppStore.setTheme()` → `App.tsx` 监听并切换 `document.documentElement.classList`
-- [ ] 设置保存后重启应用仍保留（通过 IPC → settings 表持久化）
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + 运行态截图（可选）
+- [x] 1.4 CRUD 层已补充 `getAllSettings()` 和 `deleteAllSettings()` 方法及测试
+- [x] `src/shared/types.ts` 新增 `AppSettings` 接口（8 个字段）、`DEFAULT_SETTINGS` 常量、`validateSettings()` 函数
+- [x] `src/preload/index.ts` 通过 `contextBridge` 暴露 `settings.get/update/reset`，并映射到对应 IPC 通道
+- [x] `src/preload/index.d.ts` 中 `settings.get()` 返回 `Promise<AppSettings>`，`settings.update()` 参数为 `Partial<AppSettings>`
+- [x] `src/main/ipc/settings.handler.ts` 存在，导出 `createSettingsHandler` 工厂函数和 `setupSettingsHandlers` 注册函数
+- [x] `getSettings()` 通过 `crud.getAllSettings()` + `JSON.parse` + shallow merge `DEFAULT_SETTINGS` 返回完整 `AppSettings`
+- [x] `updateSettings(partial)` 先 `validateSettings()` 校验，再遍历 `JSON.stringify` + `crud.setSetting()` 逐条写入
+- [x] `resetSettings()` 调用 `crud.deleteAllSettings()` 清空 settings 表
+- [x] `src/renderer/src/features/settings/SettingsView.tsx` 存在，使用 shadcn/ui `Tabs` 组件，包含：
+  - [x] 通用 Tab：主题切换（亮/暗 radio group）、语言选择（占位）
+  - [x] AI Tab：Provider 下拉、API Key 密码框、Base URL 输入、模型输入、Temperature 滑块
+  - [x] 插件 Tab：插件目录路径只读展示
+- [x] 设置页提供”重置默认设置”交互：调用 `window.workbox.settings.reset()`，并在 UI 中恢复默认值
+- [x] 暗色模式切换生效：主题变更 → `useAppStore.setTheme()` → `App.tsx` 监听并切换 `document.documentElement.classList`
+- [x] 设置保存后重启应用仍保留（通过 IPC → settings 表持久化）
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出（必需）
+- [ ] 运行态截图（可选，建议提供）
 
 **交付物**：
 
-- [ ] `src/main/storage/crud.ts` 更新（新增 `getAllSettings` + `deleteAllSettings`）及 `crud.test.ts` 补充测试
-- [ ] `src/shared/types.ts` 更新（新增 `AppSettings` 接口 + `DEFAULT_SETTINGS` 常量 + `validateSettings()` 函数）
-- [ ] `src/preload/index.d.ts` 更新（`settings` 类型从 `unknown` 改为 `AppSettings`）
-- [ ] `src/main/ipc/settings.handler.ts` + 测试
-- [ ] `src/renderer/src/features/settings/SettingsView.tsx` + 测试
-- [ ] 暗色模式切换逻辑（`App.tsx` 中 `useEffect` 监听 `useAppStore.theme`）
-- [ ] `src/main/ipc/register.ts` 更新（注册 settings handler，替换空壳函数）
+- [x] `src/main/storage/crud.ts` 更新（新增 `getAllSettings` + `deleteAllSettings`）及 `crud.test.ts` 补充测试
+- [x] `src/shared/types.ts` 更新（新增 `AppSettings` 接口 + `DEFAULT_SETTINGS` 常量 + `validateSettings()` 函数）
+- [x] `src/preload/index.ts` 更新（暴露 `settings.get/update/reset` 桥接）
+- [x] `src/preload/index.d.ts` 更新（`settings` 类型从 `unknown` 改为 `AppSettings`）
+- [x] `src/main/ipc/settings.handler.ts` + 测试
+- [x] `src/renderer/src/features/settings/SettingsView.tsx` + 测试
+- [x] 暗色模式切换逻辑（`App.tsx` 中 `useEffect` 监听 `useAppStore.theme`）
+- [x] `src/main/ipc/register.ts` 更新（注册 settings handler，替换空壳函数）
