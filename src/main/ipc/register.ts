@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { setupFSHandlers } from './fs.handler'
+import { setupShellHandlers } from './shell.handler'
 
 let registered = false
 
@@ -21,8 +22,8 @@ export function registerIPCHandlers(): void {
   // fs 领域（Task 1.2 实现）
   setupFSHandlers(ipcMain)
 
-  // shell 领域
-  ipcMain.handle(IPC_CHANNELS.shell.exec, notImplemented)
+  // shell 领域（Task 1.3 实现）
+  setupShellHandlers(ipcMain)
 
   // ai 领域
   ipcMain.handle(IPC_CHANNELS.ai.chat, notImplemented)

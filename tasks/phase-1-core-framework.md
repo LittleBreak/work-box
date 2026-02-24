@@ -668,9 +668,9 @@ describe('fs.handler', () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 shell handler 使测试通过
-- [ ] Refactor：提取危险命令检测为独立函数，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 shell handler 使测试通过
+- [x] Refactor：提取危险命令检测为独立函数，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -854,24 +854,24 @@ describe('shell.handler', () => {
 
 **验收标准**：
 
-- [ ] `src/main/ipc/shell.handler.ts` 存在，导出 `setupShellHandlers`、`exec`、`isDangerousCommand`、`filterEnv` 函数
-- [ ] `exec(command, options?)` 执行命令返回 `ExecResult { stdout, stderr, exitCode, signal? }`；命令失败或超时**不 throw**，通过 `exitCode !== 0` 判断；仅前置校验失败（空命令、危险命令）时 throw
-- [ ] 超时机制生效：默认 30s（通过 spy 验证），可配置，超时后终止进程返回 `ExecResult`（含 `signal: 'SIGTERM'`）
-- [ ] 危险命令黑名单检测（词边界匹配）：`rm -rf /`、`dd`、`mkfs`、`sudo`、`shutdown`、`reboot` 被拦截；`rm -rf ./dir`、含黑名单子串的安全命令（如 `adding`）不被误拦
-- [ ] 环境变量过滤：继承 `process.env` 但过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量，`options.env` 合并覆盖
-- [ ] `setupShellHandlers(ipcMain)` 有独立测试验证：注册 `shell:exec` channel、handler wrapper 可调用
-- [ ] `register.ts` 中 shell 领域空壳已替换为 `setupShellHandlers(ipcMain)` 调用，`register.test.ts` 回归通过
-- [ ] Preload 层已就绪（`src/preload/index.ts` 中 `shell.exec` 已通过 `ipcRenderer.invoke` 桥接，**本任务无需修改**）
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `pnpm test` 回归通过
-- [ ] `pnpm lint` 回归通过
-- [ ] 提供可复核证据：测试输出
+- [x] `src/main/ipc/shell.handler.ts` 存在，导出 `setupShellHandlers`、`exec`、`isDangerousCommand`、`filterEnv` 函数
+- [x] `exec(command, options?)` 执行命令返回 `ExecResult { stdout, stderr, exitCode, signal? }`；命令失败或超时**不 throw**，通过 `exitCode !== 0` 判断；仅前置校验失败（空命令、危险命令）时 throw
+- [x] 超时机制生效：默认 30s（通过导出常量验证），可配置，超时后终止进程返回 `ExecResult`（含 `signal: 'SIGTERM'`）
+- [x] 危险命令黑名单检测（词边界匹配）：`rm -rf /`、`dd`、`mkfs`、`sudo`、`shutdown`、`reboot` 被拦截；`rm -rf ./dir`、含黑名单子串的安全命令（如 `adding`）不被误拦
+- [x] 环境变量过滤：继承 `process.env` 但过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量，`options.env` 合并覆盖
+- [x] `setupShellHandlers(ipcMain)` 有独立测试验证：注册 `shell:exec` channel、handler wrapper 可调用
+- [x] `register.ts` 中 shell 领域空壳已替换为 `setupShellHandlers(ipcMain)` 调用，`register.test.ts` 回归通过
+- [x] Preload 层已就绪（`src/preload/index.ts` 中 `shell.exec` 已通过 `ipcRenderer.invoke` 桥接，**本任务无需修改**）
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `pnpm test` 回归通过
+- [x] `pnpm lint` 回归通过
+- [x] 提供可复核证据：测试输出
 
 **交付物**：
 
-- [ ] `src/main/ipc/shell.handler.ts`（含 `setupShellHandlers`、`exec`、`isDangerousCommand`、`filterEnv`）
-- [ ] `src/main/ipc/shell.handler.test.ts`（含 `setupShellHandlers` 注册测试）
-- [ ] `src/main/ipc/register.ts` 更新（shell 空壳替换为 `setupShellHandlers(ipcMain)` 调用）
+- [x] `src/main/ipc/shell.handler.ts`（含 `setupShellHandlers`、`exec`、`isDangerousCommand`、`filterEnv`）
+- [x] `src/main/ipc/shell.handler.test.ts`（含 `setupShellHandlers` 注册测试）
+- [x] `src/main/ipc/register.ts` 更新（shell 空壳替换为 `setupShellHandlers(ipcMain)` 调用）
 
 ---
 
