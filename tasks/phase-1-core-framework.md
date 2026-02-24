@@ -1594,15 +1594,91 @@ describe('Sidebar', () => {
 
 **关键决策**：
 
-| 决策项               | 方案                                                                                                             |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 设置分类             | 3 个 Tab：通用设置（主题/语言）、AI 设置（Provider/API Key/Model）、插件设置（插件目录）                         |
-| 设置存储方式         | 使用 1.4 的 `settings` 表（key-value 结构，value 为 JSON 字符串）                                                |
-| 设置 IPC 通道        | `settings:get`（获取所有设置）、`settings:update`（批量更新）、`settings:reset`（重置为默认值）                  |
-| 暗色模式实现         | Tailwind CSS `dark:` class 变体，通过 `document.documentElement.classList.toggle('dark')` 切换                   |
-| API Key 安全         | 设置页面中 API Key 输入框使用 `type="password"` 显示，存储时不加密（本地应用，安全性可接受）                     |
-| 默认设置值           | 定义 `DEFAULT_SETTINGS` 常量：`theme: 'dark'`、`language: 'zh'`、`aiProvider: 'openai'`、`aiTemperature: 0.7` 等 |
-| settings IPC handler | 创建 `src/main/ipc/settings.handler.ts`，在 1.1 的注册机制中注册                                                 |
+| 决策项               | 方案                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 设置分类             | 3 个 Tab：通用设置（主题/语言）、AI 设置（Provider/API Key/Model）、插件设置（插件目录）。使用 shadcn/ui 的 `Tabs` 组件（需先通过 `npx shadcn@latest add tabs` 安装）                                                                                                                                                                                                                     |
+| 设置存储方式         | 使用 1.4 的 `settings` 表（key-value 结构，value 为 JSON 字符串）。**需在 1.4 的 `crud.ts` 中补充 `getAllSettings()` 和 `deleteAllSettings()` 方法**（见下方"对 1.4 CRUD 层的补充修改"），以支持 handler 层一次性读取所有设置和重置功能                                                                                                                                                   |
+| 设置 IPC 通道        | `settings:get`（获取所有设置）、`settings:update`（批量更新）、`settings:reset`（重置为默认值）                                                                                                                                                                                                                                                                                           |
+| 暗色模式实现         | Tailwind CSS `dark:` class 变体，通过 `document.documentElement.classList.toggle('dark')` 切换                                                                                                                                                                                                                                                                                            |
+| API Key 安全         | 设置页面中 API Key 输入框使用 `type="password"` 显示，存储时不加密（本地应用，安全性可接受）                                                                                                                                                                                                                                                                                              |
+| 默认设置值           | 定义 `DEFAULT_SETTINGS` 常量（完整字段见下方 `AppSettings` 接口定义）                                                                                                                                                                                                                                                                                                                     |
+| settings IPC handler | 创建 `src/main/ipc/settings.handler.ts`，导出 `createSettingsHandler(crud)` 工厂函数（依赖注入），在 1.1 的注册机制中注册                                                                                                                                                                                                                                                                 |
+| 设置校验方案         | 在 `src/shared/types.ts` 中导出 `validateSettings(partial: Partial<AppSettings>): void` 校验函数（手写校验，不引入 Zod）。校验规则：`theme` 必须为 `'light' \| 'dark'`、`language` 必须为 `'en' \| 'zh'`、`aiProvider` 必须为 `'openai' \| 'claude' \| 'custom'`、`aiTemperature` 范围 `[0, 2]`、其余字符串字段仅做 `typeof === 'string'` 校验；校验不通过时 throw Error                  |
+| resetSettings 语义   | `resetSettings()` 语义为**删除 settings 表所有行**（调用 `crud.deleteAllSettings()`），之后 `getSettings()` 通过合并 `DEFAULT_SETTINGS` 自然返回默认值；不向表中写入默认值                                                                                                                                                                                                                |
+| Renderer 状态管理    | 设置页面使用组件内部 `useState` 管理表单状态（因为设置是独立表单，非全局共享数据）。页面 `useEffect` 初始化时调用 `window.workbox.settings.get()` 加载设置；保存按钮调用 `window.workbox.settings.update()` 后更新本地 state。**主题切换例外**：主题变更同时更新 `useAppStore` 的 `theme` 字段（已存在于 `app.store.ts`），`App.tsx` 根组件监听 `useAppStore.theme` 变化来切换 dark class |
+| Preload 类型更新     | 本任务需更新 `src/preload/index.d.ts` 中 `settings.get()` 返回类型为 `Promise<AppSettings>`、`settings.update()` 参数类型为 `Partial<AppSettings>`，替换现有的 `unknown` / `Record<string, unknown>`                                                                                                                                                                                      |
+| 语言设置说明         | `language` 设置项本阶段为**占位**，仅持久化用户选择，不引入 i18n 框架。实际多语言支持推迟到后续阶段                                                                                                                                                                                                                                                                                       |
+
+**`AppSettings` 接口完整定义**（放在 `src/shared/types.ts`）：
+
+```typescript
+/** 应用设置接口 - 所有可持久化的用户设置 */
+export interface AppSettings {
+  // ---- 通用设置 ----
+  theme: 'light' | 'dark'
+  language: 'en' | 'zh' // 占位，本阶段不实现 i18n
+
+  // ---- AI 设置 ----
+  aiProvider: 'openai' | 'claude' | 'custom'
+  aiApiKey: string // 存储时不加密
+  aiBaseUrl: string // 自定义 API 端点
+  aiModel: string // 当前选择的模型名称
+  aiTemperature: number // 范围 [0, 2]
+
+  // ---- 插件设置 ----
+  pluginDir: string // 插件目录路径，只读展示
+}
+
+/** 默认设置值 */
+export const DEFAULT_SETTINGS: AppSettings = {
+  theme: 'dark',
+  language: 'zh',
+  aiProvider: 'openai',
+  aiApiKey: '',
+  aiBaseUrl: 'https://api.openai.com/v1',
+  aiModel: 'gpt-4o',
+  aiTemperature: 0.7,
+  pluginDir: '~/.workbox/plugins'
+}
+```
+
+**对 1.4 CRUD 层的补充修改**：
+
+本任务执行前，需在 `src/main/storage/crud.ts` 的 `Crud` 接口和 `createCrud` 实现中**补充以下两个方法**（并在 `crud.test.ts` 中添加对应测试）：
+
+```typescript
+// Crud 接口新增
+getAllSettings(): Array<{ key: string; value: string }>
+deleteAllSettings(): void
+
+// createCrud 实现新增
+getAllSettings() {
+  return db.select().from(settings).all()
+},
+deleteAllSettings() {
+  db.delete(settings).run()
+}
+```
+
+**Handler 层与 CRUD 层的衔接逻辑**：
+
+```
+settings.handler.ts
+  ├── createSettingsHandler(crud: Crud)  ← 依赖注入，返回 { getSettings, updateSettings, resetSettings }
+  ├── getSettings():
+  │   1. 调用 crud.getAllSettings() 获取所有行 → Array<{key, value}>
+  │   2. 将每一行的 value 做 JSON.parse() 反序列化
+  │   3. 构建 Record<string, unknown> 对象
+  │   4. 与 DEFAULT_SETTINGS 做 shallow merge（{ ...DEFAULT_SETTINGS, ...dbValues }）
+  │   5. 返回完整的 AppSettings 对象
+  ├── updateSettings(partial: Partial<AppSettings>):
+  │   1. 调用 validateSettings(partial) 校验（不通过则 throw）
+  │   2. 遍历 partial 的每个 key-value
+  │   3. 对每个 value 做 JSON.stringify() 序列化
+  │   4. 调用 crud.setSetting(key, serializedValue) 逐条写入
+  └── resetSettings():
+      1. 调用 crud.deleteAllSettings() 清空 settings 表
+```
 
 **TDD 要求**：
 
@@ -1614,118 +1690,233 @@ describe('Sidebar', () => {
 
 ```typescript
 // === src/main/ipc/settings.handler.test.ts ===
+// 注意：settings handler 内部调用 crud（同步），handler 函数本身也是同步的。
+// 通过 ipcMain.handle 注册后 IPC 调用为 async，但单元测试直接测试 handler 内部函数，使用同步写法。
+import { createTestDatabase } from '../storage/test-utils'
+import { createSettingsHandler } from './settings.handler'
+import { DEFAULT_SETTINGS } from '../../shared/types'
+import type { Database } from '../storage/database'
+import type { Crud } from '../storage/crud'
+
 describe('settings.handler', () => {
+  let database: Database
+  let crud: Crud
+  let handler: ReturnType<typeof createSettingsHandler>
+
+  beforeEach(() => {
+    const testDb = createTestDatabase()
+    database = testDb.database
+    crud = testDb.crud
+    handler = createSettingsHandler(crud)
+  })
+
+  afterEach(() => {
+    database.close()
+  })
+
   describe('getSettings', () => {
-    // 正常路径
-    it('返回所有设置（合并默认值）', async () => {
-      const settings = await getSettings()
+    // 正常路径：返回完整 AppSettings 对象，包含所有 8 个字段
+    it('返回所有设置（合并默认值）', () => {
+      const settings = handler.getSettings()
       expect(settings).toHaveProperty('theme')
       expect(settings).toHaveProperty('aiProvider')
+      expect(settings).toHaveProperty('aiApiKey')
+      expect(settings).toHaveProperty('aiBaseUrl')
+      expect(settings).toHaveProperty('aiModel')
+      expect(settings).toHaveProperty('aiTemperature')
+      expect(settings).toHaveProperty('pluginDir')
+      expect(settings).toHaveProperty('language')
     })
 
-    // 边界条件：数据库为空时返回默认值
-    it('无自定义设置时返回全部默认值', async () => {
-      const settings = await getSettings()
-      expect(settings.theme).toBe('dark')
+    // 边界条件：数据库为空时返回全部默认值
+    it('无自定义设置时返回全部默认值', () => {
+      const settings = handler.getSettings()
+      expect(settings).toEqual(DEFAULT_SETTINGS)
+    })
+
+    // 正常路径：数据库有值时覆盖默认值
+    it('数据库中有值时覆盖默认值', () => {
+      crud.setSetting('theme', JSON.stringify('light'))
+      const settings = handler.getSettings()
+      expect(settings.theme).toBe('light')
+      expect(settings.aiProvider).toBe(DEFAULT_SETTINGS.aiProvider) // 其他字段仍为默认值
     })
   })
 
   describe('updateSettings', () => {
     // 正常路径
-    it('更新设置并持久化', async () => {
-      await updateSettings({ theme: 'light' })
-      const settings = await getSettings()
+    it('更新设置并持久化', () => {
+      handler.updateSettings({ theme: 'light' })
+      const settings = handler.getSettings()
       expect(settings.theme).toBe('light')
     })
 
     // 正常路径：部分更新不影响其他设置
-    it('部分更新不覆盖其他设置', async () => {
-      await updateSettings({ theme: 'light' })
-      await updateSettings({ aiProvider: 'claude' })
-      const settings = await getSettings()
+    it('部分更新不覆盖其他设置', () => {
+      handler.updateSettings({ theme: 'light' })
+      handler.updateSettings({ aiProvider: 'claude' })
+      const settings = handler.getSettings()
       expect(settings.theme).toBe('light')
       expect(settings.aiProvider).toBe('claude')
     })
 
+    // 正常路径：值被 JSON 序列化存储
+    it('值以 JSON 字符串形式存储到 settings 表', () => {
+      handler.updateSettings({ aiTemperature: 0.5 })
+      const raw = crud.getSetting('aiTemperature')
+      expect(raw).toBe('0.5') // JSON.stringify(0.5) === '0.5'
+    })
+
     // 错误处理：无效设置值
-    it('无效主题值抛出错误', async () => {
-      await expect(updateSettings({ theme: 'invalid' as any })).rejects.toThrow()
+    it('无效主题值抛出错误', () => {
+      expect(() => handler.updateSettings({ theme: 'invalid' as any })).toThrow()
+    })
+
+    // 错误处理：temperature 超出范围
+    it('temperature 超出 [0, 2] 范围抛出错误', () => {
+      expect(() => handler.updateSettings({ aiTemperature: 3 })).toThrow()
+      expect(() => handler.updateSettings({ aiTemperature: -1 })).toThrow()
     })
   })
 
   describe('resetSettings', () => {
-    it('重置后恢复默认值', async () => {
-      await updateSettings({ theme: 'light' })
-      await resetSettings()
-      const settings = await getSettings()
-      expect(settings.theme).toBe('dark')
+    it('重置后恢复默认值（清空 settings 表）', () => {
+      handler.updateSettings({ theme: 'light', aiProvider: 'claude' })
+      handler.resetSettings()
+      const settings = handler.getSettings()
+      expect(settings).toEqual(DEFAULT_SETTINGS)
+    })
+
+    it('重置后 settings 表为空', () => {
+      handler.updateSettings({ theme: 'light' })
+      handler.resetSettings()
+      expect(crud.getAllSettings()).toHaveLength(0)
     })
   })
 })
 
 // === src/renderer/src/features/settings/SettingsView.test.tsx ===
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { SettingsView } from './SettingsView'
+import { DEFAULT_SETTINGS } from '@shared/types'
+import { useAppStore } from '@renderer/stores/app.store'
+
+// Mock window.workbox.settings
+const mockGet = vi.fn().mockResolvedValue({ ...DEFAULT_SETTINGS })
+const mockUpdate = vi.fn().mockResolvedValue(undefined)
+const mockReset = vi.fn().mockResolvedValue(undefined)
+
+beforeEach(() => {
+  Object.defineProperty(window, 'workbox', {
+    value: { settings: { get: mockGet, update: mockUpdate, reset: mockReset } },
+    writable: true,
+    configurable: true
+  })
+  mockGet.mockClear()
+  mockUpdate.mockClear()
+  mockReset.mockClear()
+})
+
 describe('SettingsView', () => {
   // 正常路径
-  it('渲染设置页面标题', () => {
+  it('渲染设置页面标题', async () => {
     render(<SettingsView />)
     expect(screen.getByText(/设置|settings/i)).toBeInTheDocument()
   })
 
+  // 正常路径：显示 3 个 Tab
+  it('显示通用、AI、插件三个 Tab', async () => {
+    render(<SettingsView />)
+    await waitFor(() => {
+      expect(screen.getByText(/通用|general/i)).toBeInTheDocument()
+      expect(screen.getByText(/ai/i)).toBeInTheDocument()
+      expect(screen.getByText(/插件|plugin/i)).toBeInTheDocument()
+    })
+  })
+
   // 正常路径：显示主题选择
-  it('显示主题切换选项', () => {
+  it('显示主题切换选项', async () => {
     render(<SettingsView />)
-    expect(screen.getByText(/主题|theme/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(/主题|theme/i)).toBeInTheDocument()
+    })
   })
 
-  // 正常路径：显示 AI 设置区域
-  it('显示 AI Provider 设置', () => {
+  // 正常路径：初始化时调用 settings.get 加载设置
+  it('初始化时调用 window.workbox.settings.get()', async () => {
     render(<SettingsView />)
-    expect(screen.getByText(/ai/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledTimes(1)
+    })
   })
 
-  // 交互验证：切换暗色模式
-  it('切换主题时更新 store', async () => {
+  // 交互验证：切换暗色模式同步更新 app store
+  it('切换主题时更新 appStore.theme', async () => {
+    const user = userEvent.setup()
     render(<SettingsView />)
-    // 模拟主题切换操作
+    await waitFor(() => expect(mockGet).toHaveBeenCalled())
+    // 找到主题切换控件并切换到 light
+    const lightOption = await screen.findByRole('radio', { name: /light|亮色/i })
+    await user.click(lightOption)
+    expect(useAppStore.getState().theme).toBe('light')
+  })
+
+  // 交互验证：保存按钮触发 settings.update
+  it('点击保存调用 window.workbox.settings.update()', async () => {
+    const user = userEvent.setup()
+    render(<SettingsView />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalled())
+    const saveBtn = screen.getByRole('button', { name: /保存|save/i })
+    await user.click(saveBtn)
+    expect(mockUpdate).toHaveBeenCalled()
   })
 })
 ```
 
 **执行步骤**：
 
-1. **（Red）** 编写 `src/main/ipc/settings.handler.test.ts`：测试 getSettings/updateSettings/resetSettings
-2. **（Red）** 编写 `src/renderer/src/features/settings/SettingsView.test.tsx`：测试 UI 渲染和交互
-3. 运行 `pnpm test`，确认全部失败
-4. **（Green）** 定义 `AppSettings` 接口和 `DEFAULT_SETTINGS` 常量（放在 `src/shared/types.ts` 或独立文件）
-5. **（Green）** 创建 `src/main/ipc/settings.handler.ts`：
-   - `getSettings()` → 从 settings 表读取 + 合并默认值
-   - `updateSettings(partial)` → 校验 + 写入 settings 表
-   - `resetSettings()` → 清除 settings 表
-   - 导出 `setupSettingsHandlers(ipcMain)` 注册函数
-6. 在 `src/main/ipc/register.ts` 中注册 settings handler
-7. **（Green）** 实现 `src/renderer/src/features/settings/SettingsView.tsx`：
-   - 3 个设置分区：通用、AI、插件
-   - 通用：主题选择（light/dark）、语言选择（en/zh）
-   - AI：Provider 下拉、API Key 密码框、Base URL 输入、模型选择、Temperature 滑块
-   - 插件：插件目录路径显示
-   - 保存按钮：调用 `window.workbox.settings.update()`
-8. **（Green）** 实现暗色模式切换逻辑：
-   - 在 App 根组件监听 `theme` 变化，切换 `document.documentElement.classList`
-   - 使用 Tailwind `dark:` 变体
-9. 运行 `pnpm test`，确认测试通过
-10. **（Refactor）** 整理设置表单组件，提取通用表单项组件，再次运行 `pnpm test` 确认通过
+1. **（前置）** 补充 1.4 CRUD 层：在 `crud.ts` 的 `Crud` 接口和 `createCrud` 中添加 `getAllSettings()` 和 `deleteAllSettings()` 方法，在 `crud.test.ts` 中增加对应测试，运行 `pnpm test` 确认通过
+2. **（前置）** 安装 shadcn/ui Tabs 组件：`npx shadcn@latest add tabs`
+3. **（Red）** 编写 `src/main/ipc/settings.handler.test.ts`：测试 getSettings/updateSettings/resetSettings（使用 `createTestDatabase` + `createSettingsHandler` 依赖注入）
+4. **（Red）** 编写 `src/renderer/src/features/settings/SettingsView.test.tsx`：测试 UI 渲染和交互（mock `window.workbox.settings`）
+5. 运行 `pnpm test`，确认 Red 阶段新测试全部失败
+6. **（Green）** 在 `src/shared/types.ts` 中添加 `AppSettings` 接口、`DEFAULT_SETTINGS` 常量、`validateSettings()` 校验函数
+7. **（Green）** 更新 `src/preload/index.d.ts`：将 `settings.get()` 返回类型改为 `Promise<AppSettings>`，`settings.update()` 参数改为 `Partial<AppSettings>`（需 `import type { AppSettings }` ）
+8. **（Green）** 创建 `src/main/ipc/settings.handler.ts`：
+   - 导出 `createSettingsHandler(crud: Crud)` 工厂函数（依赖注入，便于测试）
+   - `getSettings()` → `crud.getAllSettings()` + `JSON.parse` 反序列化 + shallow merge `DEFAULT_SETTINGS`
+   - `updateSettings(partial)` → `validateSettings(partial)` 校验 + 遍历 `JSON.stringify` 序列化 + `crud.setSetting()` 逐条写入
+   - `resetSettings()` → `crud.deleteAllSettings()` 清空 settings 表
+   - 导出 `setupSettingsHandlers(ipcMain, crud)` 注册 IPC handler
+9. 在 `src/main/ipc/register.ts` 中注册 settings handler（替换 1.1 阶段的空壳函数）
+10. **（Green）** 实现 `src/renderer/src/features/settings/SettingsView.tsx`：
+    - 使用 shadcn/ui `Tabs` 组件实现 3 个设置分区
+    - 通用 Tab：主题选择（light/dark radio group）、语言选择（en/zh 下拉，占位不实现 i18n）
+    - AI Tab：Provider 下拉（openai/claude/custom）、API Key 密码框、Base URL 输入、模型名称输入、Temperature 滑块 [0, 2]
+    - 插件 Tab：插件目录路径只读显示
+    - `useEffect` 初始化时调用 `window.workbox.settings.get()` 加载设置到组件 `useState`
+    - 保存按钮：调用 `window.workbox.settings.update()` 后更新本地 state
+11. **（Green）** 实现暗色模式切换逻辑：
+    - 主题变更时同步调用 `useAppStore.getState().setTheme(newTheme)`
+    - 在 `App.tsx` 根组件中 `useEffect` 监听 `useAppStore.theme` 变化，执行 `document.documentElement.classList.toggle('dark', theme === 'dark')`
+12. 运行 `pnpm test`，确认测试通过
+13. **（Refactor）** 整理设置表单组件，提取通用表单项组件，再次运行 `pnpm test` 确认通过
 
 **验收标准**：
 
-- [ ] `src/main/ipc/settings.handler.ts` 存在，导出 `setupSettingsHandlers` 函数
-- [ ] 实现 `getSettings()` → 返回合并默认值后的完整设置对象
-- [ ] 实现 `updateSettings(partial)` → 部分更新设置并持久化
-- [ ] 实现 `resetSettings()` → 重置为默认值
-- [ ] `src/renderer/src/features/settings/SettingsView.tsx` 存在，包含：
-  - [ ] 通用设置：主题切换（亮/暗）、语言选择
-  - [ ] AI 设置：Provider 配置（API Key、Base URL、模型选择）
-  - [ ] 插件设置：插件目录路径
-- [ ] 暗色模式切换生效：`document.documentElement` 正确添加/移除 `dark` class
+- [ ] 1.4 CRUD 层已补充 `getAllSettings()` 和 `deleteAllSettings()` 方法及测试
+- [ ] `src/shared/types.ts` 新增 `AppSettings` 接口（8 个字段）、`DEFAULT_SETTINGS` 常量、`validateSettings()` 函数
+- [ ] `src/preload/index.d.ts` 中 `settings.get()` 返回 `Promise<AppSettings>`，`settings.update()` 参数为 `Partial<AppSettings>`
+- [ ] `src/main/ipc/settings.handler.ts` 存在，导出 `createSettingsHandler` 工厂函数和 `setupSettingsHandlers` 注册函数
+- [ ] `getSettings()` 通过 `crud.getAllSettings()` + `JSON.parse` + shallow merge `DEFAULT_SETTINGS` 返回完整 `AppSettings`
+- [ ] `updateSettings(partial)` 先 `validateSettings()` 校验，再遍历 `JSON.stringify` + `crud.setSetting()` 逐条写入
+- [ ] `resetSettings()` 调用 `crud.deleteAllSettings()` 清空 settings 表
+- [ ] `src/renderer/src/features/settings/SettingsView.tsx` 存在，使用 shadcn/ui `Tabs` 组件，包含：
+  - [ ] 通用 Tab：主题切换（亮/暗 radio group）、语言选择（占位）
+  - [ ] AI Tab：Provider 下拉、API Key 密码框、Base URL 输入、模型输入、Temperature 滑块
+  - [ ] 插件 Tab：插件目录路径只读展示
+- [ ] 暗色模式切换生效：主题变更 → `useAppStore.setTheme()` → `App.tsx` 监听并切换 `document.documentElement.classList`
 - [ ] 设置保存后重启应用仍保留（通过 IPC → settings 表持久化）
 - [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
 - [ ] `pnpm test` 回归通过
@@ -1733,8 +1924,10 @@ describe('SettingsView', () => {
 
 **交付物**：
 
+- [ ] `src/main/storage/crud.ts` 更新（新增 `getAllSettings` + `deleteAllSettings`）及 `crud.test.ts` 补充测试
+- [ ] `src/shared/types.ts` 更新（新增 `AppSettings` 接口 + `DEFAULT_SETTINGS` 常量 + `validateSettings()` 函数）
+- [ ] `src/preload/index.d.ts` 更新（`settings` 类型从 `unknown` 改为 `AppSettings`）
 - [ ] `src/main/ipc/settings.handler.ts` + 测试
 - [ ] `src/renderer/src/features/settings/SettingsView.tsx` + 测试
-- [ ] `AppSettings` 接口 + `DEFAULT_SETTINGS` 常量
-- [ ] 暗色模式切换逻辑
-- [ ] `src/main/ipc/register.ts` 更新（注册 settings handler）
+- [ ] 暗色模式切换逻辑（`App.tsx` 中 `useEffect` 监听 `useAppStore.theme`）
+- [ ] `src/main/ipc/register.ts` 更新（注册 settings handler，替换空壳函数）
