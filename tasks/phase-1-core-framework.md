@@ -1365,37 +1365,45 @@ describe('Schema CRUD 操作', () => {
 - 依赖：Phase 0（Tailwind + shadcn/ui）完成
 - 推荐在 1.4 之后执行（便于集成数据层），但非强制
 - 需读取：`ARCHITECTURE.md` 第三节（渲染进程）、第八节（renderer 目录结构）
-- 需安装：`zustand`（状态管理）、`react-router-dom`（路由，可选用简单条件渲染替代）、`lucide-react`（图标）
+- 需安装：`zustand`（状态管理）、`lucide-react`（图标）
+- 测试依赖确认：`@testing-library/react`、`@testing-library/user-event` 已在 Phase 0 配置
 
 **验证策略**：A 类（严格 TDD）
 
 **关键决策**：
 
-| 决策项             | 方案                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------ |
-| 路由方案           | React Router v6（`react-router-dom`），使用 `HashRouter`（Electron 兼容性更好）            |
-| 页面列表           | Home（首页/欢迎页）、Chat（AI 对话占位）、Plugins（插件管理占位）、Settings（设置占位）    |
-| 状态管理           | Zustand v5+，`src/renderer/src/stores/app.store.ts`                                        |
-| 布局结构           | 左侧 Sidebar（可折叠）+ 右侧内容区（Router Outlet）                                        |
-| 图标库             | `lucide-react`（ARCHITECTURE.md 未限定，选择轻量且与 shadcn/ui 一致的方案）                |
-| shadcn/ui 新增组件 | 可按需添加 `Tooltip`、`Separator` 等，通过 `npx shadcn@latest add` 安装                    |
-| 组件文件命名       | PascalCase：`AppLayout.tsx`、`Sidebar.tsx`（遵循 CLAUDE.md 命名约定）                      |
-| 测试方式           | Zustand store 用纯单元测试（node 环境即可）；React 组件用 `@testing-library/react` + jsdom |
+| 决策项             | 方案                                                                                                                 |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 页面切换方案       | Zustand `currentPage` + 条件渲染（不引入 React Router，4 个固定页面无需 URL 路由）                                   |
+| 页面列表           | Home（首页/欢迎页）、Chat（AI 对话占位）、Plugins（插件管理占位）、Settings（设置占位）                              |
+| 状态管理           | Zustand v5+，`src/renderer/src/stores/app.store.ts`                                                                  |
+| PageId 类型定义    | 在 store 文件中定义并导出 `type PageId = 'home' \| 'chat' \| 'plugins' \| 'settings'`，供组件引用                    |
+| 布局结构           | 左侧 Sidebar（可折叠）+ 右侧内容区（根据 `currentPage` 条件渲染）                                                    |
+| 图标库             | `lucide-react`（ARCHITECTURE.md 未限定，选择轻量且与 shadcn/ui 一致的方案）                                          |
+| shadcn/ui 新增组件 | 可按需添加 `Tooltip`、`Separator` 等，通过 `npx shadcn@latest add` 安装                                              |
+| 组件文件命名       | PascalCase：`AppLayout.tsx`、`Sidebar.tsx`（遵循 CLAUDE.md 命名约定）                                                |
+| 测试方式           | Zustand store 用纯单元测试（node 环境即可）；React 组件用 `@testing-library/react` + jsdom                           |
+| 主题默认值         | 默认 `'dark'`（Electron 桌面应用惯例）；此阶段仅在 store 中定义，不实际应用到 DOM；1.6 阶段接入持久化和 CSS 变量切换 |
+| 侧边栏折叠实现     | 折叠时文字标签使用 `sr-only` 类隐藏（保留在 DOM 中供屏幕阅读器访问），**不使用条件渲染移除**                         |
+| 导航项 DOM 约定    | 每个导航项容器必须带 `data-testid="nav-{pageId}"` 和 `data-active="true/false"` 属性                                 |
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 App Shell 组件和 Zustand store，使测试通过
-- [ ] Refactor：整理组件结构和样式，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 App Shell 组件和 Zustand store，使测试通过
+- [x] Refactor：整理组件结构和样式，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
 ```typescript
 // === src/renderer/src/stores/app.store.test.ts ===
+// 注意：Zustand v5 无内置 getInitialState()，需从 store 文件手动导出 initialState
+import { useAppStore, initialAppState } from './app.store'
+
 describe('useAppStore', () => {
   beforeEach(() => {
-    // 重置 store
-    useAppStore.setState(useAppStore.getInitialState())
+    // 用导出的初始状态重置 store
+    useAppStore.setState(initialAppState, true)
   })
 
   describe('导航状态', () => {
@@ -1443,93 +1451,132 @@ describe('useAppStore', () => {
 })
 
 // === src/renderer/src/components/Layout/AppLayout.test.tsx ===
+import { useAppStore, initialAppState } from '../../stores/app.store'
+
 describe('AppLayout', () => {
+  beforeEach(() => {
+    useAppStore.setState(initialAppState, true)
+  })
+
   // 正常路径
   it('渲染侧边栏和内容区域', () => {
-    render(<MemoryRouter><AppLayout /></MemoryRouter>)
+    render(<AppLayout />)
     expect(screen.getByTestId('sidebar')).toBeInTheDocument()
     expect(screen.getByTestId('content')).toBeInTheDocument()
+  })
+
+  // 页面切换：根据 currentPage 渲染对应组件
+  it('默认渲染 Home 页面', () => {
+    render(<AppLayout />)
+    expect(screen.getByTestId('page-home')).toBeInTheDocument()
+  })
+
+  it('currentPage 为 chat 时渲染 ChatView', () => {
+    useAppStore.setState({ currentPage: 'chat' })
+    render(<AppLayout />)
+    expect(screen.getByTestId('page-chat')).toBeInTheDocument()
   })
 })
 
 // === src/renderer/src/components/Sidebar/Sidebar.test.tsx ===
+import { useAppStore, initialAppState } from '../../stores/app.store'
+
 describe('Sidebar', () => {
-  // 正常路径
+  beforeEach(() => {
+    useAppStore.setState(initialAppState, true)
+  })
+
+  // 正常路径：通过 data-testid 定位导航项，避免文本正则匹配的脆弱性
   it('渲染所有导航项', () => {
-    render(<MemoryRouter><Sidebar /></MemoryRouter>)
-    expect(screen.getByText(/home/i)).toBeInTheDocument()
-    expect(screen.getByText(/chat/i)).toBeInTheDocument()
-    expect(screen.getByText(/plugin/i)).toBeInTheDocument()
-    expect(screen.getByText(/setting/i)).toBeInTheDocument()
+    render(<Sidebar />)
+    expect(screen.getByTestId('nav-home')).toBeInTheDocument()
+    expect(screen.getByTestId('nav-chat')).toBeInTheDocument()
+    expect(screen.getByTestId('nav-plugins')).toBeInTheDocument()
+    expect(screen.getByTestId('nav-settings')).toBeInTheDocument()
   })
 
-  // 交互验证
-  it('点击导航项切换路由', async () => {
-    render(<MemoryRouter><Sidebar /></MemoryRouter>)
-    await userEvent.click(screen.getByText(/chat/i))
-    // 验证路由或 store 状态变化
+  // 交互验证：点击导航项更新 store
+  it('点击导航项切换当前页面', async () => {
+    render(<Sidebar />)
+    await userEvent.click(screen.getByTestId('nav-chat'))
+    expect(useAppStore.getState().currentPage).toBe('chat')
   })
 
-  // 边界条件：折叠状态
-  it('折叠状态下只显示图标', () => {
+  // 高亮当前活跃项：直接通过 data-testid 获取导航项容器，检查 data-active
+  it('当前页面的导航项具有 active 样式', () => {
+    useAppStore.setState({ currentPage: 'settings' })
+    render(<Sidebar />)
+    expect(screen.getByTestId('nav-settings')).toHaveAttribute('data-active', 'true')
+    expect(screen.getByTestId('nav-home')).toHaveAttribute('data-active', 'false')
+  })
+
+  // 边界条件：折叠状态下文字标签用 sr-only 隐藏（保留在 DOM 中），不可见但可被屏幕阅读器访问
+  it('折叠状态下导航项文字标签不可见', () => {
     useAppStore.setState({ sidebarCollapsed: true })
-    render(<MemoryRouter><Sidebar /></MemoryRouter>)
-    // 验证文字标签不可见
+    render(<Sidebar />)
+    // 文字仍在 DOM 中（sr-only），但视觉不可见
+    const label = screen.getByTestId('nav-home').querySelector('[class*="sr-only"]')
+    expect(label).toBeInTheDocument()
   })
 })
 ```
 
 **执行步骤**：
 
-1. **（Red）** 安装依赖：`pnpm add zustand react-router-dom lucide-react`
-2. 编写 `src/renderer/src/stores/app.store.test.ts`：测试 Zustand store 的导航/侧边栏/主题状态
-3. 编写 `src/renderer/src/components/Layout/AppLayout.test.tsx`：测试布局渲染
-4. 编写 `src/renderer/src/components/Sidebar/Sidebar.test.tsx`：测试导航项渲染和交互
+1. **（准备）** 安装依赖：`pnpm add zustand lucide-react`
+2. **（Red）** 编写 `src/renderer/src/stores/app.store.test.ts`：测试 Zustand store 的导航/侧边栏/主题状态
+3. **（Red）** 编写 `src/renderer/src/components/Layout/AppLayout.test.tsx`：测试布局渲染和页面条件渲染
+4. **（Red）** 编写 `src/renderer/src/components/Sidebar/Sidebar.test.tsx`：测试导航项渲染、点击切换和折叠状态
 5. 运行 `pnpm test`，确认全部失败
 6. **（Green）** 实现 `src/renderer/src/stores/app.store.ts`：
+   - 导出 `type PageId = 'home' | 'chat' | 'plugins' | 'settings'`
+   - 导出 `initialAppState` 对象（包含所有初始状态值，供测试 reset 使用）
    - 导出 `useAppStore`（Zustand store）
-   - 状态：`currentPage`、`sidebarCollapsed`、`theme`、`loading`
-   - Actions：`setCurrentPage`、`setSidebarCollapsed`、`setTheme`、`setLoading`
-7. **（Green）** 实现 `src/renderer/src/components/Layout/AppLayout.tsx`：
-   - 左侧 Sidebar + 右侧 `<Outlet />` 布局
+   - 状态：`currentPage: PageId`、`sidebarCollapsed: boolean`、`theme: 'light' | 'dark'`
+   - Actions：`setCurrentPage`、`setSidebarCollapsed`、`setTheme`
+7. **（Green）** 创建页面占位组件（每个组件渲染标题文字 + `data-testid="page-{name}"`）：
+   - `src/renderer/src/features/home/HomeView.tsx`（首页/欢迎页）
+   - `src/renderer/src/features/chat/ChatView.tsx`（AI 对话占位）
+   - `src/renderer/src/features/plugins/PluginListView.tsx`（插件管理占位）
+   - `src/renderer/src/features/settings/SettingsView.tsx`（设置占位）
+8. **（Green）** 实现 `src/renderer/src/components/Layout/AppLayout.tsx`：
+   - 左侧 Sidebar + 右侧内容区布局
+   - 内容区根据 `useAppStore` 的 `currentPage` 条件渲染对应页面组件
    - 使用 Tailwind CSS 样式
-8. **（Green）** 实现 `src/renderer/src/components/Sidebar/Sidebar.tsx`：
+9. **（Green）** 实现 `src/renderer/src/components/Sidebar/Sidebar.tsx`：
    - 4 个导航项：Home、Chat、Plugins、Settings
+   - 每个导航项容器带 `data-testid="nav-{pageId}"` 和 `data-active="true"/"false"` 属性
    - 图标使用 `lucide-react`
-   - 支持折叠/展开
-   - 高亮当前活跃项
-9. **（Green）** 创建页面占位组件：
-   - `src/renderer/src/features/chat/ChatView.tsx`（占位）
-   - `src/renderer/src/features/plugins/PluginListView.tsx`（占位）
-   - `src/renderer/src/features/settings/SettingsView.tsx`（占位）
-   - Home 页可直接在 `App.tsx` 中内联
-10. **（Green）** 更新 `src/renderer/src/App.tsx`：集成路由 + 布局
+   - 点击导航项调用 `setCurrentPage()` 切换页面
+   - 支持折叠/展开：折叠时文字标签添加 `sr-only` 类（CSS 隐藏，保留 DOM 元素），展开时正常显示
+   - 高亮当前活跃项（通过 `data-active` 属性标识）
+10. **（Green）** 更新 `src/renderer/src/App.tsx`：渲染 `<AppLayout />`
 11. 运行 `pnpm test`，确认测试通过
 12. **（Refactor）** 整理组件结构和 CSS 类名，再次运行 `pnpm test` 确认通过
 
 **验收标准**：
 
-- [ ] 安装 `zustand`、`react-router-dom`、`lucide-react`（版本锁定在 `pnpm-lock.yaml`）
-- [ ] `src/renderer/src/stores/app.store.ts` 存在：Zustand store 含导航/侧边栏/主题状态
-- [ ] `src/renderer/src/components/Layout/AppLayout.tsx` 存在：左侧导航 + 右侧内容区布局
-- [ ] `src/renderer/src/components/Sidebar/Sidebar.tsx` 存在：可折叠侧边栏，图标导航
-- [ ] 4 个页面占位组件存在（Home、ChatView、PluginListView、SettingsView）
-- [ ] `src/renderer/src/App.tsx` 集成路由，点击导航可切换页面
-- [ ] 使用 shadcn/ui 组件构建界面
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] Zustand store 单元测试通过
-- [ ] 组件渲染测试通过
-- [ ] `pnpm dev` 启动无报错，可看到侧边栏 + 内容区布局
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + 运行态截图（可选）
+- [x] 安装 `zustand`、`lucide-react`（版本锁定在 `pnpm-lock.yaml`）
+- [x] `src/renderer/src/stores/app.store.ts` 存在：Zustand store 含 `currentPage`/`sidebarCollapsed`/`theme` 状态
+- [x] `src/renderer/src/components/Layout/AppLayout.tsx` 存在：左侧 Sidebar + 右侧内容区，内容区根据 `currentPage` 条件渲染
+- [x] `src/renderer/src/components/Sidebar/Sidebar.tsx` 存在：可折叠侧边栏，图标导航，点击切换 `currentPage`
+- [x] 4 个页面占位组件存在：`HomeView.tsx`、`ChatView.tsx`、`PluginListView.tsx`、`SettingsView.tsx`
+- [x] `src/renderer/src/App.tsx` 渲染 `<AppLayout />`，点击侧边栏导航可切换页面
+- [x] 使用 shadcn/ui 组件（如 `Button`、`Tooltip`、`Separator`，按需通过 `npx shadcn@latest add` 安装）
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] Zustand store 单元测试通过
+- [x] 组件渲染测试通过（含页面切换、导航点击、折叠状态断言）
+- [x] `pnpm dev` 启动无报错，可看到侧边栏 + 内容区布局
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + 运行态截图（可选）
 
 **交付物**：
 
-- [ ] `src/renderer/src/stores/app.store.ts` + 测试
-- [ ] `src/renderer/src/components/Layout/AppLayout.tsx` + 测试
-- [ ] `src/renderer/src/components/Sidebar/Sidebar.tsx` + 测试
-- [ ] 页面占位组件（ChatView、PluginListView、SettingsView）
-- [ ] `src/renderer/src/App.tsx`（路由集成更新）
+- [x] `src/renderer/src/stores/app.store.ts` + 测试
+- [x] `src/renderer/src/components/Layout/AppLayout.tsx` + 测试
+- [x] `src/renderer/src/components/Sidebar/Sidebar.tsx` + 测试
+- [x] 页面占位组件（HomeView、ChatView、PluginListView、SettingsView）
+- [x] `src/renderer/src/App.tsx`（集成 AppLayout）
 
 ---
 
