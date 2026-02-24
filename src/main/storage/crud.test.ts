@@ -1,328 +1,330 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { createTestDatabase } from './test-utils'
-import type { Database } from './database'
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createTestDatabase } from "./test-utils";
+import type { Database } from "./database";
 
 // 注意：better-sqlite3 + drizzle-orm 的 better-sqlite3 driver 均为同步 API，
 // 所有 CRUD 函数为同步函数，测试中不使用 async/await。
 
-describe('Schema CRUD 操作', () => {
-  let database: Database
-  let crud: ReturnType<typeof import('./crud').createCrud>
+describe("Schema CRUD 操作", () => {
+  let database: Database;
+  let crud: ReturnType<typeof import("./crud").createCrud>;
 
   beforeEach(() => {
-    const testDb = createTestDatabase()
-    database = testDb.database
-    crud = testDb.crud
-  })
+    const testDb = createTestDatabase();
+    database = testDb.database;
+    crud = testDb.crud;
+  });
 
   afterEach(() => {
-    database.close()
-  })
+    database.close();
+  });
 
-  describe('conversations 表', () => {
+  describe("conversations 表", () => {
     // 正常路径：创建对话
-    it('创建对话并查询', () => {
-      const id = 'conv-001'
+    it("创建对话并查询", () => {
+      const id = "conv-001";
       crud.insertConversation({
         id,
-        title: 'Test Chat',
+        title: "Test Chat",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
-      const conv = crud.getConversation(id)
-      expect(conv).toBeDefined()
-      expect(conv!.title).toBe('Test Chat')
-    })
+      });
+      const conv = crud.getConversation(id);
+      expect(conv).toBeDefined();
+      expect(conv!.title).toBe("Test Chat");
+    });
 
     // 正常路径：更新对话标题和 updatedAt
-    it('更新对话标题和 updatedAt', () => {
-      const id = 'conv-002'
-      const now = Date.now()
-      crud.insertConversation({ id, title: 'Old', createdAt: now, updatedAt: now })
-      const later = now + 5000
-      crud.updateConversation(id, { title: 'New Title', updatedAt: later })
-      const conv = crud.getConversation(id)
-      expect(conv!.title).toBe('New Title')
-      expect(conv!.updatedAt).toBe(later)
-    })
+    it("更新对话标题和 updatedAt", () => {
+      const id = "conv-002";
+      const now = Date.now();
+      crud.insertConversation({ id, title: "Old", createdAt: now, updatedAt: now });
+      const later = now + 5000;
+      crud.updateConversation(id, { title: "New Title", updatedAt: later });
+      const conv = crud.getConversation(id);
+      expect(conv!.title).toBe("New Title");
+      expect(conv!.updatedAt).toBe(later);
+    });
 
     // 正常路径：删除对话（无关联消息）
-    it('删除对话', () => {
-      const id = 'conv-003'
+    it("删除对话", () => {
+      const id = "conv-003";
       crud.insertConversation({
         id,
-        title: 'To Delete',
+        title: "To Delete",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
-      crud.deleteConversation(id)
-      const conv = crud.getConversation(id)
-      expect(conv).toBeUndefined()
-    })
+      });
+      crud.deleteConversation(id);
+      const conv = crud.getConversation(id);
+      expect(conv).toBeUndefined();
+    });
 
     // 正常路径：删除对话时级联删除关联消息（ON DELETE CASCADE）
-    it('删除对话时级联删除关联消息', () => {
+    it("删除对话时级联删除关联消息", () => {
       crud.insertConversation({
-        id: 'conv-cascade',
-        title: 'Cascade Test',
+        id: "conv-cascade",
+        title: "Cascade Test",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
+      });
       crud.insertMessage({
-        id: 'msg-cascade-1',
-        conversationId: 'conv-cascade',
-        role: 'user',
-        content: 'Hello',
+        id: "msg-cascade-1",
+        conversationId: "conv-cascade",
+        role: "user",
+        content: "Hello",
         createdAt: Date.now()
-      })
+      });
       crud.insertMessage({
-        id: 'msg-cascade-2',
-        conversationId: 'conv-cascade',
-        role: 'assistant',
-        content: 'Hi',
+        id: "msg-cascade-2",
+        conversationId: "conv-cascade",
+        role: "assistant",
+        content: "Hi",
         createdAt: Date.now()
-      })
-      crud.deleteConversation('conv-cascade')
-      const messages = crud.getMessagesByConversation('conv-cascade')
-      expect(messages).toHaveLength(0)
-    })
+      });
+      crud.deleteConversation("conv-cascade");
+      const messages = crud.getMessagesByConversation("conv-cascade");
+      expect(messages).toHaveLength(0);
+    });
 
     // 边界条件：查询不存在的对话
-    it('查询不存在的对话返回 undefined', () => {
-      const conv = crud.getConversation('nonexistent')
-      expect(conv).toBeUndefined()
-    })
-  })
+    it("查询不存在的对话返回 undefined", () => {
+      const conv = crud.getConversation("nonexistent");
+      expect(conv).toBeUndefined();
+    });
+  });
 
-  describe('messages 表', () => {
+  describe("messages 表", () => {
     // 每个 messages 测试前先创建所需的 conversation
     beforeEach(() => {
       crud.insertConversation({
-        id: 'conv-msg',
-        title: 'Chat',
+        id: "conv-msg",
+        title: "Chat",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
-    })
+      });
+    });
 
     // 正常路径：创建消息（仅必填字段）
-    it('创建消息并查询', () => {
+    it("创建消息并查询", () => {
       crud.insertMessage({
-        id: 'msg-001',
-        conversationId: 'conv-msg',
-        role: 'user',
-        content: 'Hello',
+        id: "msg-001",
+        conversationId: "conv-msg",
+        role: "user",
+        content: "Hello",
         createdAt: Date.now()
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages).toHaveLength(1)
-      expect(messages[0].content).toBe('Hello')
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages).toHaveLength(1);
+      expect(messages[0].content).toBe("Hello");
       // toolCalls 和 toolResult 为可选字段，未传入时应为 null
-      expect(messages[0].toolCalls).toBeNull()
-      expect(messages[0].toolResult).toBeNull()
-    })
+      expect(messages[0].toolCalls).toBeNull();
+      expect(messages[0].toolResult).toBeNull();
+    });
 
     // 正常路径：创建带 toolCalls 和 toolResult 的消息
-    it('创建带 tool 字段的消息', () => {
-      const toolCalls = JSON.stringify([{ id: 'call-1', name: 'readFile', args: { path: '/tmp' } }])
-      const toolResult = JSON.stringify({ content: 'file content' })
+    it("创建带 tool 字段的消息", () => {
+      const toolCalls = JSON.stringify([
+        { id: "call-1", name: "readFile", args: { path: "/tmp" } }
+      ]);
+      const toolResult = JSON.stringify({ content: "file content" });
       crud.insertMessage({
-        id: 'msg-tool',
-        conversationId: 'conv-msg',
-        role: 'assistant',
-        content: 'Let me read that file.',
+        id: "msg-tool",
+        conversationId: "conv-msg",
+        role: "assistant",
+        content: "Let me read that file.",
         toolCalls,
         toolResult,
         createdAt: Date.now()
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages[0].toolCalls).toBe(toolCalls)
-      expect(messages[0].toolResult).toBe(toolResult)
-    })
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages[0].toolCalls).toBe(toolCalls);
+      expect(messages[0].toolResult).toBe(toolResult);
+    });
 
     // 正常路径：role 枚举校验（system、tool 角色）
-    it('支持所有 role 值：user, assistant, system, tool', () => {
-      const roles = ['user', 'assistant', 'system', 'tool'] as const
+    it("支持所有 role 值：user, assistant, system, tool", () => {
+      const roles = ["user", "assistant", "system", "tool"] as const;
       roles.forEach((role, i) => {
         crud.insertMessage({
           id: `msg-role-${i}`,
-          conversationId: 'conv-msg',
+          conversationId: "conv-msg",
           role,
           content: `${role} message`,
           createdAt: Date.now() + i
-        })
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages).toHaveLength(4)
-    })
+        });
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages).toHaveLength(4);
+    });
 
     // 正常路径：按时间排序
-    it('消息按创建时间排序', () => {
-      const now = Date.now()
+    it("消息按创建时间排序", () => {
+      const now = Date.now();
       crud.insertMessage({
-        id: 'msg-1',
-        conversationId: 'conv-msg',
-        role: 'user',
-        content: 'first',
+        id: "msg-1",
+        conversationId: "conv-msg",
+        role: "user",
+        content: "first",
         createdAt: now
-      })
+      });
       crud.insertMessage({
-        id: 'msg-2',
-        conversationId: 'conv-msg',
-        role: 'assistant',
-        content: 'second',
+        id: "msg-2",
+        conversationId: "conv-msg",
+        role: "assistant",
+        content: "second",
         createdAt: now + 100
-      })
+      });
       crud.insertMessage({
-        id: 'msg-3',
-        conversationId: 'conv-msg',
-        role: 'user',
-        content: 'third',
+        id: "msg-3",
+        conversationId: "conv-msg",
+        role: "user",
+        content: "third",
         createdAt: now + 200
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages.map((m) => m.content)).toEqual(['first', 'second', 'third'])
-    })
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages.map((m) => m.content)).toEqual(["first", "second", "third"]);
+    });
 
     // 错误处理：外键约束（需要 PRAGMA foreign_keys = ON）
-    it('引用不存在的 conversationId 抛错', () => {
+    it("引用不存在的 conversationId 抛错", () => {
       expect(() =>
         crud.insertMessage({
-          id: 'msg-bad',
-          conversationId: 'nonexistent',
-          role: 'user',
-          content: 'x',
+          id: "msg-bad",
+          conversationId: "nonexistent",
+          role: "user",
+          content: "x",
           createdAt: Date.now()
         })
-      ).toThrow()
-    })
-  })
+      ).toThrow();
+    });
+  });
 
-  describe('settings 表', () => {
+  describe("settings 表", () => {
     // 正常路径：设置和获取
-    it('保存和获取设置值', () => {
-      crud.setSetting('theme', 'dark')
-      const value = crud.getSetting('theme')
-      expect(value).toBe('dark')
-    })
+    it("保存和获取设置值", () => {
+      crud.setSetting("theme", "dark");
+      const value = crud.getSetting("theme");
+      expect(value).toBe("dark");
+    });
 
     // 正常路径：更新已有设置（upsert 语义）
-    it('更新已有设置值', () => {
-      crud.setSetting('theme', 'light')
-      crud.setSetting('theme', 'dark')
-      const value = crud.getSetting('theme')
-      expect(value).toBe('dark')
-    })
+    it("更新已有设置值", () => {
+      crud.setSetting("theme", "light");
+      crud.setSetting("theme", "dark");
+      const value = crud.getSetting("theme");
+      expect(value).toBe("dark");
+    });
 
     // 正常路径：删除设置（删除整行记录）
-    it('删除设置', () => {
-      crud.setSetting('theme', 'dark')
-      crud.deleteSetting('theme')
-      const value = crud.getSetting('theme')
-      expect(value).toBeUndefined()
-    })
+    it("删除设置", () => {
+      crud.setSetting("theme", "dark");
+      crud.deleteSetting("theme");
+      const value = crud.getSetting("theme");
+      expect(value).toBeUndefined();
+    });
 
     // 边界条件：获取不存在的设置
-    it('获取不存在的设置返回 undefined', () => {
-      const value = crud.getSetting('nonexistent')
-      expect(value).toBeUndefined()
-    })
+    it("获取不存在的设置返回 undefined", () => {
+      const value = crud.getSetting("nonexistent");
+      expect(value).toBeUndefined();
+    });
 
     // 正常路径：JSON 序列化的复杂值（由调用者负责序列化）
-    it('支持 JSON 序列化的复杂值', () => {
-      const config = { provider: 'openai', model: 'gpt-4', temperature: 0.7 }
-      crud.setSetting('ai', JSON.stringify(config))
-      const value = JSON.parse(crud.getSetting('ai')!)
-      expect(value.provider).toBe('openai')
-    })
+    it("支持 JSON 序列化的复杂值", () => {
+      const config = { provider: "openai", model: "gpt-4", temperature: 0.7 };
+      crud.setSetting("ai", JSON.stringify(config));
+      const value = JSON.parse(crud.getSetting("ai")!);
+      expect(value.provider).toBe("openai");
+    });
 
     // 边界条件：删除不存在的设置不抛错
-    it('删除不存在的设置不抛错', () => {
-      expect(() => crud.deleteSetting('nonexistent')).not.toThrow()
-    })
+    it("删除不存在的设置不抛错", () => {
+      expect(() => crud.deleteSetting("nonexistent")).not.toThrow();
+    });
 
     // 正常路径：获取所有设置
-    it('获取所有设置', () => {
-      crud.setSetting('theme', '"dark"')
-      crud.setSetting('language', '"zh"')
-      const all = crud.getAllSettings()
-      expect(all).toHaveLength(2)
-      expect(all.map((r) => r.key).sort()).toEqual(['language', 'theme'])
-    })
+    it("获取所有设置", () => {
+      crud.setSetting("theme", '"dark"');
+      crud.setSetting("language", '"zh"');
+      const all = crud.getAllSettings();
+      expect(all).toHaveLength(2);
+      expect(all.map((r) => r.key).sort()).toEqual(["language", "theme"]);
+    });
 
     // 边界条件：无设置时返回空数组
-    it('无设置时 getAllSettings 返回空数组', () => {
-      const all = crud.getAllSettings()
-      expect(all).toHaveLength(0)
-    })
+    it("无设置时 getAllSettings 返回空数组", () => {
+      const all = crud.getAllSettings();
+      expect(all).toHaveLength(0);
+    });
 
     // 正常路径：删除所有设置
-    it('删除所有设置', () => {
-      crud.setSetting('theme', '"dark"')
-      crud.setSetting('language', '"zh"')
-      crud.deleteAllSettings()
-      expect(crud.getAllSettings()).toHaveLength(0)
-      expect(crud.getSetting('theme')).toBeUndefined()
-    })
+    it("删除所有设置", () => {
+      crud.setSetting("theme", '"dark"');
+      crud.setSetting("language", '"zh"');
+      crud.deleteAllSettings();
+      expect(crud.getAllSettings()).toHaveLength(0);
+      expect(crud.getSetting("theme")).toBeUndefined();
+    });
 
     // 边界条件：空表时 deleteAllSettings 不抛错
-    it('空表时 deleteAllSettings 不抛错', () => {
-      expect(() => crud.deleteAllSettings()).not.toThrow()
-    })
-  })
+    it("空表时 deleteAllSettings 不抛错", () => {
+      expect(() => crud.deleteAllSettings()).not.toThrow();
+    });
+  });
 
-  describe('plugin_storage 表', () => {
+  describe("plugin_storage 表", () => {
     // 正常路径：按插件 ID + key 存取（value 为原始字符串，调用者负责 JSON 序列化）
-    it('按 pluginId + key 保存和获取', () => {
-      crud.setPluginData('git-helper', 'lastCommit', '"abc123"')
-      const value = crud.getPluginData('git-helper', 'lastCommit')
-      expect(value).toBe('"abc123"')
-    })
+    it("按 pluginId + key 保存和获取", () => {
+      crud.setPluginData("git-helper", "lastCommit", '"abc123"');
+      const value = crud.getPluginData("git-helper", "lastCommit");
+      expect(value).toBe('"abc123"');
+    });
 
     // 正常路径：更新已有 key 的值（upsert 语义）
-    it('更新已有 key 的值', () => {
-      crud.setPluginData('plugin-a', 'config', '"old"')
-      crud.setPluginData('plugin-a', 'config', '"new"')
-      expect(crud.getPluginData('plugin-a', 'config')).toBe('"new"')
-    })
+    it("更新已有 key 的值", () => {
+      crud.setPluginData("plugin-a", "config", '"old"');
+      crud.setPluginData("plugin-a", "config", '"new"');
+      expect(crud.getPluginData("plugin-a", "config")).toBe('"new"');
+    });
 
     // 边界条件：不同插件相同 key 不冲突
-    it('不同插件的相同 key 互不干扰', () => {
-      crud.setPluginData('plugin-a', 'config', '"a"')
-      crud.setPluginData('plugin-b', 'config', '"b"')
-      expect(crud.getPluginData('plugin-a', 'config')).toBe('"a"')
-      expect(crud.getPluginData('plugin-b', 'config')).toBe('"b"')
-    })
+    it("不同插件的相同 key 互不干扰", () => {
+      crud.setPluginData("plugin-a", "config", '"a"');
+      crud.setPluginData("plugin-b", "config", '"b"');
+      expect(crud.getPluginData("plugin-a", "config")).toBe('"a"');
+      expect(crud.getPluginData("plugin-b", "config")).toBe('"b"');
+    });
 
     // 正常路径：删除单条插件数据
-    it('删除指定 pluginId + key 的数据', () => {
-      crud.setPluginData('plugin-a', 'config', '"val"')
-      crud.deletePluginData('plugin-a', 'config')
-      expect(crud.getPluginData('plugin-a', 'config')).toBeUndefined()
-    })
+    it("删除指定 pluginId + key 的数据", () => {
+      crud.setPluginData("plugin-a", "config", '"val"');
+      crud.deletePluginData("plugin-a", "config");
+      expect(crud.getPluginData("plugin-a", "config")).toBeUndefined();
+    });
 
     // 正常路径：删除插件全部数据
-    it('删除插件全部数据', () => {
-      crud.setPluginData('plugin-a', 'k1', '"v1"')
-      crud.setPluginData('plugin-a', 'k2', '"v2"')
-      crud.setPluginData('plugin-b', 'k1', '"other"')
-      crud.deleteAllPluginData('plugin-a')
-      expect(crud.getPluginData('plugin-a', 'k1')).toBeUndefined()
-      expect(crud.getPluginData('plugin-a', 'k2')).toBeUndefined()
+    it("删除插件全部数据", () => {
+      crud.setPluginData("plugin-a", "k1", '"v1"');
+      crud.setPluginData("plugin-a", "k2", '"v2"');
+      crud.setPluginData("plugin-b", "k1", '"other"');
+      crud.deleteAllPluginData("plugin-a");
+      expect(crud.getPluginData("plugin-a", "k1")).toBeUndefined();
+      expect(crud.getPluginData("plugin-a", "k2")).toBeUndefined();
       // 不影响其他插件
-      expect(crud.getPluginData('plugin-b', 'k1')).toBe('"other"')
-    })
+      expect(crud.getPluginData("plugin-b", "k1")).toBe('"other"');
+    });
 
     // 边界条件：删除不存在的插件数据不抛错
-    it('删除不存在的插件数据不抛错', () => {
-      expect(() => crud.deletePluginData('unknown', 'missing')).not.toThrow()
-      expect(() => crud.deleteAllPluginData('unknown')).not.toThrow()
-    })
+    it("删除不存在的插件数据不抛错", () => {
+      expect(() => crud.deletePluginData("unknown", "missing")).not.toThrow();
+      expect(() => crud.deleteAllPluginData("unknown")).not.toThrow();
+    });
 
     // 边界条件：获取不存在的 key 返回 undefined
-    it('获取不存在的 key 返回 undefined', () => {
-      const value = crud.getPluginData('unknown', 'missing')
-      expect(value).toBeUndefined()
-    })
-  })
-})
+    it("获取不存在的 key 返回 undefined", () => {
+      const value = crud.getPluginData("unknown", "missing");
+      expect(value).toBeUndefined();
+    });
+  });
+});

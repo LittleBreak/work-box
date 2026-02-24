@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { Card, CardHeader, CardTitle, CardContent } from './card'
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { Card, CardHeader, CardTitle, CardContent } from "./card";
 
-describe('Card', () => {
+describe("Card", () => {
   // 正常路径
-  it('renders Card with title and content', () => {
+  it("renders Card with title and content", () => {
     render(
       <Card>
         <CardHeader>
@@ -12,14 +12,14 @@ describe('Card', () => {
         </CardHeader>
         <CardContent>Content</CardContent>
       </Card>
-    )
-    expect(screen.getByText('Title')).toBeInTheDocument()
-    expect(screen.getByText('Content')).toBeInTheDocument()
-  })
+    );
+    expect(screen.getByText("Title")).toBeInTheDocument();
+    expect(screen.getByText("Content")).toBeInTheDocument();
+  });
 
   // 边界条件：空内容
-  it('renders empty Card without crashing', () => {
-    render(<Card />)
-    expect(document.querySelector('[class]')).toBeInTheDocument()
-  })
-})
+  it("renders empty Card without crashing", () => {
+    render(<Card />);
+    expect(document.querySelector("[class]")).toBeInTheDocument();
+  });
+});

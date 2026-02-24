@@ -3,11 +3,11 @@
  */
 export interface PluginManifest {
   /** Unique plugin identifier */
-  name: string
+  name: string;
   /** Semantic version string */
-  version: string
+  version: string;
   /** Human-readable description */
-  description?: string
+  description?: string;
   /** Plugin author */
-  author?: string
+  author?: string;
 }

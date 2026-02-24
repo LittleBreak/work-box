@@ -4,5 +4,5 @@ export function ChatView(): React.JSX.Element {
       <h1 className="text-2xl font-bold">Chat</h1>
       <p className="text-muted-foreground">AI Chat — coming soon</p>
     </div>
-  )
+  );
 }

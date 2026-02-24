@@ -1,54 +1,54 @@
-import { useEffect, useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
-import { Label } from '@renderer/components/ui/label'
-import { Input } from '@renderer/components/ui/input'
-import { Button } from '@renderer/components/ui/button'
+import { useEffect, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
+import { Label } from "@renderer/components/ui/label";
+import { Input } from "@renderer/components/ui/input";
+import { Button } from "@renderer/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@renderer/components/ui/select'
-import { Slider } from '@renderer/components/ui/slider'
-import { RadioGroup, RadioGroupItem } from '@renderer/components/ui/radio-group'
-import { useAppStore } from '@renderer/stores/app.store'
-import type { AppSettings } from '@shared/types'
-import { DEFAULT_SETTINGS } from '@shared/types'
+} from "@renderer/components/ui/select";
+import { Slider } from "@renderer/components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "@renderer/components/ui/radio-group";
+import { useAppStore } from "@renderer/stores/app.store";
+import type { AppSettings } from "@shared/types";
+import { DEFAULT_SETTINGS } from "@shared/types";
 
 export function SettingsView(): React.JSX.Element {
-  const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS })
-  const [loaded, setLoaded] = useState(false)
+  const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     window.workbox.settings.get().then((data) => {
-      setSettings(data)
-      setLoaded(true)
-    })
-  }, [])
+      setSettings(data);
+      setLoaded(true);
+    });
+  }, []);
 
   const handleThemeChange = (value: string): void => {
-    const theme = value as 'light' | 'dark'
-    setSettings((prev) => ({ ...prev, theme }))
-    useAppStore.getState().setTheme(theme)
-  }
+    const theme = value as "light" | "dark";
+    setSettings((prev) => ({ ...prev, theme }));
+    useAppStore.getState().setTheme(theme);
+  };
 
   const handleSave = async (): Promise<void> => {
-    await window.workbox.settings.update(settings)
-  }
+    await window.workbox.settings.update(settings);
+  };
 
   const handleReset = async (): Promise<void> => {
-    await window.workbox.settings.reset()
-    setSettings({ ...DEFAULT_SETTINGS })
-    useAppStore.getState().setTheme(DEFAULT_SETTINGS.theme)
-  }
+    await window.workbox.settings.reset();
+    setSettings({ ...DEFAULT_SETTINGS });
+    useAppStore.getState().setTheme(DEFAULT_SETTINGS.theme);
+  };
 
   if (!loaded) {
     return (
       <div data-testid="page-settings" className="flex flex-col gap-4 p-6">
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
-    )
+    );
   }
 
   return (
@@ -83,7 +83,7 @@ export function SettingsView(): React.JSX.Element {
             <Select
               value={settings.language}
               onValueChange={(value) =>
-                setSettings((prev) => ({ ...prev, language: value as 'en' | 'zh' }))
+                setSettings((prev) => ({ ...prev, language: value as "en" | "zh" }))
               }
             >
               <SelectTrigger className="w-48">
@@ -106,7 +106,7 @@ export function SettingsView(): React.JSX.Element {
               onValueChange={(value) =>
                 setSettings((prev) => ({
                   ...prev,
-                  aiProvider: value as 'openai' | 'claude' | 'custom'
+                  aiProvider: value as "openai" | "claude" | "custom"
                 }))
               }
             >
@@ -180,5 +180,5 @@ export function SettingsView(): React.JSX.Element {
         </Button>
       </div>
     </div>
-  )
+  );
 }

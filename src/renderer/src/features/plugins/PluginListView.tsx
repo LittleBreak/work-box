@@ -4,5 +4,5 @@ export function PluginListView(): React.JSX.Element {
       <h1 className="text-2xl font-bold">Plugins</h1>
       <p className="text-muted-foreground">Plugin management — coming soon</p>
     </div>
-  )
+  );
 }

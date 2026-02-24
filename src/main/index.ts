@@ -1,10 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { registerIPCHandlers } from './ipc/register'
-import { Database } from './storage/database'
-import { createCrud } from './storage/crud'
-import icon from '../../resources/icon.png?asset'
+import { app, shell, BrowserWindow, ipcMain } from "electron";
+import { join } from "path";
+import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { registerIPCHandlers } from "./ipc/register";
+import { Database } from "./storage/database";
+import { createCrud } from "./storage/crud";
+import icon from "../../resources/icon.png?asset";
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -12,57 +12,57 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
     }
-  })
+  });
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+  mainWindow.on("ready-to-show", () => {
+    mainWindow.show();
+  });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: "deny" };
+  });
 
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.workbox')
+  electronApp.setAppUserModelId("com.workbox");
 
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on("ping", () => console.log("pong"));
 
   // 初始化数据库
-  const dbPath = join(app.getPath('userData'), 'workbox.db')
-  const database = new Database(dbPath)
-  database.initialize()
-  const crud = createCrud(database.drizzle)
+  const dbPath = join(app.getPath("userData"), "workbox.db");
+  const database = new Database(dbPath);
+  database.initialize();
+  const crud = createCrud(database.drizzle);
 
-  registerIPCHandlers({ crud })
+  registerIPCHandlers({ crud });
 
-  createWindow()
+  createWindow();
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+  app.on("activate", function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});

@@ -1,16 +1,16 @@
-import { exec as cpExec } from 'child_process'
-import { homedir } from 'os'
-import { IPC_CHANNELS } from '@shared/ipc-channels'
-import type { ExecResult, ExecOptions } from '@shared/types'
+import { exec as cpExec } from "child_process";
+import { homedir } from "os";
+import { IPC_CHANNELS } from "@shared/ipc-channels";
+import type { ExecResult, ExecOptions } from "@shared/types";
 
 // ---- Constants ----
 
-export const DEFAULT_TIMEOUT = 30000
+export const DEFAULT_TIMEOUT = 30000;
 
 /**
  * 敏感环境变量名关键词（大小写不敏感匹配）
  */
-const SENSITIVE_ENV_KEYWORDS = ['KEY', 'SECRET', 'TOKEN', 'PASSWORD', 'CREDENTIAL']
+const SENSITIVE_ENV_KEYWORDS = ["KEY", "SECRET", "TOKEN", "PASSWORD", "CREDENTIAL"];
 
 /**
  * 危险命令正则列表（词边界匹配，避免子串误判）
@@ -23,7 +23,7 @@ const DANGEROUS_PATTERNS: RegExp[] = [
   /\bformat\b/,
   /\bshutdown\b/,
   /\breboot\b/
-]
+];
 
 // ---- Dangerous Command Detection ----
 
@@ -32,7 +32,7 @@ const DANGEROUS_PATTERNS: RegExp[] = [
  * 返回 true 表示命令危险，应被拦截。
  */
 export function isDangerousCommand(command: string): boolean {
-  return DANGEROUS_PATTERNS.some((pattern) => pattern.test(command))
+  return DANGEROUS_PATTERNS.some((pattern) => pattern.test(command));
 }
 
 // ---- Environment Variable Filtering ----
@@ -45,22 +45,22 @@ export function filterEnv(
   processEnv: Record<string, string | undefined>,
   extraEnv?: Record<string, string>
 ): Record<string, string> {
-  const filtered: Record<string, string> = {}
+  const filtered: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(processEnv)) {
-    if (value === undefined) continue
-    const upperKey = key.toUpperCase()
-    const isSensitive = SENSITIVE_ENV_KEYWORDS.some((keyword) => upperKey.includes(keyword))
+    if (value === undefined) continue;
+    const upperKey = key.toUpperCase();
+    const isSensitive = SENSITIVE_ENV_KEYWORDS.some((keyword) => upperKey.includes(keyword));
     if (!isSensitive) {
-      filtered[key] = value
+      filtered[key] = value;
     }
   }
 
   if (extraEnv) {
-    Object.assign(filtered, extraEnv)
+    Object.assign(filtered, extraEnv);
   }
 
-  return filtered
+  return filtered;
 }
 
 // ---- Shell Exec ----
@@ -73,41 +73,41 @@ export function filterEnv(
  */
 export function exec(command: string, options?: ExecOptions): Promise<ExecResult> {
   // 前置校验：空命令
-  if (!command || command.trim() === '') {
-    return Promise.reject(new Error('Command must not be empty'))
+  if (!command || command.trim() === "") {
+    return Promise.reject(new Error("Command must not be empty"));
   }
 
   // 前置校验：危险命令
   if (isDangerousCommand(command)) {
-    return Promise.reject(new Error(`Dangerous command rejected: ${command}`))
+    return Promise.reject(new Error(`Dangerous command rejected: ${command}`));
   }
 
-  const timeout = options?.timeout ?? DEFAULT_TIMEOUT
-  const cwd = options?.cwd ?? homedir()
-  const env = filterEnv(process.env, options?.env)
+  const timeout = options?.timeout ?? DEFAULT_TIMEOUT;
+  const cwd = options?.cwd ?? homedir();
+  const env = filterEnv(process.env, options?.env);
 
   return new Promise<ExecResult>((resolve) => {
     cpExec(command, { timeout, cwd, env }, (error, stdout, stderr) => {
       if (error) {
         // exec error: command failed, timed out, or was killed
-        const exitCode = error.code ?? 1
-        const signal = error.killed ? 'SIGTERM' : (error as { signal?: string }).signal
+        const exitCode = error.code ?? 1;
+        const signal = error.killed ? "SIGTERM" : (error as { signal?: string }).signal;
         resolve({
-          stdout: stdout ?? '',
+          stdout: stdout ?? "",
           stderr: stderr || error.message,
-          exitCode: typeof exitCode === 'number' ? exitCode : 1,
+          exitCode: typeof exitCode === "number" ? exitCode : 1,
           signal: signal ?? undefined
-        })
-        return
+        });
+        return;
       }
 
       resolve({
-        stdout: stdout ?? '',
-        stderr: stderr ?? '',
+        stdout: stdout ?? "",
+        stderr: stderr ?? "",
         exitCode: 0
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
 // ---- IPC Registration ----
@@ -118,5 +118,5 @@ export function exec(command: string, options?: ExecOptions): Promise<ExecResult
 export function setupShellHandlers(ipcMain: Electron.IpcMain): void {
   ipcMain.handle(IPC_CHANNELS.shell.exec, (_event, command: string, options?: ExecOptions) =>
     exec(command, options)
-  )
+  );
 }

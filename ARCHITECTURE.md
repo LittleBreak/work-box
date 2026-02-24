@@ -159,41 +159,41 @@ plugins/
 ### 4.2 插件 API
 
 ```typescript
-import { definePlugin } from '@workbox/plugin-api'
+import { definePlugin } from "@workbox/plugin-api";
 
 export default definePlugin({
-  name: 'git-helper',
+  name: "git-helper",
 
   // 插件激活时调用
   async activate(ctx: PluginContext) {
     // 注册命令
-    ctx.commands.register('quick-commit', async () => {
-      const status = await ctx.shell.exec('git status --porcelain')
+    ctx.commands.register("quick-commit", async () => {
+      const status = await ctx.shell.exec("git status --porcelain");
       if (status.stdout) {
-        await ctx.shell.exec('git add -A && git commit -m "quick commit"')
-        ctx.notification.success('Commit 成功')
+        await ctx.shell.exec('git add -A && git commit -m "quick commit"');
+        ctx.notification.success("Commit 成功");
       }
-    })
+    });
 
     // 注册 AI Tool（供 AI 对话时调用）
     ctx.ai.registerTool({
-      name: 'git_status',
-      description: '获取当前 Git 仓库状态',
+      name: "git_status",
+      description: "获取当前 Git 仓库状态",
       parameters: z.object({
-        path: z.string().optional().describe('仓库路径')
+        path: z.string().optional().describe("仓库路径")
       }),
       handler: async ({ path }) => {
-        const cwd = path || ctx.workspace.rootPath
-        return ctx.shell.exec('git status', { cwd })
+        const cwd = path || ctx.workspace.rootPath;
+        return ctx.shell.exec("git status", { cwd });
       }
-    })
+    });
   },
 
   // 插件停用时调用
   async deactivate() {
     // 清理资源
   }
-})
+});
 ```
 
 ### 4.3 PluginContext API 清单
@@ -201,54 +201,54 @@ export default definePlugin({
 ```typescript
 interface PluginContext {
   // 插件元信息
-  plugin: { id: string; name: string; version: string; dataPath: string }
+  plugin: { id: string; name: string; version: string; dataPath: string };
 
   // 文件系统
   fs: {
-    readFile(path: string): Promise<Buffer>
-    writeFile(path: string, data: Buffer | string): Promise<void>
-    readDir(path: string): Promise<string[]>
-    watch(path: string, callback: WatchCallback): Disposable
-    stat(path: string): Promise<FileStat>
-  }
+    readFile(path: string): Promise<Buffer>;
+    writeFile(path: string, data: Buffer | string): Promise<void>;
+    readDir(path: string): Promise<string[]>;
+    watch(path: string, callback: WatchCallback): Disposable;
+    stat(path: string): Promise<FileStat>;
+  };
 
   // 命令执行
   shell: {
-    exec(command: string, options?: ExecOptions): Promise<ExecResult>
-    spawn(command: string, args: string[], options?: SpawnOptions): ChildProcess
-  }
+    exec(command: string, options?: ExecOptions): Promise<ExecResult>;
+    spawn(command: string, args: string[], options?: SpawnOptions): ChildProcess;
+  };
 
   // AI 能力
   ai: {
-    chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk>
-    registerTool(tool: ToolDefinition): Disposable
-  }
+    chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk>;
+    registerTool(tool: ToolDefinition): Disposable;
+  };
 
   // 命令注册
   commands: {
-    register(id: string, handler: CommandHandler): Disposable
-  }
+    register(id: string, handler: CommandHandler): Disposable;
+  };
 
   // UI 通知
   notification: {
-    success(message: string): void
-    error(message: string): void
-    info(message: string): void
-  }
+    success(message: string): void;
+    error(message: string): void;
+    info(message: string): void;
+  };
 
   // 工作区
   workspace: {
-    rootPath: string
-    selectFolder(): Promise<string | null>
-    selectFile(filters?: FileFilter[]): Promise<string | null>
-  }
+    rootPath: string;
+    selectFolder(): Promise<string | null>;
+    selectFile(filters?: FileFilter[]): Promise<string | null>;
+  };
 
   // 键值存储（插件私有）
   storage: {
-    get<T>(key: string): Promise<T | null>
-    set<T>(key: string, value: T): Promise<void>
-    delete(key: string): Promise<void>
-  }
+    get<T>(key: string): Promise<T | null>;
+    set<T>(key: string, value: T): Promise<void>;
+    delete(key: string): Promise<void>;
+  };
 }
 ```
 
@@ -324,10 +324,10 @@ interface PluginContext {
 
 ```typescript
 interface AIProvider {
-  id: string
-  name: string
-  models: ModelInfo[]
-  chat(params: ChatParams): AsyncIterable<StreamChunk>
+  id: string;
+  name: string;
+  models: ModelInfo[];
+  chat(params: ChatParams): AsyncIterable<StreamChunk>;
 }
 
 // 内置 Provider
@@ -335,7 +335,7 @@ const providers = [
   new OpenAIProvider({ apiKey, baseUrl }), // 兼容 OpenAI 协议
   new ClaudeProvider({ apiKey }), // Anthropic Claude
   new OllamaProvider({ host }) // 本地模型
-]
+];
 ```
 
 ### 5.3 AI Tool Calling 流程
@@ -366,60 +366,60 @@ const providers = [
 // shared/ipc-channels.ts — 统一定义所有 IPC 通道
 export const IPC_CHANNELS = {
   fs: {
-    readFile: 'fs:readFile',
-    writeFile: 'fs:writeFile',
-    readDir: 'fs:readDir',
-    stat: 'fs:stat'
+    readFile: "fs:readFile",
+    writeFile: "fs:writeFile",
+    readDir: "fs:readDir",
+    stat: "fs:stat"
   },
   shell: {
-    exec: 'shell:exec'
+    exec: "shell:exec"
   },
   ai: {
-    chat: 'ai:chat', // 双向流式通信
-    getModels: 'ai:getModels'
+    chat: "ai:chat", // 双向流式通信
+    getModels: "ai:getModels"
   },
   plugin: {
-    list: 'plugin:list',
-    enable: 'plugin:enable',
-    disable: 'plugin:disable'
+    list: "plugin:list",
+    enable: "plugin:enable",
+    disable: "plugin:disable"
   },
   settings: {
-    get: 'settings:get',
-    update: 'settings:update',
-    reset: 'settings:reset'
+    get: "settings:get",
+    update: "settings:update",
+    reset: "settings:reset"
   }
-} as const
+} as const;
 ```
 
 ### 6.2 Preload 安全暴露
 
 ```typescript
 // preload/index.ts
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer } from "electron";
 
-contextBridge.exposeInMainWorld('workbox', {
+contextBridge.exposeInMainWorld("workbox", {
   fs: {
-    readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
-    writeFile: (path: string, data: string) => ipcRenderer.invoke('fs:writeFile', path, data),
-    readDir: (path: string) => ipcRenderer.invoke('fs:readDir', path),
-    stat: (path: string) => ipcRenderer.invoke('fs:stat', path)
+    readFile: (path: string) => ipcRenderer.invoke("fs:readFile", path),
+    writeFile: (path: string, data: string) => ipcRenderer.invoke("fs:writeFile", path, data),
+    readDir: (path: string) => ipcRenderer.invoke("fs:readDir", path),
+    stat: (path: string) => ipcRenderer.invoke("fs:stat", path)
   },
   shell: {
-    exec: (cmd: string) => ipcRenderer.invoke('shell:exec', cmd)
+    exec: (cmd: string) => ipcRenderer.invoke("shell:exec", cmd)
   },
   ai: {
-    chat: (messages: any[]) => ipcRenderer.invoke('ai:chat', messages)
+    chat: (messages: any[]) => ipcRenderer.invoke("ai:chat", messages)
     // onStream 事件监听模式推迟到 Phase 3 AI 任务中实现
   },
   plugin: {
-    list: () => ipcRenderer.invoke('plugin:list')
+    list: () => ipcRenderer.invoke("plugin:list")
   },
   settings: {
-    get: () => ipcRenderer.invoke('settings:get'),
-    update: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:update', settings),
-    reset: () => ipcRenderer.invoke('settings:reset')
+    get: () => ipcRenderer.invoke("settings:get"),
+    update: (settings: Record<string, unknown>) => ipcRenderer.invoke("settings:update", settings),
+    reset: () => ipcRenderer.invoke("settings:reset")
   }
-})
+});
 ```
 
 ---

@@ -110,171 +110,171 @@ Phase 1 共 6 个任务（1.1–1.6），覆盖 IPC 通信基础设施、文件�
 
 ```typescript
 // === src/shared/ipc-channels.test.ts ===
-import { IPC_CHANNELS } from './ipc-channels'
+import { IPC_CHANNELS } from "./ipc-channels";
 
-describe('IPC_CHANNELS', () => {
+describe("IPC_CHANNELS", () => {
   // 正常路径：通道常量存在且格式正确
-  it('定义 fs 领域通道', () => {
-    expect(IPC_CHANNELS.fs.readFile).toBe('fs:readFile')
-    expect(IPC_CHANNELS.fs.writeFile).toBe('fs:writeFile')
-    expect(IPC_CHANNELS.fs.readDir).toBe('fs:readDir')
-    expect(IPC_CHANNELS.fs.stat).toBe('fs:stat')
-  })
+  it("定义 fs 领域通道", () => {
+    expect(IPC_CHANNELS.fs.readFile).toBe("fs:readFile");
+    expect(IPC_CHANNELS.fs.writeFile).toBe("fs:writeFile");
+    expect(IPC_CHANNELS.fs.readDir).toBe("fs:readDir");
+    expect(IPC_CHANNELS.fs.stat).toBe("fs:stat");
+  });
 
-  it('定义 shell 领域通道', () => {
-    expect(IPC_CHANNELS.shell.exec).toBe('shell:exec')
-  })
+  it("定义 shell 领域通道", () => {
+    expect(IPC_CHANNELS.shell.exec).toBe("shell:exec");
+  });
 
-  it('定义 ai 领域通道', () => {
-    expect(IPC_CHANNELS.ai.chat).toBe('ai:chat')
-    expect(IPC_CHANNELS.ai.getModels).toBe('ai:getModels')
-  })
+  it("定义 ai 领域通道", () => {
+    expect(IPC_CHANNELS.ai.chat).toBe("ai:chat");
+    expect(IPC_CHANNELS.ai.getModels).toBe("ai:getModels");
+  });
 
-  it('定义 plugin 领域通道', () => {
-    expect(IPC_CHANNELS.plugin.list).toBe('plugin:list')
-    expect(IPC_CHANNELS.plugin.enable).toBe('plugin:enable')
-    expect(IPC_CHANNELS.plugin.disable).toBe('plugin:disable')
-  })
+  it("定义 plugin 领域通道", () => {
+    expect(IPC_CHANNELS.plugin.list).toBe("plugin:list");
+    expect(IPC_CHANNELS.plugin.enable).toBe("plugin:enable");
+    expect(IPC_CHANNELS.plugin.disable).toBe("plugin:disable");
+  });
 
-  it('定义 settings 领域通道', () => {
-    expect(IPC_CHANNELS.settings.get).toBe('settings:get')
-    expect(IPC_CHANNELS.settings.update).toBe('settings:update')
-    expect(IPC_CHANNELS.settings.reset).toBe('settings:reset')
-  })
+  it("定义 settings 领域通道", () => {
+    expect(IPC_CHANNELS.settings.get).toBe("settings:get");
+    expect(IPC_CHANNELS.settings.update).toBe("settings:update");
+    expect(IPC_CHANNELS.settings.reset).toBe("settings:reset");
+  });
 
   // 边界条件：通道对象是 as const（只读）
-  it('IPC_CHANNELS 是只读的', () => {
+  it("IPC_CHANNELS 是只读的", () => {
     // TypeScript 层面的 as const 保证，运行时验证 frozen
-    expect(typeof IPC_CHANNELS).toBe('object')
-    expect(IPC_CHANNELS).toBeDefined()
-  })
+    expect(typeof IPC_CHANNELS).toBe("object");
+    expect(IPC_CHANNELS).toBeDefined();
+  });
 
   // 正常路径：所有通道值遵循 domain:action 格式
-  it('所有通道值遵循 domain:action 命名格式', () => {
-    const pattern = /^[a-z]+:[a-zA-Z]+$/
-    const allChannels = Object.values(IPC_CHANNELS).flatMap((domain) => Object.values(domain))
+  it("所有通道值遵循 domain:action 命名格式", () => {
+    const pattern = /^[a-z]+:[a-zA-Z]+$/;
+    const allChannels = Object.values(IPC_CHANNELS).flatMap((domain) => Object.values(domain));
     allChannels.forEach((channel) => {
-      expect(channel).toMatch(pattern)
-    })
-  })
-})
+      expect(channel).toMatch(pattern);
+    });
+  });
+});
 
 // === src/shared/types.test.ts ===
 // 注意：TypeScript interface 编译后不存在于 JavaScript 中，无法通过 import 解构获取。
 // 因此不测试类型本身，而是导出**运行时辅助函数**（如工厂函数或类型守卫），测试这些函数的行为。
 // 纯类型正确性由 `tsc --noEmit` 保证。
-import { createExecResult, createFileStat, isExecResult } from './types'
+import { createExecResult, createFileStat, isExecResult } from "./types";
 
-describe('共享类型辅助函数', () => {
-  describe('createExecResult', () => {
+describe("共享类型辅助函数", () => {
+  describe("createExecResult", () => {
     // 正常路径：工厂函数创建符合结构的对象
-    it('创建包含 stdout/stderr/exitCode 的结果对象', () => {
-      const result = createExecResult({ stdout: 'hello', stderr: '', exitCode: 0 })
-      expect(result.stdout).toBe('hello')
-      expect(result.stderr).toBe('')
-      expect(result.exitCode).toBe(0)
-    })
+    it("创建包含 stdout/stderr/exitCode 的结果对象", () => {
+      const result = createExecResult({ stdout: "hello", stderr: "", exitCode: 0 });
+      expect(result.stdout).toBe("hello");
+      expect(result.stderr).toBe("");
+      expect(result.exitCode).toBe(0);
+    });
 
     // 边界条件：支持可选 signal 字段
-    it('支持可选 signal 字段', () => {
-      const result = createExecResult({ stdout: '', stderr: '', exitCode: 1, signal: 'SIGTERM' })
-      expect(result.signal).toBe('SIGTERM')
-    })
+    it("支持可选 signal 字段", () => {
+      const result = createExecResult({ stdout: "", stderr: "", exitCode: 1, signal: "SIGTERM" });
+      expect(result.signal).toBe("SIGTERM");
+    });
 
     // 边界条件：未传 signal 时为 undefined
-    it('未传 signal 时为 undefined', () => {
-      const result = createExecResult({ stdout: '', stderr: '', exitCode: 0 })
-      expect(result.signal).toBeUndefined()
-    })
-  })
+    it("未传 signal 时为 undefined", () => {
+      const result = createExecResult({ stdout: "", stderr: "", exitCode: 0 });
+      expect(result.signal).toBeUndefined();
+    });
+  });
 
-  describe('createFileStat', () => {
-    it('创建文件元信息对象', () => {
+  describe("createFileStat", () => {
+    it("创建文件元信息对象", () => {
       const stat = createFileStat({
         size: 1024,
         isDirectory: false,
         isFile: true,
         mtime: 1700000000
-      })
-      expect(stat.size).toBe(1024)
-      expect(stat.isFile).toBe(true)
-      expect(stat.isDirectory).toBe(false)
-      expect(stat.mtime).toBe(1700000000)
-    })
-  })
+      });
+      expect(stat.size).toBe(1024);
+      expect(stat.isFile).toBe(true);
+      expect(stat.isDirectory).toBe(false);
+      expect(stat.mtime).toBe(1700000000);
+    });
+  });
 
-  describe('isExecResult（类型守卫）', () => {
-    it('合法 ExecResult 返回 true', () => {
-      expect(isExecResult({ stdout: '', stderr: '', exitCode: 0 })).toBe(true)
-    })
+  describe("isExecResult（类型守卫）", () => {
+    it("合法 ExecResult 返回 true", () => {
+      expect(isExecResult({ stdout: "", stderr: "", exitCode: 0 })).toBe(true);
+    });
 
-    it('缺少必要字段返回 false', () => {
-      expect(isExecResult({ stdout: '' })).toBe(false)
-      expect(isExecResult(null)).toBe(false)
-      expect(isExecResult('string')).toBe(false)
-    })
-  })
-})
+    it("缺少必要字段返回 false", () => {
+      expect(isExecResult({ stdout: "" })).toBe(false);
+      expect(isExecResult(null)).toBe(false);
+      expect(isExecResult("string")).toBe(false);
+    });
+  });
+});
 
 // === src/main/ipc/register.test.ts ===
 // 测试 IPC Handler 注册机制（mock electron）
 // 注意：每个测试必须通过 vi.resetModules() 清除模块缓存，
 // 确保 registerIPCHandlers 内部的「已注册」状态被重置，
 // 否则动态 import 会复用同一模块实例导致重复注册测试误判。
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock('electron', () => ({
+vi.mock("electron", () => ({
   ipcMain: {
     handle: vi.fn(),
     on: vi.fn()
   }
-}))
+}));
 
-describe('IPC Handler 注册', () => {
+describe("IPC Handler 注册", () => {
   beforeEach(() => {
-    vi.resetModules()
+    vi.resetModules();
     // 重新设置 mock，因为 resetModules 会清除 mock 缓存
-    vi.mock('electron', () => ({
+    vi.mock("electron", () => ({
       ipcMain: {
         handle: vi.fn(),
         on: vi.fn()
       }
-    }))
-  })
+    }));
+  });
 
-  it('registerIPCHandlers 注册所有领域 handler', async () => {
-    const { ipcMain } = await import('electron')
-    const { registerIPCHandlers } = await import('./register')
+  it("registerIPCHandlers 注册所有领域 handler", async () => {
+    const { ipcMain } = await import("electron");
+    const { registerIPCHandlers } = await import("./register");
 
-    registerIPCHandlers()
+    registerIPCHandlers();
 
     // 验证注册了具体的通道名（空壳 handler）
-    const registeredChannels = (ipcMain.handle as any).mock.calls.map((c: any[]) => c[0])
+    const registeredChannels = (ipcMain.handle as any).mock.calls.map((c: any[]) => c[0]);
     // Task 1.1 阶段注册所有已定义通道的空壳 handler
-    expect(registeredChannels).toContain('fs:readFile')
-    expect(registeredChannels).toContain('fs:writeFile')
-    expect(registeredChannels).toContain('fs:readDir')
-    expect(registeredChannels).toContain('fs:stat')
-    expect(registeredChannels).toContain('shell:exec')
-    expect(registeredChannels).toContain('ai:chat')
-    expect(registeredChannels).toContain('ai:getModels')
-    expect(registeredChannels).toContain('plugin:list')
-    expect(registeredChannels).toContain('plugin:enable')
-    expect(registeredChannels).toContain('plugin:disable')
-    expect(registeredChannels).toContain('settings:get')
-    expect(registeredChannels).toContain('settings:update')
-    expect(registeredChannels).toContain('settings:reset')
-  })
+    expect(registeredChannels).toContain("fs:readFile");
+    expect(registeredChannels).toContain("fs:writeFile");
+    expect(registeredChannels).toContain("fs:readDir");
+    expect(registeredChannels).toContain("fs:stat");
+    expect(registeredChannels).toContain("shell:exec");
+    expect(registeredChannels).toContain("ai:chat");
+    expect(registeredChannels).toContain("ai:getModels");
+    expect(registeredChannels).toContain("plugin:list");
+    expect(registeredChannels).toContain("plugin:enable");
+    expect(registeredChannels).toContain("plugin:disable");
+    expect(registeredChannels).toContain("settings:get");
+    expect(registeredChannels).toContain("settings:update");
+    expect(registeredChannels).toContain("settings:reset");
+  });
 
   // 错误处理：重复注册应抛错
-  it('不允许重复注册同一通道', async () => {
-    const { registerIPCHandlers } = await import('./register')
+  it("不允许重复注册同一通道", async () => {
+    const { registerIPCHandlers } = await import("./register");
     // 第一次注册成功
-    registerIPCHandlers()
+    registerIPCHandlers();
     // 第二次注册同样通道应抛出错误
-    expect(() => registerIPCHandlers()).toThrow(/already registered|duplicate/i)
-  })
-})
+    expect(() => registerIPCHandlers()).toThrow(/already registered|duplicate/i);
+  });
+});
 ```
 
 **执行步骤**：
@@ -355,10 +355,10 @@ describe('IPC Handler 注册', () => {
 
 ```typescript
 // === src/main/ipc/fs.handler.test.ts ===
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync } from 'fs'
-import { join, resolve } from 'path'
-import { tmpdir, homedir } from 'os'
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync } from "fs";
+import { join, resolve } from "path";
+import { tmpdir, homedir } from "os";
 // 纯业务逻辑函数 + 自定义错误类 + 路径校验函数，均从 fs.handler.ts 导入。
 // IPC 注册由 setupFSHandlers 完成，测试中不涉及 IPC 层。
 import {
@@ -370,233 +370,233 @@ import {
   PathSecurityError,
   FileNotFoundError,
   PermissionDeniedError
-} from './fs.handler'
+} from "./fs.handler";
 
-describe('fs.handler', () => {
-  let testDir: string
+describe("fs.handler", () => {
+  let testDir: string;
   // 获取 resolve 后的真实 tmpdir 路径（macOS 上 /tmp 是 /private/tmp 的 symlink）
-  const resolvedTmpBase = resolve(tmpdir())
+  const resolvedTmpBase = resolve(tmpdir());
 
   beforeEach(() => {
-    testDir = mkdtempSync(join(tmpdir(), 'workbox-test-'))
-  })
+    testDir = mkdtempSync(join(tmpdir(), "workbox-test-"));
+  });
 
   afterEach(() => {
-    rmSync(testDir, { recursive: true, force: true })
-  })
+    rmSync(testDir, { recursive: true, force: true });
+  });
 
-  describe('readFile', () => {
+  describe("readFile", () => {
     // 正常路径
-    it('读取文件返回 UTF-8 字符串内容', async () => {
-      const filePath = join(testDir, 'test.txt')
-      writeFileSync(filePath, 'hello world')
+    it("读取文件返回 UTF-8 字符串内容", async () => {
+      const filePath = join(testDir, "test.txt");
+      writeFileSync(filePath, "hello world");
       // allowedPaths 是内部依赖注入参数，仅供测试使用
-      const content = await readFile(filePath, { allowedPaths: [resolvedTmpBase] })
-      expect(content).toBe('hello world')
-    })
+      const content = await readFile(filePath, { allowedPaths: [resolvedTmpBase] });
+      expect(content).toBe("hello world");
+    });
 
     // 边界条件：空文件
-    it('读取空文件返回空字符串', async () => {
-      const filePath = join(testDir, 'empty.txt')
-      writeFileSync(filePath, '')
-      const content = await readFile(filePath, { allowedPaths: [resolvedTmpBase] })
-      expect(content).toBe('')
-    })
+    it("读取空文件返回空字符串", async () => {
+      const filePath = join(testDir, "empty.txt");
+      writeFileSync(filePath, "");
+      const content = await readFile(filePath, { allowedPaths: [resolvedTmpBase] });
+      expect(content).toBe("");
+    });
 
     // 错误处理：文件不存在 → FileNotFoundError
-    it('文件不存在时抛出 FileNotFoundError', async () => {
+    it("文件不存在时抛出 FileNotFoundError", async () => {
       await expect(
-        readFile(join(testDir, 'nonexistent.txt'), { allowedPaths: [resolvedTmpBase] })
-      ).rejects.toThrow(FileNotFoundError)
-    })
+        readFile(join(testDir, "nonexistent.txt"), { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(FileNotFoundError);
+    });
 
     // 安全：路径穿越 — resolve 后逃逸白名单
-    it('拒绝 resolve 后逃逸白名单的路径', async () => {
+    it("拒绝 resolve 后逃逸白名单的路径", async () => {
       // /tmp/../etc/passwd → resolve 为 /etc/passwd (或 /private/etc/passwd)
       // 不在 resolvedTmpBase 白名单前缀内，应拒绝
       await expect(
-        readFile('/tmp/../etc/passwd', { allowedPaths: [resolvedTmpBase] })
-      ).rejects.toThrow(PathSecurityError)
-    })
+        readFile("/tmp/../etc/passwd", { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(PathSecurityError);
+    });
 
     // 安全：非绝对路径
-    it('拒绝相对路径', async () => {
-      await expect(readFile('relative/path.txt')).rejects.toThrow(/absolute/i)
-    })
-  })
+    it("拒绝相对路径", async () => {
+      await expect(readFile("relative/path.txt")).rejects.toThrow(/absolute/i);
+    });
+  });
 
-  describe('writeFile', () => {
+  describe("writeFile", () => {
     // 正常路径
-    it('写入字符串内容到文件', async () => {
-      const filePath = join(testDir, 'output.txt')
-      await writeFile(filePath, 'written content', { allowedPaths: [resolvedTmpBase] })
-      const content = readFileSync(filePath, 'utf-8')
-      expect(content).toBe('written content')
-    })
+    it("写入字符串内容到文件", async () => {
+      const filePath = join(testDir, "output.txt");
+      await writeFile(filePath, "written content", { allowedPaths: [resolvedTmpBase] });
+      const content = readFileSync(filePath, "utf-8");
+      expect(content).toBe("written content");
+    });
 
     // 正常路径：覆盖已有文件
-    it('覆盖已有文件内容', async () => {
-      const filePath = join(testDir, 'existing.txt')
-      writeFileSync(filePath, 'old content')
-      await writeFile(filePath, 'new content', { allowedPaths: [resolvedTmpBase] })
-      expect(readFileSync(filePath, 'utf-8')).toBe('new content')
-    })
+    it("覆盖已有文件内容", async () => {
+      const filePath = join(testDir, "existing.txt");
+      writeFileSync(filePath, "old content");
+      await writeFile(filePath, "new content", { allowedPaths: [resolvedTmpBase] });
+      expect(readFileSync(filePath, "utf-8")).toBe("new content");
+    });
 
     // 正常路径：父目录不存在时自动创建
-    it('父目录不存在时自动创建后写入', async () => {
-      const filePath = join(testDir, 'nested', 'deep', 'output.txt')
-      await writeFile(filePath, 'auto-mkdir content', { allowedPaths: [resolvedTmpBase] })
-      expect(readFileSync(filePath, 'utf-8')).toBe('auto-mkdir content')
-    })
+    it("父目录不存在时自动创建后写入", async () => {
+      const filePath = join(testDir, "nested", "deep", "output.txt");
+      await writeFile(filePath, "auto-mkdir content", { allowedPaths: [resolvedTmpBase] });
+      expect(readFileSync(filePath, "utf-8")).toBe("auto-mkdir content");
+    });
 
     // 安全：路径穿越
-    it('拒绝 resolve 后逃逸白名单的写入', async () => {
+    it("拒绝 resolve 后逃逸白名单的写入", async () => {
       await expect(
-        writeFile('/tmp/../etc/evil', 'data', { allowedPaths: [resolvedTmpBase] })
-      ).rejects.toThrow(PathSecurityError)
-    })
-  })
+        writeFile("/tmp/../etc/evil", "data", { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(PathSecurityError);
+    });
+  });
 
-  describe('readDir', () => {
+  describe("readDir", () => {
     // 正常路径
-    it('返回目录下的文件名列表', async () => {
-      writeFileSync(join(testDir, 'a.txt'), '')
-      writeFileSync(join(testDir, 'b.txt'), '')
-      const list = await readDir(testDir, { allowedPaths: [resolvedTmpBase] })
-      expect(list).toContain('a.txt')
-      expect(list).toContain('b.txt')
-    })
+    it("返回目录下的文件名列表", async () => {
+      writeFileSync(join(testDir, "a.txt"), "");
+      writeFileSync(join(testDir, "b.txt"), "");
+      const list = await readDir(testDir, { allowedPaths: [resolvedTmpBase] });
+      expect(list).toContain("a.txt");
+      expect(list).toContain("b.txt");
+    });
 
     // 边界条件：空目录
-    it('空目录返回空数组', async () => {
-      const emptyDir = join(testDir, 'empty')
-      mkdirSync(emptyDir)
-      const list = await readDir(emptyDir, { allowedPaths: [resolvedTmpBase] })
-      expect(list).toEqual([])
-    })
+    it("空目录返回空数组", async () => {
+      const emptyDir = join(testDir, "empty");
+      mkdirSync(emptyDir);
+      const list = await readDir(emptyDir, { allowedPaths: [resolvedTmpBase] });
+      expect(list).toEqual([]);
+    });
 
     // 错误处理：路径不是目录
-    it('路径不是目录时抛出错误', async () => {
-      const filePath = join(testDir, 'file.txt')
-      writeFileSync(filePath, '')
-      await expect(readDir(filePath, { allowedPaths: [resolvedTmpBase] })).rejects.toThrow()
-    })
+    it("路径不是目录时抛出错误", async () => {
+      const filePath = join(testDir, "file.txt");
+      writeFileSync(filePath, "");
+      await expect(readDir(filePath, { allowedPaths: [resolvedTmpBase] })).rejects.toThrow();
+    });
 
     // 错误处理：目录不存在 → FileNotFoundError
-    it('目录不存在时抛出 FileNotFoundError', async () => {
+    it("目录不存在时抛出 FileNotFoundError", async () => {
       await expect(
-        readDir(join(testDir, 'nonexistent'), { allowedPaths: [resolvedTmpBase] })
-      ).rejects.toThrow(FileNotFoundError)
-    })
-  })
+        readDir(join(testDir, "nonexistent"), { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(FileNotFoundError);
+    });
+  });
 
-  describe('stat', () => {
+  describe("stat", () => {
     // 正常路径
-    it('返回文件元信息', async () => {
-      const filePath = join(testDir, 'info.txt')
-      writeFileSync(filePath, 'data')
-      const info = await stat(filePath, { allowedPaths: [resolvedTmpBase] })
-      expect(info.isFile).toBe(true)
-      expect(info.isDirectory).toBe(false)
-      expect(info.size).toBeGreaterThan(0)
-      expect(info.mtime).toBeGreaterThan(0)
-    })
+    it("返回文件元信息", async () => {
+      const filePath = join(testDir, "info.txt");
+      writeFileSync(filePath, "data");
+      const info = await stat(filePath, { allowedPaths: [resolvedTmpBase] });
+      expect(info.isFile).toBe(true);
+      expect(info.isDirectory).toBe(false);
+      expect(info.size).toBeGreaterThan(0);
+      expect(info.mtime).toBeGreaterThan(0);
+    });
 
     // 正常路径：目录
-    it('返回目录元信息', async () => {
-      const info = await stat(testDir, { allowedPaths: [resolvedTmpBase] })
-      expect(info.isDirectory).toBe(true)
-      expect(info.isFile).toBe(false)
-    })
+    it("返回目录元信息", async () => {
+      const info = await stat(testDir, { allowedPaths: [resolvedTmpBase] });
+      expect(info.isDirectory).toBe(true);
+      expect(info.isFile).toBe(false);
+    });
 
     // 错误处理：路径不存在 → FileNotFoundError
-    it('路径不存在时抛出 FileNotFoundError', async () => {
+    it("路径不存在时抛出 FileNotFoundError", async () => {
       await expect(
-        stat(join(testDir, 'nope'), { allowedPaths: [resolvedTmpBase] })
-      ).rejects.toThrow(FileNotFoundError)
-    })
-  })
+        stat(join(testDir, "nope"), { allowedPaths: [resolvedTmpBase] })
+      ).rejects.toThrow(FileNotFoundError);
+    });
+  });
 
-  describe('validatePath（路径安全校验）', () => {
-    it('允许用户 home 目录下的绝对路径（默认白名单）', () => {
-      expect(() => validatePath(join(homedir(), 'Documents/test.txt'))).not.toThrow()
-    })
+  describe("validatePath（路径安全校验）", () => {
+    it("允许用户 home 目录下的绝对路径（默认白名单）", () => {
+      expect(() => validatePath(join(homedir(), "Documents/test.txt"))).not.toThrow();
+    });
 
-    it('允许显式白名单目录下的路径', () => {
-      const tmpBase = resolve(tmpdir())
-      expect(() => validatePath(join(tmpBase, 'some-file.txt'), [tmpBase])).not.toThrow()
-    })
+    it("允许显式白名单目录下的路径", () => {
+      const tmpBase = resolve(tmpdir());
+      expect(() => validatePath(join(tmpBase, "some-file.txt"), [tmpBase])).not.toThrow();
+    });
 
-    it('拒绝白名单外的路径', () => {
-      expect(() => validatePath('/etc/passwd')).toThrow(PathSecurityError)
-    })
+    it("拒绝白名单外的路径", () => {
+      expect(() => validatePath("/etc/passwd")).toThrow(PathSecurityError);
+    });
 
-    it('拒绝 resolve 后逃逸白名单的路径穿越', () => {
+    it("拒绝 resolve 后逃逸白名单的路径穿越", () => {
       // join(homedir(), '..', 'etc', 'passwd') → resolve 后不以 homedir() 为前缀，应拒绝
-      expect(() => validatePath(join(homedir(), '..', 'etc', 'passwd'))).toThrow(PathSecurityError)
-    })
+      expect(() => validatePath(join(homedir(), "..", "etc", "passwd"))).toThrow(PathSecurityError);
+    });
 
-    it('拒绝相对路径', () => {
-      expect(() => validatePath('relative/path')).toThrow(/absolute/i)
-    })
-  })
+    it("拒绝相对路径", () => {
+      expect(() => validatePath("relative/path")).toThrow(/absolute/i);
+    });
+  });
 
-  describe('错误类型包装', () => {
+  describe("错误类型包装", () => {
     // EACCES → PermissionDeniedError
-    it('文件无读取权限时抛出 PermissionDeniedError', async () => {
-      const filePath = join(testDir, 'no-access.txt')
-      writeFileSync(filePath, 'secret')
+    it("文件无读取权限时抛出 PermissionDeniedError", async () => {
+      const filePath = join(testDir, "no-access.txt");
+      writeFileSync(filePath, "secret");
       // 移除所有读取权限
-      const { chmodSync } = await import('fs')
-      chmodSync(filePath, 0o000)
+      const { chmodSync } = await import("fs");
+      chmodSync(filePath, 0o000);
       try {
         await expect(readFile(filePath, { allowedPaths: [resolvedTmpBase] })).rejects.toThrow(
           PermissionDeniedError
-        )
+        );
       } finally {
         // 恢复权限以便 afterEach 清理
-        chmodSync(filePath, 0o644)
+        chmodSync(filePath, 0o644);
       }
-    })
-  })
+    });
+  });
 
-  describe('setupFSHandlers（IPC 集成）', () => {
+  describe("setupFSHandlers（IPC 集成）", () => {
     // 需要 mock electron 的 ipcMain
-    it('注册 4 个 fs channel 到 ipcMain', async () => {
-      const { setupFSHandlers } = await import('./fs.handler')
-      const mockHandle = vi.fn()
-      const mockIpcMain = { handle: mockHandle } as any
+    it("注册 4 个 fs channel 到 ipcMain", async () => {
+      const { setupFSHandlers } = await import("./fs.handler");
+      const mockHandle = vi.fn();
+      const mockIpcMain = { handle: mockHandle } as any;
 
-      setupFSHandlers(mockIpcMain)
+      setupFSHandlers(mockIpcMain);
 
-      const registeredChannels = mockHandle.mock.calls.map((c: any[]) => c[0])
-      expect(registeredChannels).toContain('fs:readFile')
-      expect(registeredChannels).toContain('fs:writeFile')
-      expect(registeredChannels).toContain('fs:readDir')
-      expect(registeredChannels).toContain('fs:stat')
-      expect(registeredChannels).toHaveLength(4)
-    })
+      const registeredChannels = mockHandle.mock.calls.map((c: any[]) => c[0]);
+      expect(registeredChannels).toContain("fs:readFile");
+      expect(registeredChannels).toContain("fs:writeFile");
+      expect(registeredChannels).toContain("fs:readDir");
+      expect(registeredChannels).toContain("fs:stat");
+      expect(registeredChannels).toHaveLength(4);
+    });
 
-    it('handler wrapper 正确转发参数并返回结果', async () => {
-      const { setupFSHandlers } = await import('./fs.handler')
-      const handlers: Record<string, Function> = {}
+    it("handler wrapper 正确转发参数并返回结果", async () => {
+      const { setupFSHandlers } = await import("./fs.handler");
+      const handlers: Record<string, Function> = {};
       const mockIpcMain = {
         handle: vi.fn((channel: string, handler: Function) => {
-          handlers[channel] = handler
+          handlers[channel] = handler;
         })
-      } as any
+      } as any;
 
-      setupFSHandlers(mockIpcMain)
+      setupFSHandlers(mockIpcMain);
 
       // 准备测试文件（位于 homedir 下才能通过默认白名单）
       // 注意：此测试验证 handler wrapper 的转发逻辑，
       // 实际会走默认 allowedPaths=[homedir()]，
       // 因此只验证 handler 函数存在且可调用
-      expect(handlers['fs:readFile']).toBeDefined()
-      expect(typeof handlers['fs:readFile']).toBe('function')
-    })
-  })
-})
+      expect(handlers["fs:readFile"]).toBeDefined();
+      expect(typeof handlers["fs:readFile"]).toBe("function");
+    });
+  });
+});
 ```
 
 **执行步骤**：
@@ -676,167 +676,167 @@ describe('fs.handler', () => {
 
 ```typescript
 // === src/main/ipc/shell.handler.test.ts ===
-import * as cp from 'child_process'
-import { vi, describe, it, expect } from 'vitest'
-import { exec, isDangerousCommand, filterEnv, setupShellHandlers } from './shell.handler'
+import * as cp from "child_process";
+import { vi, describe, it, expect } from "vitest";
+import { exec, isDangerousCommand, filterEnv, setupShellHandlers } from "./shell.handler";
 
-describe('shell.handler', () => {
-  describe('exec', () => {
+describe("shell.handler", () => {
+  describe("exec", () => {
     // 正常路径：执行简单命令
-    it('执行 echo 命令返回 stdout', async () => {
-      const result = await exec('echo hello')
-      expect(result.stdout.trim()).toBe('hello')
-      expect(result.exitCode).toBe(0)
-    })
+    it("执行 echo 命令返回 stdout", async () => {
+      const result = await exec("echo hello");
+      expect(result.stdout.trim()).toBe("hello");
+      expect(result.exitCode).toBe(0);
+    });
 
     // 正常路径：命令失败返回非零 exitCode（不 throw）
-    it('命令失败时返回非零 exitCode 和 stderr', async () => {
-      const result = await exec('ls /nonexistent_path_12345')
-      expect(result.exitCode).not.toBe(0)
-      expect(result.stderr).toBeTruthy()
-    })
+    it("命令失败时返回非零 exitCode 和 stderr", async () => {
+      const result = await exec("ls /nonexistent_path_12345");
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toBeTruthy();
+    });
 
     // 正常路径：支持自定义 cwd
-    it('支持自定义工作目录', async () => {
-      const result = await exec('pwd', { cwd: '/tmp' })
-      expect(result.stdout.trim()).toContain('/tmp')
-    })
+    it("支持自定义工作目录", async () => {
+      const result = await exec("pwd", { cwd: "/tmp" });
+      expect(result.stdout.trim()).toContain("/tmp");
+    });
 
     // 边界条件：空命令
-    it('空命令抛出错误', async () => {
-      await expect(exec('')).rejects.toThrow()
-    })
-  })
+    it("空命令抛出错误", async () => {
+      await expect(exec("")).rejects.toThrow();
+    });
+  });
 
-  describe('超时保护', () => {
+  describe("超时保护", () => {
     // 正常路径：超时后返回非零 exitCode 和 signal
-    it('命令超时后返回非零 exitCode 和 SIGTERM signal', async () => {
-      const result = await exec('sleep 10', { timeout: 500 })
-      expect(result.exitCode).not.toBe(0)
-      expect(result.signal).toBe('SIGTERM')
-      expect(result.stderr).toBeTruthy() // 包含超时相关信息
-    }, 5000)
+    it("命令超时后返回非零 exitCode 和 SIGTERM signal", async () => {
+      const result = await exec("sleep 10", { timeout: 500 });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.signal).toBe("SIGTERM");
+      expect(result.stderr).toBeTruthy(); // 包含超时相关信息
+    }, 5000);
 
     // 正常路径：默认超时 30s（通过 spy 验证传递给 child_process 的参数）
-    it('默认超时为 30 秒', async () => {
-      const cpExecSpy = vi.spyOn(cp, 'exec')
-      await exec('echo fast')
+    it("默认超时为 30 秒", async () => {
+      const cpExecSpy = vi.spyOn(cp, "exec");
+      await exec("echo fast");
       expect(cpExecSpy).toHaveBeenCalledWith(
-        'echo fast',
+        "echo fast",
         expect.objectContaining({ timeout: 30000 }),
         expect.any(Function)
-      )
-      cpExecSpy.mockRestore()
-    })
-  })
+      );
+      cpExecSpy.mockRestore();
+    });
+  });
 
-  describe('危险命令检测', () => {
+  describe("危险命令检测", () => {
     // 安全：拦截 rm -rf /
-    it('拒绝 rm -rf /', async () => {
-      await expect(exec('rm -rf /')).rejects.toThrow(/dangerous/i)
-    })
+    it("拒绝 rm -rf /", async () => {
+      await expect(exec("rm -rf /")).rejects.toThrow(/dangerous/i);
+    });
 
     // 安全：拦截 sudo
-    it('拒绝 sudo 命令', async () => {
-      await expect(exec('sudo rm file')).rejects.toThrow(/dangerous/i)
-    })
+    it("拒绝 sudo 命令", async () => {
+      await expect(exec("sudo rm file")).rejects.toThrow(/dangerous/i);
+    });
 
     // 安全：拦截 dd（词边界匹配）
-    it('拒绝 dd 命令', async () => {
-      await expect(exec('dd if=/dev/zero of=/dev/sda')).rejects.toThrow(/dangerous/i)
-    })
+    it("拒绝 dd 命令", async () => {
+      await expect(exec("dd if=/dev/zero of=/dev/sda")).rejects.toThrow(/dangerous/i);
+    });
 
     // 安全：拦截 mkfs（词边界匹配，含子命令如 mkfs.ext4）
-    it('拒绝 mkfs 命令', async () => {
-      await expect(exec('mkfs.ext4 /dev/sda1')).rejects.toThrow(/dangerous/i)
-    })
+    it("拒绝 mkfs 命令", async () => {
+      await expect(exec("mkfs.ext4 /dev/sda1")).rejects.toThrow(/dangerous/i);
+    });
 
     // 正常路径：允许安全命令
-    it('允许安全命令通过', async () => {
-      const result = await exec('echo safe')
-      expect(result.exitCode).toBe(0)
-    })
+    it("允许安全命令通过", async () => {
+      const result = await exec("echo safe");
+      expect(result.exitCode).toBe(0);
+    });
 
     // 边界条件：rm 非根目录不拦截
-    it('允许 rm 非根目录命令', async () => {
+    it("允许 rm 非根目录命令", async () => {
       // rm -rf ./tmp 不应被拦截（只拦截 rm -rf / 根路径）
-      await expect(exec('rm -rf ./tmp')).resolves.not.toThrow()
-    })
+      await expect(exec("rm -rf ./tmp")).resolves.not.toThrow();
+    });
 
     // 边界条件：包含黑名单子串但非独立命令的不拦截
-    it('不误拦含黑名单子串的安全命令', async () => {
+    it("不误拦含黑名单子串的安全命令", async () => {
       // "adding" 包含 "dd"，但不应被拦截
-      const result = await exec('echo adding')
-      expect(result.exitCode).toBe(0)
-    })
-  })
+      const result = await exec("echo adding");
+      expect(result.exitCode).toBe(0);
+    });
+  });
 
-  describe('环境变量过滤', () => {
-    it('过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量', () => {
+  describe("环境变量过滤", () => {
+    it("过滤含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量", () => {
       const env = filterEnv({
-        PATH: '/usr/bin',
-        HOME: '/home/user',
-        API_KEY: 'secret123',
-        DB_PASSWORD: 'pass',
-        MY_TOKEN: 'tok',
-        AWS_SECRET_ACCESS_KEY: 'aws',
-        NORMAL_VAR: 'ok'
-      })
-      expect(env.PATH).toBe('/usr/bin')
-      expect(env.HOME).toBe('/home/user')
-      expect(env.NORMAL_VAR).toBe('ok')
-      expect(env).not.toHaveProperty('API_KEY')
-      expect(env).not.toHaveProperty('DB_PASSWORD')
-      expect(env).not.toHaveProperty('MY_TOKEN')
-      expect(env).not.toHaveProperty('AWS_SECRET_ACCESS_KEY')
-    })
+        PATH: "/usr/bin",
+        HOME: "/home/user",
+        API_KEY: "secret123",
+        DB_PASSWORD: "pass",
+        MY_TOKEN: "tok",
+        AWS_SECRET_ACCESS_KEY: "aws",
+        NORMAL_VAR: "ok"
+      });
+      expect(env.PATH).toBe("/usr/bin");
+      expect(env.HOME).toBe("/home/user");
+      expect(env.NORMAL_VAR).toBe("ok");
+      expect(env).not.toHaveProperty("API_KEY");
+      expect(env).not.toHaveProperty("DB_PASSWORD");
+      expect(env).not.toHaveProperty("MY_TOKEN");
+      expect(env).not.toHaveProperty("AWS_SECRET_ACCESS_KEY");
+    });
 
-    it('options.env 合并覆盖到过滤后的环境变量', () => {
+    it("options.env 合并覆盖到过滤后的环境变量", () => {
       const env = filterEnv(
-        { PATH: '/usr/bin', API_KEY: 'secret' },
-        { CUSTOM: 'value', PATH: '/custom/bin' }
-      )
-      expect(env.PATH).toBe('/custom/bin') // options.env 覆盖
-      expect(env.CUSTOM).toBe('value')
-      expect(env).not.toHaveProperty('API_KEY')
-    })
-  })
+        { PATH: "/usr/bin", API_KEY: "secret" },
+        { CUSTOM: "value", PATH: "/custom/bin" }
+      );
+      expect(env.PATH).toBe("/custom/bin"); // options.env 覆盖
+      expect(env.CUSTOM).toBe("value");
+      expect(env).not.toHaveProperty("API_KEY");
+    });
+  });
 
-  describe('isDangerousCommand', () => {
-    it('使用词边界匹配，不误判子串', () => {
-      expect(isDangerousCommand('echo adding')).toBe(false)
-      expect(isDangerousCommand('dd if=/dev/zero of=/dev/sda')).toBe(true)
-    })
+  describe("isDangerousCommand", () => {
+    it("使用词边界匹配，不误判子串", () => {
+      expect(isDangerousCommand("echo adding")).toBe(false);
+      expect(isDangerousCommand("dd if=/dev/zero of=/dev/sda")).toBe(true);
+    });
 
-    it('拦截 rm -rf / 及其变体但不拦截非根路径', () => {
-      expect(isDangerousCommand('rm -rf /')).toBe(true)
-      expect(isDangerousCommand('rm -rf /*')).toBe(true)
-      expect(isDangerousCommand('rm -rf ./dir')).toBe(false)
-    })
-  })
+    it("拦截 rm -rf / 及其变体但不拦截非根路径", () => {
+      expect(isDangerousCommand("rm -rf /")).toBe(true);
+      expect(isDangerousCommand("rm -rf /*")).toBe(true);
+      expect(isDangerousCommand("rm -rf ./dir")).toBe(false);
+    });
+  });
 
-  describe('setupShellHandlers', () => {
-    it('注册 shell:exec channel', () => {
-      const handleFn = vi.fn()
-      const mockIpcMain = { handle: handleFn } as unknown as Electron.IpcMain
-      setupShellHandlers(mockIpcMain)
-      expect(handleFn).toHaveBeenCalledWith('shell:exec', expect.any(Function))
-    })
+  describe("setupShellHandlers", () => {
+    it("注册 shell:exec channel", () => {
+      const handleFn = vi.fn();
+      const mockIpcMain = { handle: handleFn } as unknown as Electron.IpcMain;
+      setupShellHandlers(mockIpcMain);
+      expect(handleFn).toHaveBeenCalledWith("shell:exec", expect.any(Function));
+    });
 
-    it('handler wrapper 正确传递参数给 exec', async () => {
-      let registeredHandler: Function | undefined
+    it("handler wrapper 正确传递参数给 exec", async () => {
+      let registeredHandler: Function | undefined;
       const mockIpcMain = {
         handle: vi.fn((_channel: string, handler: Function) => {
-          registeredHandler = handler
+          registeredHandler = handler;
         })
-      } as unknown as Electron.IpcMain
-      setupShellHandlers(mockIpcMain)
-      const result = await registeredHandler!({}, 'echo test')
-      expect(result.stdout.trim()).toBe('test')
-      expect(result.exitCode).toBe(0)
-    })
-  })
-})
+      } as unknown as Electron.IpcMain;
+      setupShellHandlers(mockIpcMain);
+      const result = await registeredHandler!({}, "echo test");
+      expect(result.stdout.trim()).toBe("test");
+      expect(result.exitCode).toBe(0);
+    });
+  });
+});
 ```
 
 **执行步骤**：
@@ -936,359 +936,361 @@ CRUD 函数（crud.ts）
 ```typescript
 // === src/main/storage/test-utils.ts ===
 // 测试专用工具函数，不计入生产代码
-import { Database } from './database'
-import { createCrud } from './crud'
+import { Database } from "./database";
+import { createCrud } from "./crud";
 
 /**
  * 创建用于测试的内存数据库和 CRUD 实例。
  * 自动初始化表结构和 PRAGMA foreign_keys = ON。
  */
 export function createTestDatabase() {
-  const database = new Database(':memory:')
-  database.initialize()
-  const crud = createCrud(database.drizzle)
-  return { database, crud }
+  const database = new Database(":memory:");
+  database.initialize();
+  const crud = createCrud(database.drizzle);
+  return { database, crud };
 }
 
 // === src/main/storage/database.test.ts ===
-import { Database } from './database'
+import { Database } from "./database";
 
-describe('Database', () => {
-  let database: Database
+describe("Database", () => {
+  let database: Database;
 
   beforeEach(() => {
-    database = new Database(':memory:')
-    database.initialize()
-  })
+    database = new Database(":memory:");
+    database.initialize();
+  });
 
   afterEach(() => {
-    database.close()
-  })
+    database.close();
+  });
 
-  describe('初始化', () => {
+  describe("初始化", () => {
     // 正常路径：数据库初始化成功，4 张表全部存在
-    it('初始化后表结构存在', () => {
+    it("初始化后表结构存在", () => {
       const tables = database.raw
         .prepare("SELECT name FROM sqlite_master WHERE type='table'")
-        .all() as Array<{ name: string }>
-      const tableNames = tables.map((t) => t.name)
-      expect(tableNames).toContain('conversations')
-      expect(tableNames).toContain('messages')
-      expect(tableNames).toContain('plugin_storage')
-      expect(tableNames).toContain('settings')
-    })
+        .all() as Array<{ name: string }>;
+      const tableNames = tables.map((t) => t.name);
+      expect(tableNames).toContain("conversations");
+      expect(tableNames).toContain("messages");
+      expect(tableNames).toContain("plugin_storage");
+      expect(tableNames).toContain("settings");
+    });
 
     // 正常路径：外键约束已启用
-    it('PRAGMA foreign_keys 已开启', () => {
-      const result = database.raw.pragma('foreign_keys') as Array<{ foreign_keys: number }>
-      expect(result[0].foreign_keys).toBe(1)
-    })
+    it("PRAGMA foreign_keys 已开启", () => {
+      const result = database.raw.pragma("foreign_keys") as Array<{ foreign_keys: number }>;
+      expect(result[0].foreign_keys).toBe(1);
+    });
 
     // 边界条件：重复初始化不抛错
-    it('重复初始化不报错', () => {
-      expect(() => database.initialize()).not.toThrow()
-    })
-  })
-})
+    it("重复初始化不报错", () => {
+      expect(() => database.initialize()).not.toThrow();
+    });
+  });
+});
 
 // === src/main/storage/crud.test.ts ===
 // 注意：better-sqlite3 + drizzle-orm 的 better-sqlite3 driver 均为同步 API，
 // 所有 CRUD 函数为同步函数，测试中不使用 async/await。
-import { createTestDatabase } from './test-utils'
-import type { Database } from './database'
+import { createTestDatabase } from "./test-utils";
+import type { Database } from "./database";
 
-describe('Schema CRUD 操作', () => {
-  let database: Database
-  let crud: ReturnType<typeof import('./crud').createCrud>
+describe("Schema CRUD 操作", () => {
+  let database: Database;
+  let crud: ReturnType<typeof import("./crud").createCrud>;
 
   beforeEach(() => {
-    const testDb = createTestDatabase()
-    database = testDb.database
-    crud = testDb.crud
-  })
+    const testDb = createTestDatabase();
+    database = testDb.database;
+    crud = testDb.crud;
+  });
 
   afterEach(() => {
-    database.close()
-  })
+    database.close();
+  });
 
-  describe('conversations 表', () => {
+  describe("conversations 表", () => {
     // 正常路径：创建对话
-    it('创建对话并查询', () => {
-      const id = 'conv-001'
+    it("创建对话并查询", () => {
+      const id = "conv-001";
       crud.insertConversation({
         id,
-        title: 'Test Chat',
+        title: "Test Chat",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
-      const conv = crud.getConversation(id)
-      expect(conv).toBeDefined()
-      expect(conv!.title).toBe('Test Chat')
-    })
+      });
+      const conv = crud.getConversation(id);
+      expect(conv).toBeDefined();
+      expect(conv!.title).toBe("Test Chat");
+    });
 
     // 正常路径：更新对话标题和 updatedAt
-    it('更新对话标题和 updatedAt', () => {
-      const id = 'conv-002'
-      const now = Date.now()
-      crud.insertConversation({ id, title: 'Old', createdAt: now, updatedAt: now })
-      const later = now + 5000
-      crud.updateConversation(id, { title: 'New Title', updatedAt: later })
-      const conv = crud.getConversation(id)
-      expect(conv!.title).toBe('New Title')
-      expect(conv!.updatedAt).toBe(later)
-    })
+    it("更新对话标题和 updatedAt", () => {
+      const id = "conv-002";
+      const now = Date.now();
+      crud.insertConversation({ id, title: "Old", createdAt: now, updatedAt: now });
+      const later = now + 5000;
+      crud.updateConversation(id, { title: "New Title", updatedAt: later });
+      const conv = crud.getConversation(id);
+      expect(conv!.title).toBe("New Title");
+      expect(conv!.updatedAt).toBe(later);
+    });
 
     // 正常路径：删除对话（无关联消息）
-    it('删除对话', () => {
-      const id = 'conv-003'
+    it("删除对话", () => {
+      const id = "conv-003";
       crud.insertConversation({
         id,
-        title: 'To Delete',
+        title: "To Delete",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
-      crud.deleteConversation(id)
-      const conv = crud.getConversation(id)
-      expect(conv).toBeUndefined()
-    })
+      });
+      crud.deleteConversation(id);
+      const conv = crud.getConversation(id);
+      expect(conv).toBeUndefined();
+    });
 
     // 正常路径：删除对话时级联删除关联消息（ON DELETE CASCADE）
-    it('删除对话时级联删除关联消息', () => {
+    it("删除对话时级联删除关联消息", () => {
       crud.insertConversation({
-        id: 'conv-cascade',
-        title: 'Cascade Test',
+        id: "conv-cascade",
+        title: "Cascade Test",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
+      });
       crud.insertMessage({
-        id: 'msg-cascade-1',
-        conversationId: 'conv-cascade',
-        role: 'user',
-        content: 'Hello',
+        id: "msg-cascade-1",
+        conversationId: "conv-cascade",
+        role: "user",
+        content: "Hello",
         createdAt: Date.now()
-      })
+      });
       crud.insertMessage({
-        id: 'msg-cascade-2',
-        conversationId: 'conv-cascade',
-        role: 'assistant',
-        content: 'Hi',
+        id: "msg-cascade-2",
+        conversationId: "conv-cascade",
+        role: "assistant",
+        content: "Hi",
         createdAt: Date.now()
-      })
-      crud.deleteConversation('conv-cascade')
-      const messages = crud.getMessagesByConversation('conv-cascade')
-      expect(messages).toHaveLength(0)
-    })
+      });
+      crud.deleteConversation("conv-cascade");
+      const messages = crud.getMessagesByConversation("conv-cascade");
+      expect(messages).toHaveLength(0);
+    });
 
     // 边界条件：查询不存在的对话
-    it('查询不存在的对话返回 undefined', () => {
-      const conv = crud.getConversation('nonexistent')
-      expect(conv).toBeUndefined()
-    })
-  })
+    it("查询不存在的对话返回 undefined", () => {
+      const conv = crud.getConversation("nonexistent");
+      expect(conv).toBeUndefined();
+    });
+  });
 
-  describe('messages 表', () => {
+  describe("messages 表", () => {
     // 每个 messages 测试前先创建所需的 conversation
     beforeEach(() => {
       crud.insertConversation({
-        id: 'conv-msg',
-        title: 'Chat',
+        id: "conv-msg",
+        title: "Chat",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      })
-    })
+      });
+    });
 
     // 正常路径：创建消息（仅必填字段）
-    it('创建消息并查询', () => {
+    it("创建消息并查询", () => {
       crud.insertMessage({
-        id: 'msg-001',
-        conversationId: 'conv-msg',
-        role: 'user',
-        content: 'Hello',
+        id: "msg-001",
+        conversationId: "conv-msg",
+        role: "user",
+        content: "Hello",
         createdAt: Date.now()
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages).toHaveLength(1)
-      expect(messages[0].content).toBe('Hello')
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages).toHaveLength(1);
+      expect(messages[0].content).toBe("Hello");
       // toolCalls 和 toolResult 为可选字段，未传入时应为 null
-      expect(messages[0].toolCalls).toBeNull()
-      expect(messages[0].toolResult).toBeNull()
-    })
+      expect(messages[0].toolCalls).toBeNull();
+      expect(messages[0].toolResult).toBeNull();
+    });
 
     // 正常路径：创建带 toolCalls 和 toolResult 的消息
-    it('创建带 tool 字段的消息', () => {
-      const toolCalls = JSON.stringify([{ id: 'call-1', name: 'readFile', args: { path: '/tmp' } }])
-      const toolResult = JSON.stringify({ content: 'file content' })
+    it("创建带 tool 字段的消息", () => {
+      const toolCalls = JSON.stringify([
+        { id: "call-1", name: "readFile", args: { path: "/tmp" } }
+      ]);
+      const toolResult = JSON.stringify({ content: "file content" });
       crud.insertMessage({
-        id: 'msg-tool',
-        conversationId: 'conv-msg',
-        role: 'assistant',
-        content: 'Let me read that file.',
+        id: "msg-tool",
+        conversationId: "conv-msg",
+        role: "assistant",
+        content: "Let me read that file.",
         toolCalls,
         toolResult,
         createdAt: Date.now()
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages[0].toolCalls).toBe(toolCalls)
-      expect(messages[0].toolResult).toBe(toolResult)
-    })
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages[0].toolCalls).toBe(toolCalls);
+      expect(messages[0].toolResult).toBe(toolResult);
+    });
 
     // 正常路径：role 枚举校验（system、tool 角色）
-    it('支持所有 role 值：user, assistant, system, tool', () => {
-      const roles = ['user', 'assistant', 'system', 'tool'] as const
+    it("支持所有 role 值：user, assistant, system, tool", () => {
+      const roles = ["user", "assistant", "system", "tool"] as const;
       roles.forEach((role, i) => {
         crud.insertMessage({
           id: `msg-role-${i}`,
-          conversationId: 'conv-msg',
+          conversationId: "conv-msg",
           role,
           content: `${role} message`,
           createdAt: Date.now() + i
-        })
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages).toHaveLength(4)
-    })
+        });
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages).toHaveLength(4);
+    });
 
     // 正常路径：按时间排序
-    it('消息按创建时间排序', () => {
-      const now = Date.now()
+    it("消息按创建时间排序", () => {
+      const now = Date.now();
       crud.insertMessage({
-        id: 'msg-1',
-        conversationId: 'conv-msg',
-        role: 'user',
-        content: 'first',
+        id: "msg-1",
+        conversationId: "conv-msg",
+        role: "user",
+        content: "first",
         createdAt: now
-      })
+      });
       crud.insertMessage({
-        id: 'msg-2',
-        conversationId: 'conv-msg',
-        role: 'assistant',
-        content: 'second',
+        id: "msg-2",
+        conversationId: "conv-msg",
+        role: "assistant",
+        content: "second",
         createdAt: now + 100
-      })
+      });
       crud.insertMessage({
-        id: 'msg-3',
-        conversationId: 'conv-msg',
-        role: 'user',
-        content: 'third',
+        id: "msg-3",
+        conversationId: "conv-msg",
+        role: "user",
+        content: "third",
         createdAt: now + 200
-      })
-      const messages = crud.getMessagesByConversation('conv-msg')
-      expect(messages.map((m) => m.content)).toEqual(['first', 'second', 'third'])
-    })
+      });
+      const messages = crud.getMessagesByConversation("conv-msg");
+      expect(messages.map((m) => m.content)).toEqual(["first", "second", "third"]);
+    });
 
     // 错误处理：外键约束（需要 PRAGMA foreign_keys = ON）
-    it('引用不存在的 conversationId 抛错', () => {
+    it("引用不存在的 conversationId 抛错", () => {
       expect(() =>
         crud.insertMessage({
-          id: 'msg-bad',
-          conversationId: 'nonexistent',
-          role: 'user',
-          content: 'x',
+          id: "msg-bad",
+          conversationId: "nonexistent",
+          role: "user",
+          content: "x",
           createdAt: Date.now()
         })
-      ).toThrow()
-    })
-  })
+      ).toThrow();
+    });
+  });
 
-  describe('settings 表', () => {
+  describe("settings 表", () => {
     // 正常路径：设置和获取
-    it('保存和获取设置值', () => {
-      crud.setSetting('theme', 'dark')
-      const value = crud.getSetting('theme')
-      expect(value).toBe('dark')
-    })
+    it("保存和获取设置值", () => {
+      crud.setSetting("theme", "dark");
+      const value = crud.getSetting("theme");
+      expect(value).toBe("dark");
+    });
 
     // 正常路径：更新已有设置（upsert 语义）
-    it('更新已有设置值', () => {
-      crud.setSetting('theme', 'light')
-      crud.setSetting('theme', 'dark')
-      const value = crud.getSetting('theme')
-      expect(value).toBe('dark')
-    })
+    it("更新已有设置值", () => {
+      crud.setSetting("theme", "light");
+      crud.setSetting("theme", "dark");
+      const value = crud.getSetting("theme");
+      expect(value).toBe("dark");
+    });
 
     // 正常路径：删除设置（删除整行记录）
-    it('删除设置', () => {
-      crud.setSetting('theme', 'dark')
-      crud.deleteSetting('theme')
-      const value = crud.getSetting('theme')
-      expect(value).toBeUndefined()
-    })
+    it("删除设置", () => {
+      crud.setSetting("theme", "dark");
+      crud.deleteSetting("theme");
+      const value = crud.getSetting("theme");
+      expect(value).toBeUndefined();
+    });
 
     // 边界条件：获取不存在的设置
-    it('获取不存在的设置返回 undefined', () => {
-      const value = crud.getSetting('nonexistent')
-      expect(value).toBeUndefined()
-    })
+    it("获取不存在的设置返回 undefined", () => {
+      const value = crud.getSetting("nonexistent");
+      expect(value).toBeUndefined();
+    });
 
     // 正常路径：JSON 序列化的复杂值（由调用者负责序列化）
-    it('支持 JSON 序列化的复杂值', () => {
-      const config = { provider: 'openai', model: 'gpt-4', temperature: 0.7 }
-      crud.setSetting('ai', JSON.stringify(config))
-      const value = JSON.parse(crud.getSetting('ai')!)
-      expect(value.provider).toBe('openai')
-    })
+    it("支持 JSON 序列化的复杂值", () => {
+      const config = { provider: "openai", model: "gpt-4", temperature: 0.7 };
+      crud.setSetting("ai", JSON.stringify(config));
+      const value = JSON.parse(crud.getSetting("ai")!);
+      expect(value.provider).toBe("openai");
+    });
 
     // 边界条件：删除不存在的设置不抛错
-    it('删除不存在的设置不抛错', () => {
-      expect(() => crud.deleteSetting('nonexistent')).not.toThrow()
-    })
-  })
+    it("删除不存在的设置不抛错", () => {
+      expect(() => crud.deleteSetting("nonexistent")).not.toThrow();
+    });
+  });
 
-  describe('plugin_storage 表', () => {
+  describe("plugin_storage 表", () => {
     // 正常路径：按插件 ID + key 存取（value 为原始字符串，调用者负责 JSON 序列化）
-    it('按 pluginId + key 保存和获取', () => {
-      crud.setPluginData('git-helper', 'lastCommit', '"abc123"')
-      const value = crud.getPluginData('git-helper', 'lastCommit')
-      expect(value).toBe('"abc123"')
-    })
+    it("按 pluginId + key 保存和获取", () => {
+      crud.setPluginData("git-helper", "lastCommit", '"abc123"');
+      const value = crud.getPluginData("git-helper", "lastCommit");
+      expect(value).toBe('"abc123"');
+    });
 
     // 正常路径：更新已有 key 的值（upsert 语义）
-    it('更新已有 key 的值', () => {
-      crud.setPluginData('plugin-a', 'config', '"old"')
-      crud.setPluginData('plugin-a', 'config', '"new"')
-      expect(crud.getPluginData('plugin-a', 'config')).toBe('"new"')
-    })
+    it("更新已有 key 的值", () => {
+      crud.setPluginData("plugin-a", "config", '"old"');
+      crud.setPluginData("plugin-a", "config", '"new"');
+      expect(crud.getPluginData("plugin-a", "config")).toBe('"new"');
+    });
 
     // 边界条件：不同插件相同 key 不冲突
-    it('不同插件的相同 key 互不干扰', () => {
-      crud.setPluginData('plugin-a', 'config', '"a"')
-      crud.setPluginData('plugin-b', 'config', '"b"')
-      expect(crud.getPluginData('plugin-a', 'config')).toBe('"a"')
-      expect(crud.getPluginData('plugin-b', 'config')).toBe('"b"')
-    })
+    it("不同插件的相同 key 互不干扰", () => {
+      crud.setPluginData("plugin-a", "config", '"a"');
+      crud.setPluginData("plugin-b", "config", '"b"');
+      expect(crud.getPluginData("plugin-a", "config")).toBe('"a"');
+      expect(crud.getPluginData("plugin-b", "config")).toBe('"b"');
+    });
 
     // 正常路径：删除单条插件数据
-    it('删除指定 pluginId + key 的数据', () => {
-      crud.setPluginData('plugin-a', 'config', '"val"')
-      crud.deletePluginData('plugin-a', 'config')
-      expect(crud.getPluginData('plugin-a', 'config')).toBeUndefined()
-    })
+    it("删除指定 pluginId + key 的数据", () => {
+      crud.setPluginData("plugin-a", "config", '"val"');
+      crud.deletePluginData("plugin-a", "config");
+      expect(crud.getPluginData("plugin-a", "config")).toBeUndefined();
+    });
 
     // 正常路径：删除插件全部数据
-    it('删除插件全部数据', () => {
-      crud.setPluginData('plugin-a', 'k1', '"v1"')
-      crud.setPluginData('plugin-a', 'k2', '"v2"')
-      crud.setPluginData('plugin-b', 'k1', '"other"')
-      crud.deleteAllPluginData('plugin-a')
-      expect(crud.getPluginData('plugin-a', 'k1')).toBeUndefined()
-      expect(crud.getPluginData('plugin-a', 'k2')).toBeUndefined()
+    it("删除插件全部数据", () => {
+      crud.setPluginData("plugin-a", "k1", '"v1"');
+      crud.setPluginData("plugin-a", "k2", '"v2"');
+      crud.setPluginData("plugin-b", "k1", '"other"');
+      crud.deleteAllPluginData("plugin-a");
+      expect(crud.getPluginData("plugin-a", "k1")).toBeUndefined();
+      expect(crud.getPluginData("plugin-a", "k2")).toBeUndefined();
       // 不影响其他插件
-      expect(crud.getPluginData('plugin-b', 'k1')).toBe('"other"')
-    })
+      expect(crud.getPluginData("plugin-b", "k1")).toBe('"other"');
+    });
 
     // 边界条件：删除不存在的插件数据不抛错
-    it('删除不存在的插件数据不抛错', () => {
-      expect(() => crud.deletePluginData('unknown', 'missing')).not.toThrow()
-      expect(() => crud.deleteAllPluginData('unknown')).not.toThrow()
-    })
+    it("删除不存在的插件数据不抛错", () => {
+      expect(() => crud.deletePluginData("unknown", "missing")).not.toThrow();
+      expect(() => crud.deleteAllPluginData("unknown")).not.toThrow();
+    });
 
     // 边界条件：获取不存在的 key 返回 undefined
-    it('获取不存在的 key 返回 undefined', () => {
-      const value = crud.getPluginData('unknown', 'missing')
-      expect(value).toBeUndefined()
-    })
-  })
-})
+    it("获取不存在的 key 返回 undefined", () => {
+      const value = crud.getPluginData("unknown", "missing");
+      expect(value).toBeUndefined();
+    });
+  });
+});
 ```
 
 **执行步骤**：
@@ -1615,31 +1617,31 @@ describe('Sidebar', () => {
 /** 应用设置接口 - 所有可持久化的用户设置 */
 export interface AppSettings {
   // ---- 通用设置 ----
-  theme: 'light' | 'dark'
-  language: 'en' | 'zh' // 占位，本阶段不实现 i18n
+  theme: "light" | "dark";
+  language: "en" | "zh"; // 占位，本阶段不实现 i18n
 
   // ---- AI 设置 ----
-  aiProvider: 'openai' | 'claude' | 'custom'
-  aiApiKey: string // 存储时不加密
-  aiBaseUrl: string // 自定义 API 端点
-  aiModel: string // 当前选择的模型名称
-  aiTemperature: number // 范围 [0, 2]
+  aiProvider: "openai" | "claude" | "custom";
+  aiApiKey: string; // 存储时不加密
+  aiBaseUrl: string; // 自定义 API 端点
+  aiModel: string; // 当前选择的模型名称
+  aiTemperature: number; // 范围 [0, 2]
 
   // ---- 插件设置 ----
-  pluginDir: string // 插件目录路径，只读展示
+  pluginDir: string; // 插件目录路径，只读展示
 }
 
 /** 默认设置值 */
 export const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'dark',
-  language: 'zh',
-  aiProvider: 'openai',
-  aiApiKey: '',
-  aiBaseUrl: 'https://api.openai.com/v1',
-  aiModel: 'gpt-4o',
+  theme: "dark",
+  language: "zh",
+  aiProvider: "openai",
+  aiApiKey: "",
+  aiBaseUrl: "https://api.openai.com/v1",
+  aiModel: "gpt-4o",
   aiTemperature: 0.7,
-  pluginDir: '~/.workbox/plugins'
-}
+  pluginDir: "~/.workbox/plugins"
+};
 ```
 
 **对 1.4 CRUD 层的补充修改**：

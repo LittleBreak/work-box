@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { contextBridge, ipcRenderer } from "electron";
+import { IPC_CHANNELS } from "@shared/ipc-channels";
 
 /** workbox API exposed to renderer via contextBridge */
 const workboxAPI = {
@@ -8,14 +8,14 @@ const workboxAPI = {
     writeFile: (path: string, data: string): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.fs.writeFile, path, data),
     readDir: (path: string): Promise<string[]> => ipcRenderer.invoke(IPC_CHANNELS.fs.readDir, path),
-    stat: (path: string): Promise<import('@shared/types').FileStat> =>
+    stat: (path: string): Promise<import("@shared/types").FileStat> =>
       ipcRenderer.invoke(IPC_CHANNELS.fs.stat, path)
   },
   shell: {
     exec: (
       command: string,
-      options?: import('@shared/types').ExecOptions
-    ): Promise<import('@shared/types').ExecResult> =>
+      options?: import("@shared/types").ExecOptions
+    ): Promise<import("@shared/types").ExecResult> =>
       ipcRenderer.invoke(IPC_CHANNELS.shell.exec, command, options)
   },
   ai: {
@@ -33,15 +33,15 @@ const workboxAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.settings.update, settings),
     reset: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.settings.reset)
   }
-}
+};
 
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('workbox', workboxAPI)
+    contextBridge.exposeInMainWorld("workbox", workboxAPI);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
   // @ts-ignore (define in dts)
-  window.workbox = workboxAPI
+  window.workbox = workboxAPI;
 }

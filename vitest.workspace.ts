@@ -1,32 +1,32 @@
-import { resolve } from 'path'
-import { defineWorkspace } from 'vitest/config'
+import { resolve } from "path";
+import { defineWorkspace } from "vitest/config";
 
 export default defineWorkspace([
   {
     resolve: {
       alias: {
-        '@main': resolve(__dirname, 'src/main'),
-        '@shared': resolve(__dirname, 'src/shared')
+        "@main": resolve(__dirname, "src/main"),
+        "@shared": resolve(__dirname, "src/shared")
       }
     },
     test: {
-      name: 'main',
-      include: ['src/main/**/*.test.ts', 'src/shared/**/*.test.ts'],
-      environment: 'node'
+      name: "main",
+      include: ["src/main/**/*.test.ts", "src/shared/**/*.test.ts"],
+      environment: "node"
     }
   },
   {
     resolve: {
       alias: {
-        '@renderer': resolve(__dirname, 'src/renderer/src'),
-        '@shared': resolve(__dirname, 'src/shared')
+        "@renderer": resolve(__dirname, "src/renderer/src"),
+        "@shared": resolve(__dirname, "src/shared")
       }
     },
     test: {
-      name: 'renderer',
-      include: ['src/renderer/**/*.test.ts', 'src/renderer/**/*.test.tsx'],
-      environment: 'jsdom',
-      setupFiles: ['src/renderer/src/vitest.setup.ts']
+      name: "renderer",
+      include: ["src/renderer/**/*.test.ts", "src/renderer/**/*.test.tsx"],
+      environment: "jsdom",
+      setupFiles: ["src/renderer/src/vitest.setup.ts"]
     }
   }
-])
+]);

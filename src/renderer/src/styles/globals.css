@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -125,14 +125,14 @@
       Inter,
       -apple-system,
       BlinkMacSystemFont,
-      'Segoe UI',
+      "Segoe UI",
       Roboto,
       Oxygen,
       Ubuntu,
       Cantarell,
-      'Fira Sans',
-      'Droid Sans',
-      'Helvetica Neue',
+      "Fira Sans",
+      "Droid Sans",
+      "Helvetica Neue",
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

@@ -1,10 +1,10 @@
-import { Database } from './database'
-import { createCrud, Crud } from './crud'
+import { Database } from "./database";
+import { createCrud, Crud } from "./crud";
 
 /** 测试数据库返回类型 */
 interface TestDatabase {
-  database: Database
-  crud: Crud
+  database: Database;
+  crud: Crud;
 }
 
 /**
@@ -12,8 +12,8 @@ interface TestDatabase {
  * 自动初始化表结构和 PRAGMA foreign_keys = ON。
  */
 export function createTestDatabase(): TestDatabase {
-  const database = new Database(':memory:')
-  database.initialize()
-  const crud = createCrud(database.drizzle)
-  return { database, crud }
+  const database = new Database(":memory:");
+  database.initialize();
+  const crud = createCrud(database.drizzle);
+  return { database, crud };
 }

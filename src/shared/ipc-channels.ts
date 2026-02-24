@@ -4,26 +4,26 @@
  */
 export const IPC_CHANNELS = {
   fs: {
-    readFile: 'fs:readFile',
-    writeFile: 'fs:writeFile',
-    readDir: 'fs:readDir',
-    stat: 'fs:stat'
+    readFile: "fs:readFile",
+    writeFile: "fs:writeFile",
+    readDir: "fs:readDir",
+    stat: "fs:stat"
   },
   shell: {
-    exec: 'shell:exec'
+    exec: "shell:exec"
   },
   ai: {
-    chat: 'ai:chat',
-    getModels: 'ai:getModels'
+    chat: "ai:chat",
+    getModels: "ai:getModels"
   },
   plugin: {
-    list: 'plugin:list',
-    enable: 'plugin:enable',
-    disable: 'plugin:disable'
+    list: "plugin:list",
+    enable: "plugin:enable",
+    disable: "plugin:disable"
   },
   settings: {
-    get: 'settings:get',
-    update: 'settings:update',
-    reset: 'settings:reset'
+    get: "settings:get",
+    update: "settings:update",
+    reset: "settings:reset"
   }
-} as const
+} as const;
