@@ -890,7 +890,7 @@ describe('shell.handler', () => {
 **关键决策**：
 
 | 决策项          | 方案                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | -------- | -------------------- |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 数据库引擎      | `better-sqlite3`（**同步 API**，性能好，Electron 兼容性好）。注意：better-sqlite3 和 drizzle-orm 的 better-sqlite3 driver 均为同步 API，CRUD 函数应定义为**同步函数**（不使用 async/await），测试断言也相应使用同步写法                                                                                                                                                                                                                                                                                            |
 | ORM             | `drizzle-orm`（类型安全、轻量）+ `drizzle-kit`（migration 工具）                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 数据库文件位置  | `~/.workbox/data.db`（使用 `app.getPath('home')` 获取 home 目录）                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -903,7 +903,7 @@ describe('shell.handler', () => {
 | 外键级联策略    | `messages` 表的 `conversation_id` 外键设置 `ON DELETE CASCADE`，删除对话时自动删除关联消息（需配合 `PRAGMA foreign_keys = ON`）。注意：这比 ARCHITECTURE.md 7.1 的 SQL 多了 CASCADE 约束，属于合理增强                                                                                                                                                                                                                                                                                                             |
 | 值序列化约定    | `settings.value` 和 `plugin_storage.value` 存储 **原始字符串**，JSON 序列化/反序列化由**调用者负责**，CRUD 函数不做自动转换                                                                                                                                                                                                                                                                                                                                                                                        |
 | Schema 双源职责 | 表结构存在**两处定义**，职责不同：① `database.ts` 中的手写 `CREATE TABLE IF NOT EXISTS` SQL 是**建表的唯一执行路径**（即 source of truth），包含 CHECK 约束、外键、CASCADE 等所有 DDL 细节；② `schema.ts` 中的 Drizzle schema **仅用于类型安全的查询构建**，不参与建表。两者的一致性通过以下方式保证：`schema.ts` 顶部添加注释 `// ⚠️ 表结构以 database.ts 中的 CREATE TABLE SQL 为准，修改字段时需同步两处`，并在 `database.test.ts` 中增加一条测试，验证实际数据库的列名集合与 Drizzle schema 导出的列名集合一致 |
-| CHECK 约束      | `messages.role` 的 `CHECK(role IN ('user','assistant','system','tool'))` 约束**仅在 `database.ts` 的手写建表 SQL 中定义**。Drizzle schema 中 `role` 字段定义为普通 `text` 类型（Drizzle 不原生支持 CHECK），类型层面的约束通过 TypeScript 类型 `'user'                                                                                                                                                                                                                                                             | 'assistant' | 'system' | 'tool'` 在应用层保证 |
+| CHECK 约束      | `messages.role` 的 `CHECK(role IN ('user','assistant','system','tool'))` 约束**仅在 `database.ts` 的手写建表 SQL 中定义**。Drizzle schema 中 `role` 字段定义为普通 `text` 类型（Drizzle 不原生支持 CHECK），类型层面的约束通过 TypeScript 类型 `'user' \| 'assistant' \| 'system' \| 'tool'` 在应用层保证                                                                                                                                                                                                          |
 | 未找到返回约定  | 所有"查询单条记录未找到"的场景统一返回 **`undefined`**（与 Drizzle `.get()` 原生返回值一致，无需额外转换）。包括：`getConversation`、`getSetting`、`getPluginData`                                                                                                                                                                                                                                                                                                                                                 |
 
 **架构设计：Database 类与 CRUD 函数的关系**：
@@ -927,9 +927,9 @@ CRUD 函数（crud.ts）
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：安装依赖，实现数据库初始化和 Schema，使测试通过
-- [ ] Refactor：提取通用 CRUD 工具函数，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：安装依赖，实现数据库初始化和 Schema，使测试通过
+- [x] Refactor：提取通用 CRUD 工具函数，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -1324,35 +1324,35 @@ describe('Schema CRUD 操作', () => {
 
 **验收标准**：
 
-- [ ] 安装 `better-sqlite3` + `drizzle-orm` + `drizzle-kit`（版本锁定在 `pnpm-lock.yaml`）
-- [ ] `src/main/storage/database.ts` 存在：`Database` 类封装初始化 & 连接管理，构造函数仅存路径不打开连接，`drizzle`/`raw` 属性在未初始化时访问抛出 Error
-- [ ] `src/main/storage/schema.ts` 存在：Drizzle schema 定义 4 张表（`conversations`、`messages`、`plugin_storage`、`settings`）
-- [ ] Schema 与 `ARCHITECTURE.md` 第七节 SQL 定义一致（字段名、类型、约束完全匹配），额外增加 `messages` 的 `ON DELETE CASCADE`
-- [ ] DB 列名 `snake_case`，TS 代码 `camelCase`，通过 Drizzle 列映射转换
-- [ ] `messages` 表包含 `toolCalls`（可选）和 `toolResult`（可选）字段
-- [ ] 数据库文件默认存放在 `~/.workbox/data.db`（测试中使用 `:memory:`）
-- [ ] `Database.initialize()` 执行 `PRAGMA foreign_keys = ON` 并完成建表
-- [ ] `crud.ts` 导出 `createCrud()` 工厂函数，接收 Drizzle 实例（依赖注入），返回所有 CRUD 方法
-- [ ] `updateConversation(id, fields)` 的 `fields` 类型为 `Pick<Conversation, 'title' | 'updatedAt'>`，`updatedAt` 由调用者显式传入
-- [ ] `plugin_storage` CRUD 包含 `deletePluginData(pluginId, key)` 和 `deleteAllPluginData(pluginId)` 方法
-- [ ] 所有"查询单条未找到"场景统一返回 `undefined`（`getConversation`、`getSetting`、`getPluginData`）
-- [ ] `schema.ts` 顶部包含同步维护注释，`database.test.ts` 包含列名一致性验证测试
-- [ ] `messages.role` 的 CHECK 约束仅在 `database.ts` 建表 SQL 中定义，Drizzle schema 中为普通 `text` + TypeScript 联合类型
-- [ ] 4 张表的 CRUD 测试全部通过（含正常路径、边界条件、外键约束、级联删除、tool 字段、deleteSetting、deletePluginData、deleteAllPluginData）；CRUD 函数为同步 API（与 better-sqlite3 一致）
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `pnpm test` 全量结果
+- [x] 安装 `better-sqlite3` + `drizzle-orm` + `drizzle-kit`（版本锁定在 `pnpm-lock.yaml`）
+- [x] `src/main/storage/database.ts` 存在：`Database` 类封装初始化 & 连接管理，构造函数仅存路径不打开连接，`drizzle`/`raw` 属性在未初始化时访问抛出 Error
+- [x] `src/main/storage/schema.ts` 存在：Drizzle schema 定义 4 张表（`conversations`、`messages`、`plugin_storage`、`settings`）
+- [x] Schema 与 `ARCHITECTURE.md` 第七节 SQL 定义一致（字段名、类型、约束完全匹配），额外增加 `messages` 的 `ON DELETE CASCADE`
+- [x] DB 列名 `snake_case`，TS 代码 `camelCase`，通过 Drizzle 列映射转换
+- [x] `messages` 表包含 `toolCalls`（可选）和 `toolResult`（可选）字段
+- [x] 数据库文件默认存放在 `~/.workbox/data.db`（测试中使用 `:memory:`）
+- [x] `Database.initialize()` 执行 `PRAGMA foreign_keys = ON` 并完成建表
+- [x] `crud.ts` 导出 `createCrud()` 工厂函数，接收 Drizzle 实例（依赖注入），返回所有 CRUD 方法
+- [x] `updateConversation(id, fields)` 的 `fields` 类型为 `Pick<Conversation, 'title' | 'updatedAt'>`，`updatedAt` 由调用者显式传入
+- [x] `plugin_storage` CRUD 包含 `deletePluginData(pluginId, key)` 和 `deleteAllPluginData(pluginId)` 方法
+- [x] 所有"查询单条未找到"场景统一返回 `undefined`（`getConversation`、`getSetting`、`getPluginData`）
+- [x] `schema.ts` 顶部包含同步维护注释，`database.test.ts` 包含列名一致性验证测试
+- [x] `messages.role` 的 CHECK 约束仅在 `database.ts` 建表 SQL 中定义，Drizzle schema 中为普通 `text` + TypeScript 联合类型
+- [x] 4 张表的 CRUD 测试全部通过（含正常路径、边界条件、外键约束、级联删除、tool 字段、deleteSetting、deletePluginData、deleteAllPluginData）；CRUD 函数为同步 API（与 better-sqlite3 一致）
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `pnpm test` 全量结果
 
 > **注意**：应用启动时的数据库初始化集成（在 `src/main/index.ts` 中调用 `Database` 类）不在本任务范围内，将在后续集成任务中处理。
 
 **交付物**：
 
-- [ ] `src/main/storage/database.ts`
-- [ ] `src/main/storage/schema.ts`
-- [ ] `src/main/storage/crud.ts`（`createCrud` 工厂函数 + 全部 CRUD 方法）
-- [ ] `src/main/storage/test-utils.ts`（测试工具函数）
-- [ ] `src/main/storage/database.test.ts`
-- [ ] `src/main/storage/crud.test.ts`
+- [x] `src/main/storage/database.ts`
+- [x] `src/main/storage/schema.ts`
+- [x] `src/main/storage/crud.ts`（`createCrud` 工厂函数 + 全部 CRUD 方法）
+- [x] `src/main/storage/test-utils.ts`（测试工具函数）
+- [x] `src/main/storage/database.test.ts`
+- [x] `src/main/storage/crud.test.ts`
 
 ---
 
