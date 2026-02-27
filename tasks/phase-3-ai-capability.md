@@ -16,19 +16,19 @@ Phase 3 共 5 个任务（3.1–3.5），覆盖 AI Provider 适配器、对话�
 
 在开始任何 Task 前，先记录并确认以下信息：
 
-- [ ] Phase 2 所有任务已完成且 `pnpm test` 全部通过
-- [ ] `src/main/ai/index.ts` 占位文件已存在（当前为空 `export {}`）
-- [ ] `src/main/storage/crud.ts` 已实现对话和消息相关 CRUD：`insertConversation`、`getConversation`、`updateConversation`、`deleteConversation`、`insertMessage`、`getMessagesByConversation`
-- [ ] `src/main/storage/schema.ts` 已定义 `conversations`、`messages` 表（含 `tool_calls`、`tool_result` 字段）
-- [ ] `src/shared/ipc-channels.ts` 已定义 `ai.chat`、`ai.getModels` 通道（需扩展更多通道）
-- [ ] `src/shared/types.ts` 已定义 `AppSettings`（含 `aiProvider`、`aiApiKey`、`aiBaseUrl`、`aiModel`、`aiTemperature`）
-- [ ] `src/preload/index.ts` 已暴露 `window.workbox.ai.chat/getModels` 存根（需扩展）
-- [ ] `src/renderer/src/features/chat/ChatView.tsx` 占位 UI 已存在
-- [ ] `packages/plugin-api/src/types.ts` 已定义 `ToolDefinition`（含 `name`、`description`、`parameters`、`handler`）
-- [ ] `src/main/plugin/context.ts` 已实现 `PluginContext.ai.registerTool()` 接口
-- [ ] 路径别名 `@main`、`@renderer`、`@shared` 可用
-- [ ] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖（Vercel AI SDK 系列包）
-- [ ] 执行任务后必须更新任务状态：任务成功完成时，将对应的验收标准和交付物清单项标记为 `[x]`（已完成）
+- [x] Phase 2 所有任务已完成且 `pnpm test` 全部通过
+- [x] `src/main/ai/index.ts` 占位文件已存在（当前为空 `export {}`）
+- [x] `src/main/storage/crud.ts` 已实现对话和消息相关 CRUD：`insertConversation`、`getConversation`、`updateConversation`、`deleteConversation`、`insertMessage`、`getMessagesByConversation`
+- [x] `src/main/storage/schema.ts` 已定义 `conversations`、`messages` 表（含 `tool_calls`、`tool_result` 字段）
+- [x] `src/shared/ipc-channels.ts` 已定义 `ai.chat`、`ai.getModels` 通道（需扩展更多通道）
+- [x] `src/shared/types.ts` 已定义 `AppSettings`（含 `aiProvider`、`aiApiKey`、`aiBaseUrl`、`aiModel`、`aiTemperature`）
+- [x] `src/preload/index.ts` 已暴露 `window.workbox.ai.chat/getModels` 存根（需扩展）
+- [x] `src/renderer/src/features/chat/ChatView.tsx` 占位 UI 已存在
+- [x] `packages/plugin-api/src/types.ts` 已定义 `ToolDefinition`（含 `name`、`description`、`parameters`、`handler`）
+- [x] `src/main/plugin/context.ts` 已实现 `PluginContext.ai.registerTool()` 接口
+- [x] 路径别名 `@main`、`@renderer`、`@shared` 可用
+- [x] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖（Vercel AI SDK 系列包）
+- [x] 执行任务后必须更新任务状态：任务成功完成时，将对应的验收标准和交付物清单项标记为 `[x]`（已完成）
 
 ---
 
@@ -81,10 +81,10 @@ Phase 3 共 5 个任务（3.1–3.5），覆盖 AI Provider 适配器、对话�
 
 ### 统一留痕要求
 
-- [ ] A 类任务：记录 Red 阶段失败测试名称、Green 阶段通过结果、最终回归结果
-- [ ] B 类任务：记录验证式测试通过结果
-- [ ] 所有任务：`pnpm test` 通过
-- [ ] 测试文件与源文件同目录：`*.test.ts` / `*.test.tsx`
+- [x] A 类任务：记录 Red 阶段失败测试名称、Green 阶段通过结果、最终回归结果
+- [x] B 类任务：记录验证式测试通过结果
+- [x] 所有任务：`pnpm test` 通过
+- [x] 测试文件与源文件同目录：`*.test.ts` / `*.test.tsx`
 
 ---
 
@@ -117,9 +117,9 @@ Phase 3 共 5 个任务（3.1–3.5），覆盖 AI Provider 适配器、对话�
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：安装依赖、实现类型定义、Provider 适配器和工厂函数
-- [ ] Refactor：整理导出和 JSDoc 注释，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：安装依赖、实现类型定义、Provider 适配器和工厂函数
+- [x] Refactor：整理导出和 JSDoc 注释，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -281,27 +281,27 @@ describe("createProviderAdapter（工厂函数）", () => {
 
 **验收标准**：
 
-- [ ] 安装 Vercel AI SDK（`ai`、`@ai-sdk/openai`、`@ai-sdk/anthropic`、`zod`）
-- [ ] `AIProviderAdapter` 接口定义完整（`id`、`name`、`getModels()`、`createModel(modelId)`）
-- [ ] `ModelInfo` 类型定义完整（`id`、`name`、`provider`）
-- [ ] `createOpenAIAdapter()` 可创建 OpenAI 适配器，模型列表含常用模型
-- [ ] `createClaudeAdapter()` 可创建 Claude 适配器，模型列表含常用模型
-- [ ] `createOllamaAdapter()` 可创建 Ollama 适配器（复用 OpenAI 兼容协议）
-- [ ] `createProviderAdapter()` 工厂函数根据 `AppSettings` 正确创建对应适配器
-- [ ] `AppSettings.aiProvider` 已扩展支持 `"ollama"`，`validateSettings` 已同步
-- [ ] 所有导出函数/类型有 JSDoc 注释
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `pnpm test` 回归通过
+- [x] 安装 Vercel AI SDK（`ai`、`@ai-sdk/openai`、`@ai-sdk/anthropic`、`zod`）
+- [x] `AIProviderAdapter` 接口定义完整（`id`、`name`、`getModels()`、`createModel(modelId)`）
+- [x] `ModelInfo` 类型定义完整（`id`、`name`、`provider`）
+- [x] `createOpenAIAdapter()` 可创建 OpenAI 适配器，模型列表含常用模型
+- [x] `createClaudeAdapter()` 可创建 Claude 适配器，模型列表含常用模型
+- [x] `createOllamaAdapter()` 可创建 Ollama 适配器（复用 OpenAI 兼容协议）
+- [x] `createProviderAdapter()` 工厂函数根据 `AppSettings` 正确创建对应适配器
+- [x] `AppSettings.aiProvider` 已扩展支持 `"ollama"`，`validateSettings` 已同步
+- [x] 所有导出函数/类型有 JSDoc 注释
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `pnpm test` 回归通过
 
 **交付物**：
 
-- [ ] `src/main/ai/types.ts`（AI 层类型定义：`AIProviderAdapter`、`ModelInfo`、`ProviderSettings`）
-- [ ] `src/main/ai/providers/openai.ts`（OpenAI Provider 适配器）
-- [ ] `src/main/ai/providers/claude.ts`（Claude Provider 适配器）
-- [ ] `src/main/ai/providers/ollama.ts`（Ollama Provider 适配器）
-- [ ] `src/main/ai/providers/factory.ts`（Provider 工厂函数）
-- [ ] `src/main/ai/providers/providers.test.ts`（Provider 单元测试）
-- [ ] `src/shared/types.ts`（更新 `AppSettings.aiProvider` 类型 + `validateSettings`）
+- [x] `src/main/ai/types.ts`（AI 层类型定义：`AIProviderAdapter`、`ModelInfo`、`ProviderSettings`）
+- [x] `src/main/ai/providers/openai.ts`（OpenAI Provider 适配器）
+- [x] `src/main/ai/providers/claude.ts`（Claude Provider 适配器）
+- [x] `src/main/ai/providers/ollama.ts`（Ollama Provider 适配器）
+- [x] `src/main/ai/providers/factory.ts`（Provider 工厂函数）
+- [x] `src/main/ai/providers/providers.test.ts`（Provider 单元测试）
+- [x] `src/shared/types.ts`（更新 `AppSettings.aiProvider` 类型 + `validateSettings`）
 
 ---
 
@@ -336,9 +336,9 @@ describe("createProviderAdapter（工厂函数）", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 AI Service 和共享类型
-- [ ] Refactor：提取辅助函数，优化错误处理，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 AI Service 和共享类型
+- [x] Refactor：提取辅助函数，优化错误处理，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -620,26 +620,26 @@ describe("createAIService", () => {
 
 **验收标准**：
 
-- [ ] `createAIService()` 工厂函数接收依赖注入参数并返回 Service 实例
-- [ ] `createConversation()` 创建新对话并持久化到 SQLite
-- [ ] `chat(conversationId, content, onEvent)` 发送消息、调用 Provider、流式回调、持久化
-- [ ] `getConversations()` 返回所有对话列表
-- [ ] `getHistory(conversationId)` 返回对话历史消息
-- [ ] `deleteConversation(conversationId)` 删除对话及其消息
-- [ ] 首次消息自动更新对话标题
-- [ ] 上下文裁剪：超过 `maxContextMessages` 时自动裁剪旧消息
-- [ ] Provider 调用失败时发送 `error` 事件，不抛异常
-- [ ] `StreamEvent` 类型定义在 `src/shared/types.ts`（跨进程共享）
-- [ ] `crud.ts` 新增 `getAllConversations()` 方法
-- [ ] TDD 留痕完整
-- [ ] `pnpm test` 回归通过
+- [x] `createAIService()` 工厂函数接收依赖注入参数并返回 Service 实例
+- [x] `createConversation()` 创建新对话并持久化到 SQLite
+- [x] `chat(conversationId, content, onEvent)` 发送消息、调用 Provider、流式回调、持久化
+- [x] `getConversations()` 返回所有对话列表
+- [x] `getHistory(conversationId)` 返回对话历史消息
+- [x] `deleteConversation(conversationId)` 删除对话及其消息
+- [x] 首次消息自动更新对话标题
+- [x] 上下文裁剪：超过 `maxContextMessages` 时自动裁剪旧消息
+- [x] Provider 调用失败时发送 `error` 事件，不抛异常
+- [x] `StreamEvent` 类型定义在 `src/shared/types.ts`（跨进程共享）
+- [x] `crud.ts` 新增 `getAllConversations()` 方法
+- [x] TDD 留痕完整
+- [x] `pnpm test` 回归通过
 
 **交付物**：
 
-- [ ] `src/main/ai/service.ts`（AI 对话管理核心服务）
-- [ ] `src/main/ai/service.test.ts`（AI Service 单元测试）
-- [ ] `src/shared/types.ts`（更新：添加 `StreamEvent`、`ChatParams`、`ChatResult` 类型）
-- [ ] `src/main/storage/crud.ts`（更新：添加 `getAllConversations()` 方法及 `Crud` 接口更新）
+- [x] `src/main/ai/service.ts`（AI 对话管理核心服务）
+- [x] `src/main/ai/service.test.ts`（AI Service 单元测试）
+- [x] `src/shared/types.ts`（更新：添加 `StreamEvent`、`ChatParams`、`ChatResult` 类型）
+- [x] `src/main/storage/crud.ts`（更新：添加 `getAllConversations()` 方法及 `Crud` 接口更新）
 
 ---
 
@@ -672,9 +672,9 @@ describe("createAIService", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 Tool Router
-- [ ] Refactor：优化 Schema 转换逻辑，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 Tool Router
+- [x] Refactor：优化 Schema 转换逻辑，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -843,25 +843,25 @@ describe("createToolRouter", () => {
 
 **验收标准**：
 
-- [ ] `createToolRouter()` 返回 Tool Router 实例
-- [ ] `registerTool()` 注册 Tool 到内部注册表并返回 `Disposable`
-- [ ] `getRegisteredTools()` 返回当前所有已注册 Tool 的信息
-- [ ] `getToolsForAISDK()` 正确转换为 Vercel AI SDK 的 `tool()` 格式
-- [ ] `executeTool()` 根据 tool name 路由到对应 handler 执行
-- [ ] `clearTools()` 清空注册表
-- [ ] 重复注册同名 Tool 覆盖旧定义
-- [ ] 未注册 Tool 的执行抛出明确错误
-- [ ] 插件卸载时通过 Disposable 自动取消注册
-- [ ] `streamText()` 调用时传入 `tools` 和 `maxSteps: 5`
-- [ ] TDD 留痕完整
-- [ ] `pnpm test` 回归通过
+- [x] `createToolRouter()` 返回 Tool Router 实例
+- [x] `registerTool()` 注册 Tool 到内部注册表并返回 `Disposable`
+- [x] `getRegisteredTools()` 返回当前所有已注册 Tool 的信息
+- [x] `getToolsForAISDK()` 正确转换为 Vercel AI SDK 的 `tool()` 格式
+- [x] `executeTool()` 根据 tool name 路由到对应 handler 执行
+- [x] `clearTools()` 清空注册表
+- [x] 重复注册同名 Tool 覆盖旧定义
+- [x] 未注册 Tool 的执行抛出明确错误
+- [x] 插件卸载时通过 Disposable 自动取消注册
+- [x] `streamText()` 调用时传入 `tools` 和 `maxSteps: 5`
+- [x] TDD 留痕完整
+- [x] `pnpm test` 回归通过
 
 **交付物**：
 
-- [ ] `src/main/ai/tool-router.ts`（Tool Router 实现）
-- [ ] `src/main/ai/tool-router.test.ts`（Tool Router 单元测试）
-- [ ] `src/main/plugin/context.ts`（更新：`ctx.ai.registerTool()` 连接 Tool Router）
-- [ ] `src/main/ai/service.ts`（更新：`chat()` 集成 Tool Router）
+- [x] `src/main/ai/tool-router.ts`（Tool Router 实现）
+- [x] `src/main/ai/tool-router.test.ts`（Tool Router 单元测试）
+- [x] `src/main/plugin/context.ts`（更新：`ctx.ai.registerTool()` 连接 Tool Router）
+- [x] `src/main/ai/service.ts`（更新：`chat()` 集成 Tool Router）
 
 ---
 
@@ -894,9 +894,9 @@ describe("createToolRouter", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 IPC handler + 扩展通道定义 + 更新 Preload
-- [ ] Refactor：统一错误处理、优化 handler 结构，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 IPC handler + 扩展通道定义 + 更新 Preload
+- [x] Refactor：统一错误处理、优化 handler 结构，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -1012,25 +1012,25 @@ describe("createAIHandler", () => {
 
 **验收标准**：
 
-- [ ] `IPC_CHANNELS.ai` 包含 `chat`、`getModels`、`getConversations`、`deleteConversation`、`stream` 五个通道
-- [ ] `createAIHandler(service)` 工厂函数返回所有 handler 方法
-- [ ] `setupAIHandlers()` 注册所有 AI IPC handler 到 `ipcMain`
-- [ ] `ai:chat` handler 调用 Service 并通过 `event.sender.send()` 推送流式事件
-- [ ] `ai:getModels` 返回可用模型列表
-- [ ] `ai:getConversations` 返回对话列表
-- [ ] `ai:deleteConversation` 删除指定对话
-- [ ] `register.ts` 中 ai 领域空壳 handler 已替换为真实实现
-- [ ] `preload/index.ts` 已扩展 `workbox.ai` 接口（含 `onStream` 退订函数）
-- [ ] TDD 留痕完整
-- [ ] `pnpm test` 回归通过
+- [x] `IPC_CHANNELS.ai` 包含 `chat`、`getModels`、`getConversations`、`deleteConversation`、`stream` 五个通道
+- [x] `createAIHandler(service)` 工厂函数返回所有 handler 方法
+- [x] `setupAIHandlers()` 注册所有 AI IPC handler 到 `ipcMain`
+- [x] `ai:chat` handler 调用 Service 并通过 `event.sender.send()` 推送流式事件
+- [x] `ai:getModels` 返回可用模型列表
+- [x] `ai:getConversations` 返回对话列表
+- [x] `ai:deleteConversation` 删除指定对话
+- [x] `register.ts` 中 ai 领域空壳 handler 已替换为真实实现
+- [x] `preload/index.ts` 已扩展 `workbox.ai` 接口（含 `onStream` 退订函数）
+- [x] TDD 留痕完整
+- [x] `pnpm test` 回归通过
 
 **交付物**：
 
-- [ ] `src/main/ipc/ai.handler.ts`（AI IPC Handler 实现）
-- [ ] `src/main/ipc/ai.handler.test.ts`（AI IPC Handler 单元测试）
-- [ ] `src/shared/ipc-channels.ts`（更新：扩展 `ai` 通道定义）
-- [ ] `src/main/ipc/register.ts`（更新：替换 ai 空壳 handler）
-- [ ] `src/preload/index.ts`（更新：扩展 `workbox.ai` 桥接接口）
+- [x] `src/main/ipc/ai.handler.ts`（AI IPC Handler 实现）
+- [x] `src/main/ipc/ai.handler.test.ts`（AI IPC Handler 单元测试）
+- [x] `src/shared/ipc-channels.ts`（更新：扩展 `ai` 通道定义）
+- [x] `src/main/ipc/register.ts`（更新：替换 ai 空壳 handler）
+- [x] `src/preload/index.ts`（更新：扩展 `workbox.ai` 桥接接口）
 
 ---
 
@@ -1066,9 +1066,9 @@ describe("createAIHandler", () => {
 
 **TDD 要求**：
 
-- [ ] 编写 Zustand store 测试（A 类风格：先写测试再实现）
-- [ ] 编写 ChatView、MessageList、MessageInput 组件渲染测试（B 类：验证式）
-- [ ] 所有测试通过
+- [x] 编写 Zustand store 测试（A 类风格：先写测试再实现）
+- [x] 编写 ChatView、MessageList、MessageInput 组件渲染测试（B 类：验证式）
+- [x] 所有测试通过
 
 **测试用例设计**：
 
@@ -1316,34 +1316,34 @@ describe("MessageInput", () => {
 
 **验收标准**：
 
-- [ ] 安装 Markdown 渲染依赖（`react-markdown`、`remark-gfm`、`rehype-highlight`、`highlight.js`）
-- [ ] Zustand store 包含对话列表、当前对话、消息、流式状态、模型选择等状态
-- [ ] Store actions 完整：`createConversation`、`switchConversation`、`deleteConversation`、`addMessage`、`appendStreamingText`、`setStreaming`、`setSelectedModel`
-- [ ] ChatView 左右分栏布局：左侧对话列表，右侧消息区 + 输入区
-- [ ] 空态页面：无对话时显示欢迎信息和新建对话入口
-- [ ] MessageList 区分 user / assistant / tool 消息样式
-- [ ] MessageList 支持 Markdown 渲染（含 GFM 语法）
-- [ ] MessageList 支持代码块语法高亮
-- [ ] MessageList 支持 Tool Call 折叠/展开展示
-- [ ] MessageInput 多行文本输入，`Ctrl+Enter`（macOS `Cmd+Enter`）发送
-- [ ] MessageInput 显示模型切换下拉
-- [ ] 流式响应实时渲染（打字机效果）
-- [ ] 附件按钮占位（本阶段不实现上传功能）
-- [ ] 渲染进程通过 `window.workbox.ai.onStream()` 订阅流式事件
-- [ ] 组件卸载时正确退订 stream 事件
-- [ ] 所有测试通过
-- [ ] `pnpm test` 回归通过
+- [x] 安装 Markdown 渲染依赖（`react-markdown`、`remark-gfm`、`rehype-highlight`、`highlight.js`）
+- [x] Zustand store 包含对话列表、当前对话、消息、流式状态、模型选择等状态
+- [x] Store actions 完整：`createConversation`、`switchConversation`、`deleteConversation`、`addMessage`、`appendStreamingText`、`setStreaming`、`setSelectedModel`
+- [x] ChatView 左右分栏布局：左侧对话列表，右侧消息区 + 输入区
+- [x] 空态页面：无对话时显示欢迎信息和新建对话入口
+- [x] MessageList 区分 user / assistant / tool 消息样式
+- [x] MessageList 支持 Markdown 渲染（含 GFM 语法）
+- [x] MessageList 支持代码块语法高亮
+- [x] MessageList 支持 Tool Call 折叠/展开展示
+- [x] MessageInput 多行文本输入，`Ctrl+Enter`（macOS `Cmd+Enter`）发送
+- [x] MessageInput 显示模型切换下拉
+- [x] 流式响应实时渲染（打字机效果）
+- [x] 附件按钮占位（本阶段不实现上传功能）
+- [x] 渲染进程通过 `window.workbox.ai.onStream()` 订阅流式事件
+- [x] 组件卸载时正确退订 stream 事件
+- [x] 所有测试通过
+- [x] `pnpm test` 回归通过
 
 **交付物**：
 
-- [ ] `src/renderer/src/features/chat/store.ts`（Chat Zustand Store）
-- [ ] `src/renderer/src/features/chat/store.test.ts`（Store 单元测试）
-- [ ] `src/renderer/src/features/chat/ChatView.tsx`（对话主视图 — 替换占位组件）
-- [ ] `src/renderer/src/features/chat/ChatView.test.tsx`（ChatView 组件测试）
-- [ ] `src/renderer/src/features/chat/MessageList.tsx`（消息列表组件）
-- [ ] `src/renderer/src/features/chat/MessageList.test.tsx`（MessageList 组件测试）
-- [ ] `src/renderer/src/features/chat/MessageInput.tsx`（消息输入组件）
-- [ ] `src/renderer/src/features/chat/MessageInput.test.tsx`（MessageInput 组件测试）
+- [x] `src/renderer/src/features/chat/store.ts`（Chat Zustand Store）
+- [x] `src/renderer/src/features/chat/store.test.ts`（Store 单元测试）
+- [x] `src/renderer/src/features/chat/ChatView.tsx`（对话主视图 — 替换占位组件）
+- [x] `src/renderer/src/features/chat/ChatView.test.tsx`（ChatView 组件测试）
+- [x] `src/renderer/src/features/chat/MessageList.tsx`（消息列表组件）
+- [x] `src/renderer/src/features/chat/MessageList.test.tsx`（MessageList 组件测试）
+- [x] `src/renderer/src/features/chat/MessageInput.tsx`（消息输入组件）
+- [x] `src/renderer/src/features/chat/MessageInput.test.tsx`（MessageInput 组件测试）
 
 ---
 
@@ -1368,8 +1368,8 @@ describe("MessageInput", () => {
 
 ### 低优先级问题（记录参考）
 
-- [ ] **[L1]** Task 3.5 的 UI 详细交互规范（动画、间距、颜色）未在文档中指定，可在实现阶段参考 shadcn/ui 默认风格
-- [ ] **[L2]** Ollama 模型列表动态查询（通过 `http://localhost:11434/api/tags`）未在 Phase 3 实现，`getModels()` 返回空列表，用户需手动输入模型名
-- [ ] **[L3]** 对话导出功能（Markdown / JSON）在 ARCHITECTURE.md 9.2 中提及但未纳入 Phase 3 任务，可在后续阶段添加
-- [ ] **[L4]** `aiSystemPrompt` 配置未纳入 AppSettings，默认空字符串，可在后续需求中添加
-- [ ] **[L5]** Token 级上下文裁剪（基于 tiktoken 等库）未在 Phase 3 实现，使用消息条数裁剪作为简化方案
+- [x] **[L1]** Task 3.5 的 UI 详细交互规范（动画、间距、颜色）未在文档中指定，可在实现阶段参考 shadcn/ui 默认风格
+- [x] **[L2]** Ollama 模型列表动态查询（通过 `http://localhost:11434/api/tags`）未在 Phase 3 实现，`getModels()` 返回空列表，用户需手动输入模型名
+- [x] **[L3]** 对话导出功能（Markdown / JSON）在 ARCHITECTURE.md 9.2 中提及但未纳入 Phase 3 任务，可在后续阶段添加
+- [x] **[L4]** `aiSystemPrompt` 配置未纳入 AppSettings，默认空字符串，可在后续需求中添加
+- [x] **[L5]** Token 级上下文裁剪（基于 tiktoken 等库）未在 Phase 3 实现，使用消息条数裁剪作为简化方案

@@ -1,4 +1,4 @@
-import { eq, and, asc, InferSelectModel } from "drizzle-orm";
+import { eq, and, asc, desc, InferSelectModel } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { conversations, messages, pluginStorage, settings } from "./schema";
 
@@ -42,6 +42,7 @@ export interface Crud {
   getConversation(id: string): Conversation | undefined;
   updateConversation(id: string, fields: UpdateConversationFields): void;
   deleteConversation(id: string): void;
+  getAllConversations(): Conversation[];
   insertMessage(params: InsertMessageParams): void;
   getMessagesByConversation(conversationId: string): Message[];
   getSetting(key: string): string | undefined;
@@ -82,6 +83,11 @@ export function createCrud(db: BetterSQLite3Database): Crud {
     /** 删除对话 */
     deleteConversation(id: string): void {
       db.delete(conversations).where(eq(conversations.id, id)).run();
+    },
+
+    /** 获取所有对话，按 updatedAt 降序 */
+    getAllConversations() {
+      return db.select().from(conversations).orderBy(desc(conversations.updatedAt)).all();
     },
 
     // ---- messages ----

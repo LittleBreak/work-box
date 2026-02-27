@@ -19,8 +19,28 @@ const workboxAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.shell.exec, command, options)
   },
   ai: {
-    chat: (params: unknown): Promise<unknown> => ipcRenderer.invoke(IPC_CHANNELS.ai.chat, params),
-    getModels: (): Promise<unknown> => ipcRenderer.invoke(IPC_CHANNELS.ai.getModels)
+    chat: (conversationId: string, content: string): Promise<import("@shared/types").ChatResult> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.chat, conversationId, content),
+    getModels: (): Promise<Array<import("../main/ai/types").ModelInfo>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.getModels),
+    getConversations: (): Promise<unknown[]> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.getConversations),
+    getHistory: (conversationId: string): Promise<unknown[]> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.getHistory, conversationId),
+    deleteConversation: (id: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.deleteConversation, id),
+    onStream: (callback: (event: import("@shared/types").StreamEvent) => void): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        data: import("@shared/types").StreamEvent
+      ): void => {
+        callback(data);
+      };
+      ipcRenderer.on(IPC_CHANNELS.ai.stream, handler);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.ai.stream, handler);
+      };
+    }
   },
   plugin: {
     list: (): Promise<unknown> => ipcRenderer.invoke(IPC_CHANNELS.plugin.list),

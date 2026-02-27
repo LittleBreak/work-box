@@ -3,8 +3,10 @@ import { IPC_CHANNELS } from "@shared/ipc-channels";
 import { setupFSHandlers } from "./fs.handler";
 import { setupShellHandlers } from "./shell.handler";
 import { setupSettingsHandlers } from "./settings.handler";
+import { createAIHandler } from "./ai.handler";
 import type { Crud } from "../storage/crud";
 import type { PluginManager } from "../plugin/manager";
+import type { AIService } from "../ai/service";
 
 let registered = false;
 
@@ -12,6 +14,7 @@ let registered = false;
 export interface RegisterIPCOptions {
   crud?: Crud;
   pluginManager?: PluginManager;
+  aiService?: AIService;
 }
 
 /**
@@ -34,9 +37,30 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
   // shell 领域（Task 1.3 实现）
   setupShellHandlers(ipcMain);
 
-  // ai 领域
-  ipcMain.handle(IPC_CHANNELS.ai.chat, notImplemented);
-  ipcMain.handle(IPC_CHANNELS.ai.getModels, notImplemented);
+  // ai 领域（Task 3.4 实现）
+  if (options?.aiService) {
+    const handler = createAIHandler(options.aiService);
+
+    ipcMain.handle(IPC_CHANNELS.ai.chat, async (event, conversationId: string, content: string) => {
+      return handler.chat(conversationId, content, (streamEvent) => {
+        event.sender.send(IPC_CHANNELS.ai.stream, streamEvent);
+      });
+    });
+    ipcMain.handle(IPC_CHANNELS.ai.getModels, async () => handler.getModels());
+    ipcMain.handle(IPC_CHANNELS.ai.getConversations, async () => handler.getConversations());
+    ipcMain.handle(IPC_CHANNELS.ai.getHistory, async (_event, conversationId: string) =>
+      handler.getHistory(conversationId)
+    );
+    ipcMain.handle(IPC_CHANNELS.ai.deleteConversation, async (_event, id: string) =>
+      handler.deleteConversation(id)
+    );
+  } else {
+    ipcMain.handle(IPC_CHANNELS.ai.chat, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.getModels, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.getConversations, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.getHistory, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.deleteConversation, notImplemented);
+  }
 
   // plugin 领域
   if (options?.pluginManager) {

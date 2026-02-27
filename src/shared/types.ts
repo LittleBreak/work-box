@@ -64,7 +64,7 @@ export interface AppSettings {
   language: "en" | "zh"; // 占位，本阶段不实现 i18n
 
   // ---- AI 设置 ----
-  aiProvider: "openai" | "claude" | "custom";
+  aiProvider: "openai" | "claude" | "ollama" | "custom";
   aiApiKey: string; // 存储时不加密
   aiBaseUrl: string; // 自定义 API 端点
   aiModel: string; // 当前选择的模型名称
@@ -98,10 +98,11 @@ export function validateSettings(partial: Partial<AppSettings>): void {
     "aiProvider" in partial &&
     partial.aiProvider !== "openai" &&
     partial.aiProvider !== "claude" &&
+    partial.aiProvider !== "ollama" &&
     partial.aiProvider !== "custom"
   ) {
     throw new Error(
-      `Invalid aiProvider: ${partial.aiProvider}. Must be 'openai', 'claude', or 'custom'`
+      `Invalid aiProvider: ${partial.aiProvider}. Must be 'openai', 'claude', 'ollama', or 'custom'`
     );
   }
   if ("aiTemperature" in partial) {
@@ -135,6 +136,68 @@ export function isExecResult(value: unknown): value is ExecResult {
     typeof obj.stderr === "string" &&
     typeof obj.exitCode === "number"
   );
+}
+
+// ---- AI 流式事件 ----
+
+/** AI 流式响应事件联合类型 */
+export type StreamEvent =
+  | StreamEventTextDelta
+  | StreamEventToolCall
+  | StreamEventToolResult
+  | StreamEventFinish
+  | StreamEventError;
+
+/** 文本增量事件 */
+export interface StreamEventTextDelta {
+  type: "text-delta";
+  conversationId: string;
+  textDelta: string;
+}
+
+/** Tool Call 发起事件 */
+export interface StreamEventToolCall {
+  type: "tool-call";
+  conversationId: string;
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+}
+
+/** Tool Call 结果事件 */
+export interface StreamEventToolResult {
+  type: "tool-result";
+  conversationId: string;
+  toolCallId: string;
+  toolName: string;
+  result: unknown;
+}
+
+/** 流式完成事件 */
+export interface StreamEventFinish {
+  type: "finish";
+  conversationId: string;
+  finishReason: string;
+}
+
+/** 流式错误事件 */
+export interface StreamEventError {
+  type: "error";
+  conversationId: string;
+  error: string;
+}
+
+/** AI 对话请求参数 */
+export interface ChatParams {
+  conversationId: string;
+  content: string;
+  model?: string;
+}
+
+/** AI 对话返回结果 */
+export interface ChatResult {
+  conversationId: string;
+  messageId: string;
 }
 
 // ---- 插件系统 ----

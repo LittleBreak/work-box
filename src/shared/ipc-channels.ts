@@ -14,7 +14,11 @@ export const IPC_CHANNELS = {
   },
   ai: {
     chat: "ai:chat",
-    getModels: "ai:getModels"
+    getModels: "ai:getModels",
+    getConversations: "ai:getConversations",
+    getHistory: "ai:getHistory",
+    deleteConversation: "ai:deleteConversation",
+    stream: "ai:stream"
   },
   plugin: {
     list: "plugin:list",
