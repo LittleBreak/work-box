@@ -8,6 +8,8 @@ import type { StreamEvent, ChatResult } from "@shared/types";
 export interface AIServiceDeps {
   crud: Crud;
   adapter: AIProviderAdapter;
+  /** 使用的模型名称（如 "gpt-4o"），默认取 adapter 第一个可用模型 */
+  model?: string;
   maxContextMessages?: number;
 }
 
@@ -32,7 +34,8 @@ const DEFAULT_MAX_CONTEXT_MESSAGES = 50;
  * 协调 Provider 适配器、CRUD 存储和流式转发。
  */
 export function createAIService(deps: AIServiceDeps): AIService {
-  const { crud, adapter, maxContextMessages = DEFAULT_MAX_CONTEXT_MESSAGES } = deps;
+  const { crud, adapter, model, maxContextMessages = DEFAULT_MAX_CONTEXT_MESSAGES } = deps;
+  const resolvedModel = model || adapter.getModels()[0]?.id || "default";
 
   /** 跟踪每个对话是否已发送过消息（用于首次消息更新标题） */
   const conversationMessageCount = new Map<string, number>();
@@ -48,11 +51,15 @@ export function createAIService(deps: AIServiceDeps): AIService {
     },
 
     async chat(conversationId, content, onEvent) {
-      // 空 conversationId 时自动创建新对话
+      // 确保对话在数据库中存在
       let convId = conversationId;
       if (!convId) {
         const conv = this.createConversation();
         convId = conv.id;
+      } else if (!crud.getConversation(convId)) {
+        const now = Date.now();
+        crud.insertConversation({ id: convId, title: "新对话", createdAt: now, updatedAt: now });
+        conversationMessageCount.set(convId, 0);
       }
 
       // 持久化用户消息
@@ -85,7 +92,7 @@ export function createAIService(deps: AIServiceDeps): AIService {
         }));
 
         // 调用 AI Provider
-        const model = adapter.createModel("default");
+        const model = adapter.createModel(resolvedModel);
         const result = streamText({
           model: model as Parameters<typeof streamText>[0]["model"],
           messages: sdkMessages
@@ -95,11 +102,11 @@ export function createAIService(deps: AIServiceDeps): AIService {
         let fullText = "";
         for await (const chunk of result.fullStream) {
           if (chunk.type === "text-delta") {
-            fullText += chunk.textDelta;
+            fullText += chunk.text;
             onEvent({
               type: "text-delta",
               conversationId: convId,
-              textDelta: chunk.textDelta
+              textDelta: chunk.text
             });
           } else if (chunk.type === "tool-call") {
             onEvent({

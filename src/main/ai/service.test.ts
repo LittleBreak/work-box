@@ -127,8 +127,8 @@ describe("createAIService", () => {
     it("发送用户消息后接收 text-delta 和 finish 事件", async () => {
       mockStreamText.mockReturnValue({
         fullStream: (async function* () {
-          yield { type: "text-delta", textDelta: "Hello" };
-          yield { type: "text-delta", textDelta: " world" };
+          yield { type: "text-delta", text: "Hello" };
+          yield { type: "text-delta", text: " world" };
           yield {
             type: "finish",
             finishReason: "stop",
@@ -147,11 +147,31 @@ describe("createAIService", () => {
       expect(events.some((e) => e.type === "finish")).toBe(true);
     });
 
+    // 正常路径：使用配置的模型名称调用 Provider
+    it("使用 deps 中配置的 model 而非硬编码值", async () => {
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 0 }
+          };
+        })(),
+        text: Promise.resolve("")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter, model: "gpt-4o" });
+      const conv = service.createConversation();
+      await service.chat(conv.id, "Hi", () => {});
+
+      expect(adapter.createModel).toHaveBeenCalledWith("gpt-4o");
+    });
+
     // 正常路径：用户消息和 AI 回复均持久化
     it("持久化用户消息和 AI 回复", async () => {
       mockStreamText.mockReturnValue({
         fullStream: (async function* () {
-          yield { type: "text-delta", textDelta: "Reply" };
+          yield { type: "text-delta", text: "Reply" };
           yield {
             type: "finish",
             finishReason: "stop",
@@ -204,6 +224,34 @@ describe("createAIService", () => {
       await service.chat(conv.id, "Hello", (e) => events.push(e));
 
       expect(events.some((e) => e.type === "error")).toBe(true);
+    });
+
+    // 边界条件：conversationId 存在但数据库中无记录时自动创建
+    it("conversationId 存在但数据库中无记录时自动创建对话", async () => {
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 0 }
+          };
+        })(),
+        text: Promise.resolve("")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      const externalId = "external-conv-id-not-in-db";
+      const events: StreamEvent[] = [];
+      const result = await service.chat(externalId, "Hello", (e) => events.push(e));
+
+      // 应使用传入的 conversationId（不生成新的）
+      expect(result.conversationId).toBe(externalId);
+      // 应在数据库中创建对话记录
+      expect(crud.insertConversation).toHaveBeenCalledWith(
+        expect.objectContaining({ id: externalId })
+      );
+      // 消息应正常插入不报错
+      expect(crud.insertMessage).toHaveBeenCalled();
     });
 
     // 边界条件：对话不存在时创建新对话

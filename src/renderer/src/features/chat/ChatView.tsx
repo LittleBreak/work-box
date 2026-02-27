@@ -51,29 +51,35 @@ export function ChatView(): React.JSX.Element {
         }
       | undefined;
 
-    if (workbox?.ai?.onStream) {
-      const unsubscribe = workbox.ai.onStream((event: Record<string, unknown>) => {
-        if (event.type === "text-delta") {
-          appendStreamingText(event.textDelta as string);
-        } else if (event.type === "finish") {
-          const text = useChatStore.getState().streamingText;
-          if (text && currentConversationId) {
-            addMessage(currentConversationId, {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              content: text
-            });
-          }
-          setStreaming(false);
-          unsubscribe();
-        } else if (event.type === "error") {
-          setStreaming(false);
-          unsubscribe();
-        }
-      });
-
-      workbox.ai.chat?.(currentConversationId, content);
+    if (!workbox?.ai?.onStream || !workbox?.ai?.chat) {
+      setStreaming(false);
+      return;
     }
+
+    const unsubscribe = workbox.ai.onStream((event: Record<string, unknown>) => {
+      if (event.type === "text-delta") {
+        appendStreamingText(event.textDelta as string);
+      } else if (event.type === "finish") {
+        const text = useChatStore.getState().streamingText;
+        if (text && currentConversationId) {
+          addMessage(currentConversationId, {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: text
+          });
+        }
+        setStreaming(false);
+        unsubscribe();
+      } else if (event.type === "error") {
+        setStreaming(false);
+        unsubscribe();
+      }
+    });
+
+    workbox.ai.chat(currentConversationId, content).catch(() => {
+      setStreaming(false);
+      unsubscribe();
+    });
   };
 
   return (

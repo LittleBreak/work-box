@@ -4,6 +4,10 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { registerIPCHandlers } from "./ipc/register";
 import { Database } from "./storage/database";
 import { createCrud } from "./storage/crud";
+import { createAIService, createProviderAdapter } from "./ai";
+import { createSettingsHandler } from "./ipc/settings.handler";
+import type { Crud } from "./storage/crud";
+import type { AIService } from "./ai";
 import icon from "../../resources/icon.png?asset";
 
 function createWindow(): void {
@@ -52,7 +56,10 @@ app.whenReady().then(() => {
   database.initialize();
   const crud = createCrud(database.drizzle);
 
-  registerIPCHandlers({ crud });
+  // 初始化 AI 服务
+  const aiService = initAIService(crud);
+
+  registerIPCHandlers({ crud, aiService });
 
   createWindow();
 
@@ -66,3 +73,20 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+/**
+ * 从数据库读取 AI 设置并创建 AI 服务实例。
+ * 如果创建失败（如设置缺失），返回 undefined 并降级为 notImplemented 处理。
+ */
+function initAIService(crud: Crud): AIService | undefined {
+  try {
+    const settingsHandler = createSettingsHandler(crud);
+    const { aiProvider, aiApiKey, aiBaseUrl, aiModel } = settingsHandler.getSettings();
+
+    const adapter = createProviderAdapter({ aiProvider, aiApiKey, aiBaseUrl });
+    return createAIService({ crud, adapter, model: aiModel });
+  } catch (err) {
+    console.error("[AI] Failed to initialize AI service:", err);
+    return undefined;
+  }
+}
