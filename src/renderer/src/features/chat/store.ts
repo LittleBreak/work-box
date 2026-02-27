@@ -13,6 +13,7 @@ export interface ChatMessage {
 export interface ConversationSummary {
   id: string;
   title: string;
+  systemPrompt?: string | null;
   createdAt?: number;
   updatedAt?: number;
 }
@@ -29,6 +30,13 @@ interface ChatState {
   switchConversation: (id: string) => void;
   deleteConversation: (id: string) => void;
   addMessage: (conversationId: string, message: ChatMessage) => void;
+  removeMessagesFrom: (conversationId: string, messageId: string) => void;
+  updateLocalMessageContent: (
+    conversationId: string,
+    messageId: string,
+    newContent: string
+  ) => void;
+  updateConversationSystemPrompt: (conversationId: string, systemPrompt: string | null) => void;
   appendStreamingText: (text: string) => void;
   setStreaming: (streaming: boolean) => void;
   setSelectedModel: (model: string) => void;
@@ -77,6 +85,42 @@ export const useChatStore = create<ChatState>((set) => ({
         ...state.messages,
         [conversationId]: [...(state.messages[conversationId] ?? []), message]
       }
+    }));
+  },
+
+  removeMessagesFrom(conversationId, messageId) {
+    set((state) => {
+      const msgs = state.messages[conversationId] ?? [];
+      const idx = msgs.findIndex((m) => m.id === messageId);
+      if (idx === -1) return state;
+      return {
+        messages: {
+          ...state.messages,
+          [conversationId]: msgs.slice(0, idx)
+        }
+      };
+    });
+  },
+
+  updateLocalMessageContent(conversationId, messageId, newContent) {
+    set((state) => {
+      const msgs = state.messages[conversationId] ?? [];
+      return {
+        messages: {
+          ...state.messages,
+          [conversationId]: msgs.map((m) =>
+            m.id === messageId ? { ...m, content: newContent } : m
+          )
+        }
+      };
+    });
+  },
+
+  updateConversationSystemPrompt(conversationId, systemPrompt) {
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId ? { ...c, systemPrompt } : c
+      )
     }));
   },
 

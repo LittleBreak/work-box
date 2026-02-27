@@ -9,6 +9,10 @@ export interface AIHandler {
     content: string,
     send: (event: StreamEvent) => void
   ): Promise<ChatResult>;
+  regenerate(conversationId: string, send: (event: StreamEvent) => void): Promise<ChatResult>;
+  updateSystemPrompt(conversationId: string, systemPrompt: string | null): void;
+  deleteMessagesAfter(conversationId: string, messageId: string): void;
+  updateMessageContent(messageId: string, content: string): void;
   getModels(): ModelInfo[];
   getConversations(): Conversation[];
   getHistory(conversationId: string): Message[];
@@ -22,6 +26,10 @@ interface AIServiceLike {
     content: string,
     onEvent: (event: StreamEvent) => void
   ): Promise<ChatResult>;
+  regenerate(conversationId: string, onEvent: (event: StreamEvent) => void): Promise<ChatResult>;
+  updateSystemPrompt(conversationId: string, systemPrompt: string | null): void;
+  deleteMessagesAfter(conversationId: string, messageId: string): void;
+  updateMessageContent?: (messageId: string, content: string) => void;
   getConversations(): Conversation[];
   getHistory(conversationId: string): Message[];
   deleteConversation(conversationId: string): void;
@@ -45,6 +53,26 @@ export function createAIHandler(service: AIServiceLike): AIHandler {
         return service.getModels();
       }
       return [];
+    },
+
+    async regenerate(conversationId, send) {
+      return service.regenerate(conversationId, (event) => {
+        send(event);
+      });
+    },
+
+    updateSystemPrompt(conversationId, systemPrompt) {
+      service.updateSystemPrompt(conversationId, systemPrompt);
+    },
+
+    deleteMessagesAfter(conversationId, messageId) {
+      service.deleteMessagesAfter(conversationId, messageId);
+    },
+
+    updateMessageContent(messageId, content) {
+      if (service.updateMessageContent) {
+        service.updateMessageContent(messageId, content);
+      }
     },
 
     getConversations() {

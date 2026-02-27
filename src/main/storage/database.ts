@@ -51,7 +51,7 @@ export class Database {
   }
 
   /**
-   * 初始化数据库：打开连接、启用外键、建表、创建 Drizzle 实例。
+   * 初始化数据库：打开连接、启用外键、建表、运行迁移、创建 Drizzle 实例。
    * 可安全重复调用（CREATE TABLE IF NOT EXISTS）。
    */
   initialize(): void {
@@ -60,8 +60,21 @@ export class Database {
     }
     this._raw.pragma("foreign_keys = ON");
     this._raw.exec(CREATE_TABLES_SQL);
+    this.runMigrations();
     if (!this._drizzle) {
       this._drizzle = drizzle(this._raw);
+    }
+  }
+
+  /**
+   * 运行增量迁移。
+   * 每条 ALTER TABLE 包裹在 try-catch 中保证幂等（列已存在时静默忽略）。
+   */
+  private runMigrations(): void {
+    try {
+      this._raw!.exec("ALTER TABLE conversations ADD COLUMN system_prompt TEXT DEFAULT NULL");
+    } catch {
+      // 列已存在，静默忽略
     }
   }
 

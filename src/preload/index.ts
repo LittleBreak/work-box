@@ -29,6 +29,14 @@ const workboxAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.ai.getHistory, conversationId),
     deleteConversation: (id: string): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.ai.deleteConversation, id),
+    updateSystemPrompt: (conversationId: string, systemPrompt: string | null): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.updateSystemPrompt, conversationId, systemPrompt),
+    deleteMessagesAfter: (conversationId: string, messageId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.deleteMessagesAfter, conversationId, messageId),
+    regenerate: (conversationId: string): Promise<import("@shared/types").ChatResult> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.regenerate, conversationId),
+    updateMessageContent: (messageId: string, content: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.updateMessageContent, messageId, content),
     onStream: (callback: (event: import("@shared/types").StreamEvent) => void): (() => void) => {
       const handler = (
         _event: Electron.IpcRendererEvent,
@@ -41,6 +49,10 @@ const workboxAPI = {
         ipcRenderer.removeListener(IPC_CHANNELS.ai.stream, handler);
       };
     }
+  },
+  clipboard: {
+    writeText: (text: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.clipboard.writeText, text)
   },
   plugin: {
     list: (): Promise<unknown> => ipcRenderer.invoke(IPC_CHANNELS.plugin.list),

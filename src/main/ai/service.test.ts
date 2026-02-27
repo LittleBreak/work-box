@@ -15,7 +15,12 @@ function createMockCrud(): Crud {
     getConversation: vi.fn(
       (id) => conversationStore.get(id) as ReturnType<Crud["getConversation"]>
     ),
-    updateConversation: vi.fn(),
+    updateConversation: vi.fn((id, fields) => {
+      const existing = conversationStore.get(id);
+      if (existing) {
+        conversationStore.set(id, { ...existing, ...fields });
+      }
+    }),
     deleteConversation: vi.fn((id) => {
       conversationStore.delete(id);
       messageStore.delete(id);
@@ -28,9 +33,25 @@ function createMockCrud(): Crud {
       msgs.push(params);
       messageStore.set(params.conversationId, msgs);
     }),
+    getMessage: vi.fn((id) => {
+      for (const msgs of messageStore.values()) {
+        const found = msgs.find((m) => m.id === id);
+        if (found) return found as ReturnType<Crud["getMessage"]>;
+      }
+      return undefined;
+    }),
     getMessagesByConversation: vi.fn(
       (convId) => (messageStore.get(convId) ?? []) as ReturnType<Crud["getMessagesByConversation"]>
     ),
+    updateMessageContent: vi.fn(),
+    deleteMessagesAfter: vi.fn((convId, msgId) => {
+      const msgs = messageStore.get(convId);
+      if (!msgs) return;
+      const target = msgs.find((m) => m.id === msgId);
+      if (!target) return;
+      const filtered = msgs.filter((m) => (m.createdAt as number) < (target.createdAt as number));
+      messageStore.set(convId, filtered);
+    }),
     getSetting: vi.fn(),
     setSetting: vi.fn(),
     deleteSetting: vi.fn(),
@@ -310,6 +331,240 @@ describe("createAIService", () => {
       // 验证传给 streamText 的 messages 不超过 maxContextMessages + 1（含新用户消息）
       const callArgs = mockStreamText.mock.calls[0]![0];
       expect((callArgs as Record<string, unknown[]>).messages.length).toBeLessThanOrEqual(11);
+    });
+  });
+
+  describe("systemPrompt 注入", () => {
+    // 正常路径：有 systemPrompt 时注入到 sdkMessages 最前面
+    it("有 systemPrompt 时注入为第一条 system 消息", async () => {
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield { type: "text-delta", text: "OK" };
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 2 }
+          };
+        })(),
+        text: Promise.resolve("OK")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      const conv = service.createConversation();
+      // 设置 systemPrompt
+      crud.updateConversation(conv.id, {
+        systemPrompt: "You are a helpful assistant.",
+        updatedAt: Date.now()
+      });
+
+      await service.chat(conv.id, "Hi", () => {});
+
+      const callArgs = mockStreamText.mock.calls[0]![0] as {
+        messages: Array<{ role: string; content: string }>;
+      };
+      expect(callArgs.messages[0]).toEqual({
+        role: "system",
+        content: "You are a helpful assistant."
+      });
+    });
+
+    // 边界条件：systemPrompt 为 null 时不注入
+    it("systemPrompt 为 null 时不注入 system 消息", async () => {
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 0 }
+          };
+        })(),
+        text: Promise.resolve("")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      const conv = service.createConversation();
+      await service.chat(conv.id, "Hi", () => {});
+
+      const callArgs = mockStreamText.mock.calls[0]![0] as {
+        messages: Array<{ role: string; content: string }>;
+      };
+      const systemMsgs = callArgs.messages.filter((m) => m.role === "system");
+      expect(systemMsgs).toHaveLength(0);
+    });
+
+    // 边界条件：systemPrompt 为空字符串时不注入
+    it("systemPrompt 为空字符串时不注入 system 消息", async () => {
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 0 }
+          };
+        })(),
+        text: Promise.resolve("")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      const conv = service.createConversation();
+      crud.updateConversation(conv.id, { systemPrompt: "", updatedAt: Date.now() });
+
+      await service.chat(conv.id, "Hi", () => {});
+
+      const callArgs = mockStreamText.mock.calls[0]![0] as {
+        messages: Array<{ role: string; content: string }>;
+      };
+      const systemMsgs = callArgs.messages.filter((m) => m.role === "system");
+      expect(systemMsgs).toHaveLength(0);
+    });
+
+    // 边界条件：systemPrompt 为纯空白时不注入
+    it("systemPrompt 为纯空白时不注入 system 消息", async () => {
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 0 }
+          };
+        })(),
+        text: Promise.resolve("")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      const conv = service.createConversation();
+      crud.updateConversation(conv.id, { systemPrompt: "   \n\t  ", updatedAt: Date.now() });
+
+      await service.chat(conv.id, "Hi", () => {});
+
+      const callArgs = mockStreamText.mock.calls[0]![0] as {
+        messages: Array<{ role: string; content: string }>;
+      };
+      const systemMsgs = callArgs.messages.filter((m) => m.role === "system");
+      expect(systemMsgs).toHaveLength(0);
+    });
+  });
+
+  describe("updateSystemPrompt", () => {
+    it("更新对话的 systemPrompt", () => {
+      const service = createAIService({ crud, adapter });
+      const conv = service.createConversation();
+      service.updateSystemPrompt(conv.id, "New prompt");
+      expect(crud.updateConversation).toHaveBeenCalledWith(
+        conv.id,
+        expect.objectContaining({ systemPrompt: "New prompt" })
+      );
+    });
+  });
+
+  describe("deleteMessagesAfter", () => {
+    it("代理到 crud.deleteMessagesAfter", () => {
+      const service = createAIService({ crud, adapter });
+      service.deleteMessagesAfter("conv-1", "msg-1");
+      expect(crud.deleteMessagesAfter).toHaveBeenCalledWith("conv-1", "msg-1");
+    });
+  });
+
+  describe("regenerate", () => {
+    it("读取历史消息并生成新回复，不重新插入 user 消息", async () => {
+      const historyMessages = [
+        {
+          id: "msg-1",
+          conversationId: "conv-1",
+          role: "user",
+          content: "Hello",
+          toolCalls: null,
+          toolResult: null,
+          createdAt: 1000
+        },
+        {
+          id: "msg-2",
+          conversationId: "conv-1",
+          role: "assistant",
+          content: "Hi!",
+          toolCalls: null,
+          toolResult: null,
+          createdAt: 2000
+        }
+      ];
+      vi.mocked(crud.getMessagesByConversation).mockReturnValue(
+        historyMessages as ReturnType<Crud["getMessagesByConversation"]>
+      );
+
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield { type: "text-delta", text: "New reply" };
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 5 }
+          };
+        })(),
+        text: Promise.resolve("New reply")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      // 确保 conversation 存在
+      vi.mocked(crud.getConversation).mockReturnValue({
+        id: "conv-1",
+        title: "Test",
+        systemPrompt: null,
+        createdAt: 1000,
+        updatedAt: 2000
+      });
+
+      const events: StreamEvent[] = [];
+      const result = await service.regenerate("conv-1", (e) => events.push(e));
+
+      expect(result.conversationId).toBe("conv-1");
+      // 应该只插入 assistant 回复，不插入 user 消息
+      expect(crud.insertMessage).toHaveBeenCalledTimes(1);
+      expect(crud.insertMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ role: "assistant", content: "New reply" })
+      );
+      // 流式事件应正常推送
+      expect(events.some((e) => e.type === "text-delta")).toBe(true);
+      expect(events.some((e) => e.type === "finish")).toBe(true);
+    });
+
+    it("regenerate 时注入 systemPrompt", async () => {
+      vi.mocked(crud.getMessagesByConversation).mockReturnValue([
+        {
+          id: "msg-1",
+          conversationId: "conv-1",
+          role: "user",
+          content: "Hello",
+          toolCalls: null,
+          toolResult: null,
+          createdAt: 1000
+        }
+      ] as ReturnType<Crud["getMessagesByConversation"]>);
+      vi.mocked(crud.getConversation).mockReturnValue({
+        id: "conv-1",
+        title: "Test",
+        systemPrompt: "Be concise",
+        createdAt: 1000,
+        updatedAt: 2000
+      });
+
+      mockStreamText.mockReturnValue({
+        fullStream: (async function* () {
+          yield {
+            type: "finish",
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 0 }
+          };
+        })(),
+        text: Promise.resolve("")
+      } as ReturnType<typeof streamText>);
+
+      const service = createAIService({ crud, adapter });
+      await service.regenerate("conv-1", () => {});
+
+      const callArgs = mockStreamText.mock.calls[0]![0] as {
+        messages: Array<{ role: string; content: string }>;
+      };
+      expect(callArgs.messages[0]).toEqual({ role: "system", content: "Be concise" });
     });
   });
 });

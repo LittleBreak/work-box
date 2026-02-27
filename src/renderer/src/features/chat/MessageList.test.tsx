@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MessageList } from "./MessageList";
 
 describe("MessageList", () => {
@@ -92,5 +92,149 @@ describe("MessageList", () => {
   it("消息列表为空时不崩溃", () => {
     render(<MessageList messages={[]} streamingText="" isStreaming={false} />);
     expect(screen.getByTestId("message-list")).toBeInTheDocument();
+  });
+
+  // 正常路径：所有消息显示复制按钮
+  it("每条消息显示复制按钮", () => {
+    render(
+      <MessageList
+        messages={[
+          { id: "1", role: "user", content: "Hello" },
+          { id: "2", role: "assistant", content: "Hi" }
+        ]}
+        streamingText=""
+        isStreaming={false}
+        onCopy={vi.fn()}
+      />
+    );
+    const copyButtons = screen.getAllByTitle("复制");
+    expect(copyButtons).toHaveLength(2);
+  });
+
+  // 正常路径：assistant 消息显示重新生成按钮
+  it("assistant 消息显示重新生成按钮", () => {
+    render(
+      <MessageList
+        messages={[
+          { id: "1", role: "user", content: "Hello" },
+          { id: "2", role: "assistant", content: "Hi" }
+        ]}
+        streamingText=""
+        isStreaming={false}
+        onRegenerate={vi.fn()}
+      />
+    );
+    const regenButtons = screen.getAllByTitle("重新生成");
+    expect(regenButtons).toHaveLength(1);
+  });
+
+  // 正常路径：user 消息显示编辑按钮
+  it("user 消息显示编辑按钮", () => {
+    render(
+      <MessageList
+        messages={[
+          { id: "1", role: "user", content: "Hello" },
+          { id: "2", role: "assistant", content: "Hi" }
+        ]}
+        streamingText=""
+        isStreaming={false}
+        onEdit={vi.fn()}
+      />
+    );
+    const editButtons = screen.getAllByTitle("编辑");
+    expect(editButtons).toHaveLength(1);
+  });
+
+  // 正常路径：点击复制按钮调用 onCopy 回调
+  it("点击复制按钮触发 onCopy 回调", () => {
+    const onCopy = vi.fn();
+    render(
+      <MessageList
+        messages={[{ id: "msg-1", role: "user", content: "Copy me" }]}
+        streamingText=""
+        isStreaming={false}
+        onCopy={onCopy}
+      />
+    );
+    fireEvent.click(screen.getByTitle("复制"));
+    expect(onCopy).toHaveBeenCalledWith("msg-1", "Copy me");
+  });
+
+  // 正常路径：点击重新生成按钮调用 onRegenerate 回调
+  it("点击重新生成按钮触发 onRegenerate 回调", () => {
+    const onRegenerate = vi.fn();
+    render(
+      <MessageList
+        messages={[{ id: "msg-2", role: "assistant", content: "Response" }]}
+        streamingText=""
+        isStreaming={false}
+        onRegenerate={onRegenerate}
+      />
+    );
+    fireEvent.click(screen.getByTitle("重新生成"));
+    expect(onRegenerate).toHaveBeenCalledWith("msg-2");
+  });
+
+  // 正常路径：编辑模式 — 点击编辑显示 textarea
+  it("点击编辑按钮进入编辑模式", () => {
+    render(
+      <MessageList
+        messages={[{ id: "msg-e", role: "user", content: "Edit me" }]}
+        streamingText=""
+        isStreaming={false}
+        onEdit={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByTitle("编辑"));
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+
+  // 正常路径：编辑模式 — 确认后调用 onEdit 回调
+  it("编辑确认后调用 onEdit 回调", () => {
+    const onEdit = vi.fn();
+    render(
+      <MessageList
+        messages={[{ id: "msg-e2", role: "user", content: "Old text" }]}
+        streamingText=""
+        isStreaming={false}
+        onEdit={onEdit}
+      />
+    );
+    fireEvent.click(screen.getByTitle("编辑"));
+    const textarea = screen.getByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "New text" } });
+    fireEvent.click(screen.getByTitle("确认"));
+    expect(onEdit).toHaveBeenCalledWith("msg-e2", "New text");
+  });
+
+  // 正常路径：编辑模式 — 取消后恢复原内容
+  it("编辑取消后恢复原内容", () => {
+    render(
+      <MessageList
+        messages={[{ id: "msg-e3", role: "user", content: "Keep me" }]}
+        streamingText=""
+        isStreaming={false}
+        onEdit={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByTitle("编辑"));
+    fireEvent.click(screen.getByTitle("取消"));
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Keep me")).toBeInTheDocument();
+  });
+
+  // 边界条件：流式输出期间不显示操作按钮
+  it("流式输出期间不显示操作按钮", () => {
+    render(
+      <MessageList
+        messages={[{ id: "1", role: "user", content: "Hello" }]}
+        streamingText="Thinking..."
+        isStreaming={true}
+        onCopy={vi.fn()}
+        onEdit={vi.fn()}
+      />
+    );
+    expect(screen.queryByTitle("复制")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("编辑")).not.toBeInTheDocument();
   });
 });

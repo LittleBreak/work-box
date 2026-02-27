@@ -1,4 +1,4 @@
-import { eq, and, asc, desc, InferSelectModel } from "drizzle-orm";
+import { eq, and, asc, desc, gte, InferSelectModel } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { conversations, messages, pluginStorage, settings } from "./schema";
 
@@ -21,7 +21,8 @@ export interface InsertConversationParams {
 
 /** updateConversation 可更新字段 */
 export interface UpdateConversationFields {
-  title: string;
+  title?: string;
+  systemPrompt?: string | null;
   updatedAt: number;
 }
 
@@ -44,7 +45,10 @@ export interface Crud {
   deleteConversation(id: string): void;
   getAllConversations(): Conversation[];
   insertMessage(params: InsertMessageParams): void;
+  getMessage(messageId: string): Message | undefined;
   getMessagesByConversation(conversationId: string): Message[];
+  updateMessageContent(messageId: string, content: string): void;
+  deleteMessagesAfter(conversationId: string, messageId: string): void;
   getSetting(key: string): string | undefined;
   setSetting(key: string, value: string): void;
   deleteSetting(key: string): void;
@@ -75,9 +79,12 @@ export function createCrud(db: BetterSQLite3Database): Crud {
       return db.select().from(conversations).where(eq(conversations.id, id)).get();
     },
 
-    /** 更新对话（仅 title 和 updatedAt） */
+    /** 更新对话（支持 title、systemPrompt、updatedAt） */
     updateConversation(id: string, fields: UpdateConversationFields): void {
-      db.update(conversations).set(fields).where(eq(conversations.id, id)).run();
+      const setFields: Record<string, unknown> = { updatedAt: fields.updatedAt };
+      if (fields.title !== undefined) setFields.title = fields.title;
+      if ("systemPrompt" in fields) setFields.systemPrompt = fields.systemPrompt;
+      db.update(conversations).set(setFields).where(eq(conversations.id, id)).run();
     },
 
     /** 删除对话 */
@@ -107,6 +114,11 @@ export function createCrud(db: BetterSQLite3Database): Crud {
         .run();
     },
 
+    /** 查询单条消息，未找到返回 undefined */
+    getMessage(messageId: string) {
+      return db.select().from(messages).where(eq(messages.id, messageId)).get();
+    },
+
     /** 查询对话的所有消息，按创建时间升序 */
     getMessagesByConversation(conversationId: string) {
       return db
@@ -115,6 +127,25 @@ export function createCrud(db: BetterSQLite3Database): Crud {
         .where(eq(messages.conversationId, conversationId))
         .orderBy(asc(messages.createdAt))
         .all();
+    },
+
+    /** 更新消息内容 */
+    updateMessageContent(messageId: string, content: string): void {
+      db.update(messages).set({ content }).where(eq(messages.id, messageId)).run();
+    },
+
+    /** 删除目标消息及其之后的所有消息（基于 createdAt） */
+    deleteMessagesAfter(conversationId: string, messageId: string): void {
+      const target = db.select().from(messages).where(eq(messages.id, messageId)).get();
+      if (!target) return;
+      db.delete(messages)
+        .where(
+          and(
+            eq(messages.conversationId, conversationId),
+            gte(messages.createdAt, target.createdAt)
+          )
+        )
+        .run();
     },
 
     // ---- settings ----

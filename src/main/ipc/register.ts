@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from "@shared/ipc-channels";
 import { setupFSHandlers } from "./fs.handler";
 import { setupShellHandlers } from "./shell.handler";
 import { setupSettingsHandlers } from "./settings.handler";
+import { setupClipboardHandlers } from "./clipboard.handler";
 import { createAIHandler } from "./ai.handler";
 import type { Crud } from "../storage/crud";
 import type { PluginManager } from "../plugin/manager";
@@ -34,6 +35,9 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
   // fs 领域（Task 1.2 实现）
   setupFSHandlers(ipcMain);
 
+  // clipboard 领域（Task 4.5 实现）
+  setupClipboardHandlers(ipcMain);
+
   // shell 领域（Task 1.3 实现）
   setupShellHandlers(ipcMain);
 
@@ -54,12 +58,36 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
     ipcMain.handle(IPC_CHANNELS.ai.deleteConversation, async (_event, id: string) =>
       handler.deleteConversation(id)
     );
+    ipcMain.handle(
+      IPC_CHANNELS.ai.updateSystemPrompt,
+      async (_event, conversationId: string, systemPrompt: string | null) =>
+        handler.updateSystemPrompt(conversationId, systemPrompt)
+    );
+    ipcMain.handle(
+      IPC_CHANNELS.ai.deleteMessagesAfter,
+      async (_event, conversationId: string, messageId: string) =>
+        handler.deleteMessagesAfter(conversationId, messageId)
+    );
+    ipcMain.handle(IPC_CHANNELS.ai.regenerate, async (event, conversationId: string) =>
+      handler.regenerate(conversationId, (streamEvent) => {
+        event.sender.send(IPC_CHANNELS.ai.stream, streamEvent);
+      })
+    );
+    ipcMain.handle(
+      IPC_CHANNELS.ai.updateMessageContent,
+      async (_event, messageId: string, content: string) =>
+        handler.updateMessageContent(messageId, content)
+    );
   } else {
     ipcMain.handle(IPC_CHANNELS.ai.chat, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.getModels, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.getConversations, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.getHistory, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.deleteConversation, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.updateSystemPrompt, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.deleteMessagesAfter, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.regenerate, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.updateMessageContent, notImplemented);
   }
 
   // plugin 领域

@@ -21,6 +21,10 @@ export interface AIService {
     content: string,
     onEvent: (event: StreamEvent) => void
   ): Promise<ChatResult>;
+  regenerate(conversationId: string, onEvent: (event: StreamEvent) => void): Promise<ChatResult>;
+  updateSystemPrompt(conversationId: string, systemPrompt: string | null): void;
+  deleteMessagesAfter(conversationId: string, messageId: string): void;
+  updateMessageContent(messageId: string, content: string): void;
   getConversations(): Conversation[];
   getHistory(conversationId: string): Message[];
   deleteConversation(conversationId: string): void;
@@ -85,11 +89,19 @@ export function createAIService(deps: AIServiceDeps): AIService {
         const history = crud.getMessagesByConversation(convId);
         const contextMessages = trimContext(history, maxContextMessages);
 
-        // 转换为 AI SDK 消息格式
-        const sdkMessages = contextMessages.map((msg) => ({
-          role: msg.role as "user" | "assistant" | "system",
-          content: msg.content
-        }));
+        // 转换为 AI SDK 消息格式（跳过已有的 system 消息，避免与注入的 systemPrompt 重复）
+        const sdkMessages = contextMessages
+          .filter((msg) => msg.role !== "system")
+          .map((msg) => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content
+          }));
+
+        // 注入 systemPrompt（如果有）
+        const conversation = crud.getConversation(convId);
+        if (conversation?.systemPrompt && conversation.systemPrompt.trim()) {
+          sdkMessages.unshift({ role: "system" as "user", content: conversation.systemPrompt });
+        }
 
         // 调用 AI Provider
         const model = adapter.createModel(resolvedModel);
@@ -153,6 +165,102 @@ export function createAIService(deps: AIServiceDeps): AIService {
         });
         return { conversationId: convId, messageId: "" };
       }
+    },
+
+    async regenerate(conversationId, onEvent) {
+      try {
+        // 获取历史消息
+        const history = crud.getMessagesByConversation(conversationId);
+        const contextMessages = trimContext(history, maxContextMessages);
+
+        // 转换为 AI SDK 消息格式（跳过 system 消息）
+        const sdkMessages = contextMessages
+          .filter((msg) => msg.role !== "system")
+          .map((msg) => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content
+          }));
+
+        // 注入 systemPrompt（如果有）
+        const conversation = crud.getConversation(conversationId);
+        if (conversation?.systemPrompt && conversation.systemPrompt.trim()) {
+          sdkMessages.unshift({ role: "system" as "user", content: conversation.systemPrompt });
+        }
+
+        // 调用 AI Provider
+        const model = adapter.createModel(resolvedModel);
+        const result = streamText({
+          model: model as Parameters<typeof streamText>[0]["model"],
+          messages: sdkMessages
+        });
+
+        // 处理流式响应
+        let fullText = "";
+        for await (const chunk of result.fullStream) {
+          if (chunk.type === "text-delta") {
+            fullText += chunk.text;
+            onEvent({
+              type: "text-delta",
+              conversationId,
+              textDelta: chunk.text
+            });
+          } else if (chunk.type === "tool-call") {
+            onEvent({
+              type: "tool-call",
+              conversationId,
+              toolCallId: chunk.toolCallId,
+              toolName: chunk.toolName,
+              args: chunk.args as Record<string, unknown>
+            });
+          } else if (chunk.type === "tool-result") {
+            onEvent({
+              type: "tool-result",
+              conversationId,
+              toolCallId: chunk.toolCallId,
+              toolName: chunk.toolName,
+              result: chunk.result
+            });
+          } else if (chunk.type === "finish") {
+            onEvent({
+              type: "finish",
+              conversationId,
+              finishReason: chunk.finishReason ?? "stop"
+            });
+          }
+        }
+
+        // 持久化 AI 回复（不插入 user 消息）
+        const assistantMsgId = randomUUID();
+        crud.insertMessage({
+          id: assistantMsgId,
+          conversationId,
+          role: "assistant",
+          content: fullText,
+          createdAt: Date.now()
+        });
+
+        return { conversationId, messageId: assistantMsgId };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        onEvent({
+          type: "error",
+          conversationId,
+          error: errorMsg
+        });
+        return { conversationId, messageId: "" };
+      }
+    },
+
+    updateSystemPrompt(conversationId, systemPrompt) {
+      crud.updateConversation(conversationId, { systemPrompt, updatedAt: Date.now() });
+    },
+
+    deleteMessagesAfter(conversationId, messageId) {
+      crud.deleteMessagesAfter(conversationId, messageId);
+    },
+
+    updateMessageContent(messageId, content) {
+      crud.updateMessageContent(messageId, content);
     },
 
     getConversations() {

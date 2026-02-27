@@ -327,4 +327,264 @@ describe("Schema CRUD 操作", () => {
       expect(value).toBeUndefined();
     });
   });
+
+  describe("getMessage", () => {
+    beforeEach(() => {
+      crud.insertConversation({
+        id: "conv-gm",
+        title: "Chat",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    });
+
+    // 正常路径：获取存在的消息
+    it("返回存在的消息", () => {
+      const now = Date.now();
+      crud.insertMessage({
+        id: "msg-gm-1",
+        conversationId: "conv-gm",
+        role: "user",
+        content: "Hello",
+        createdAt: now
+      });
+      const msg = crud.getMessage("msg-gm-1");
+      expect(msg).toBeDefined();
+      expect(msg!.content).toBe("Hello");
+      expect(msg!.role).toBe("user");
+    });
+
+    // 边界条件：获取不存在的消息返回 undefined
+    it("不存在的消息返回 undefined", () => {
+      const msg = crud.getMessage("nonexistent");
+      expect(msg).toBeUndefined();
+    });
+  });
+
+  describe("updateMessageContent", () => {
+    beforeEach(() => {
+      crud.insertConversation({
+        id: "conv-umc",
+        title: "Chat",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    });
+
+    // 正常路径：更新消息内容
+    it("更新消息内容", () => {
+      crud.insertMessage({
+        id: "msg-umc-1",
+        conversationId: "conv-umc",
+        role: "user",
+        content: "Original",
+        createdAt: Date.now()
+      });
+      crud.updateMessageContent("msg-umc-1", "Updated");
+      const msg = crud.getMessage("msg-umc-1");
+      expect(msg!.content).toBe("Updated");
+    });
+
+    // 边界条件：更新不存在的消息不抛错
+    it("更新不存在的消息不抛错", () => {
+      expect(() => crud.updateMessageContent("nonexistent", "Updated")).not.toThrow();
+    });
+  });
+
+  describe("deleteMessagesAfter", () => {
+    beforeEach(() => {
+      crud.insertConversation({
+        id: "conv-dma",
+        title: "Chat",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    });
+
+    // 正常路径：删除目标消息及后续消息
+    it("删除目标消息及其之后的所有消息", () => {
+      const base = 1000;
+      crud.insertMessage({
+        id: "msg-dma-1",
+        conversationId: "conv-dma",
+        role: "user",
+        content: "First",
+        createdAt: base
+      });
+      crud.insertMessage({
+        id: "msg-dma-2",
+        conversationId: "conv-dma",
+        role: "assistant",
+        content: "Second",
+        createdAt: base + 100
+      });
+      crud.insertMessage({
+        id: "msg-dma-3",
+        conversationId: "conv-dma",
+        role: "user",
+        content: "Third",
+        createdAt: base + 200
+      });
+      crud.insertMessage({
+        id: "msg-dma-4",
+        conversationId: "conv-dma",
+        role: "assistant",
+        content: "Fourth",
+        createdAt: base + 300
+      });
+
+      crud.deleteMessagesAfter("conv-dma", "msg-dma-2");
+      const msgs = crud.getMessagesByConversation("conv-dma");
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].content).toBe("First");
+    });
+
+    // 正常路径：保留目标之前的消息
+    it("保留目标消息之前的消息", () => {
+      const base = 1000;
+      crud.insertMessage({
+        id: "msg-dma-a",
+        conversationId: "conv-dma",
+        role: "user",
+        content: "Keep1",
+        createdAt: base
+      });
+      crud.insertMessage({
+        id: "msg-dma-b",
+        conversationId: "conv-dma",
+        role: "assistant",
+        content: "Keep2",
+        createdAt: base + 100
+      });
+      crud.insertMessage({
+        id: "msg-dma-c",
+        conversationId: "conv-dma",
+        role: "user",
+        content: "Delete",
+        createdAt: base + 200
+      });
+
+      crud.deleteMessagesAfter("conv-dma", "msg-dma-c");
+      const msgs = crud.getMessagesByConversation("conv-dma");
+      expect(msgs).toHaveLength(2);
+      expect(msgs.map((m) => m.content)).toEqual(["Keep1", "Keep2"]);
+    });
+
+    // 边界条件：目标消息不存在时不抛错
+    it("目标消息不存在时不抛错", () => {
+      expect(() => crud.deleteMessagesAfter("conv-dma", "nonexistent")).not.toThrow();
+    });
+
+    // 边界条件：只有一条消息时删除
+    it("只有一条消息时删除该消息", () => {
+      crud.insertMessage({
+        id: "msg-dma-only",
+        conversationId: "conv-dma",
+        role: "user",
+        content: "Only",
+        createdAt: 1000
+      });
+      crud.deleteMessagesAfter("conv-dma", "msg-dma-only");
+      const msgs = crud.getMessagesByConversation("conv-dma");
+      expect(msgs).toHaveLength(0);
+    });
+
+    // 边界条件：删除第一条时删除全部
+    it("删除第一条消息时删除全部消息", () => {
+      const base = 1000;
+      crud.insertMessage({
+        id: "msg-dma-f1",
+        conversationId: "conv-dma",
+        role: "user",
+        content: "First",
+        createdAt: base
+      });
+      crud.insertMessage({
+        id: "msg-dma-f2",
+        conversationId: "conv-dma",
+        role: "assistant",
+        content: "Second",
+        createdAt: base + 100
+      });
+      crud.deleteMessagesAfter("conv-dma", "msg-dma-f1");
+      const msgs = crud.getMessagesByConversation("conv-dma");
+      expect(msgs).toHaveLength(0);
+    });
+  });
+
+  describe("systemPrompt CRUD", () => {
+    // 正常路径：新对话 systemPrompt 默认为 null
+    it("新对话 systemPrompt 默认为 null", () => {
+      crud.insertConversation({
+        id: "conv-sp1",
+        title: "Test",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+      const conv = crud.getConversation("conv-sp1");
+      expect(conv!.systemPrompt).toBeNull();
+    });
+
+    // 正常路径：更新 systemPrompt
+    it("更新对话 systemPrompt", () => {
+      const now = Date.now();
+      crud.insertConversation({
+        id: "conv-sp2",
+        title: "Test",
+        createdAt: now,
+        updatedAt: now
+      });
+      crud.updateConversation("conv-sp2", {
+        systemPrompt: "You are a helpful assistant.",
+        updatedAt: now + 1000
+      });
+      const conv = crud.getConversation("conv-sp2");
+      expect(conv!.systemPrompt).toBe("You are a helpful assistant.");
+    });
+
+    // 正常路径：读回 systemPrompt
+    it("更新后读回 systemPrompt 值一致", () => {
+      const now = Date.now();
+      crud.insertConversation({
+        id: "conv-sp3",
+        title: "Test",
+        createdAt: now,
+        updatedAt: now
+      });
+      const prompt = "你是一个代码助手，只用中文回答";
+      crud.updateConversation("conv-sp3", { systemPrompt: prompt, updatedAt: now + 1000 });
+      const conv = crud.getConversation("conv-sp3");
+      expect(conv!.systemPrompt).toBe(prompt);
+    });
+
+    // 正常路径：清除 systemPrompt 为 null
+    it("将 systemPrompt 清除为 null", () => {
+      const now = Date.now();
+      crud.insertConversation({
+        id: "conv-sp4",
+        title: "Test",
+        createdAt: now,
+        updatedAt: now
+      });
+      crud.updateConversation("conv-sp4", { systemPrompt: "Some prompt", updatedAt: now + 1000 });
+      crud.updateConversation("conv-sp4", { systemPrompt: null, updatedAt: now + 2000 });
+      const conv = crud.getConversation("conv-sp4");
+      expect(conv!.systemPrompt).toBeNull();
+    });
+
+    // 正常路径：只更新 systemPrompt 不影响 title
+    it("只更新 systemPrompt 不影响 title", () => {
+      const now = Date.now();
+      crud.insertConversation({
+        id: "conv-sp5",
+        title: "My Title",
+        createdAt: now,
+        updatedAt: now
+      });
+      crud.updateConversation("conv-sp5", { systemPrompt: "prompt", updatedAt: now + 1000 });
+      const conv = crud.getConversation("conv-sp5");
+      expect(conv!.title).toBe("My Title");
+      expect(conv!.systemPrompt).toBe("prompt");
+    });
+  });
 });

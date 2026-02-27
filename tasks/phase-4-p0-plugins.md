@@ -602,56 +602,61 @@ ai: {
 
 **验收标准**：
 
-- [ ] **数据库 Migration**：
-  - [ ] 在 conversations 表新增 `system_prompt` 列
-  - [ ] 更新 `src/main/storage/schema.ts` 中 conversations 定义
-  - [ ] 更新相关 CRUD 类型定义
-- [ ] **复制功能**：
-  - [ ] 新增 `src/main/ipc/clipboard.handler.ts`
-  - [ ] 在 `src/shared/ipc-channels.ts` 添加 `clipboard:writeText`
-  - [ ] 在 `src/preload/index.ts` 暴露 `window.workbox.clipboard.writeText()`
-  - [ ] MessageList 中每条消息显示「复制」按钮
-  - [ ] 点击后复制消息内容到剪贴板
-- [ ] **重新生成**：
-  - [ ] 在 chat store 中新增 `regenerateMessage(conversationId, messageId)` action
-  - [ ] 新增 CRUD 方法 `deleteMessagesAfter(conversationId, messageId)`
-  - [ ] 新增 IPC 通道 `ai:deleteMessagesAfter`
-  - [ ] MessageList 中 assistant 消息显示「重新生成」按钮
-  - [ ] 点击后删除该消息及后续消息，重新发送上一条 user 消息
-- [ ] **编辑后重发**：
-  - [ ] 在 chat store 中新增 `editAndResendMessage(conversationId, messageId, newContent)` action
-  - [ ] MessageList 中 user 消息显示「编辑」按钮
-  - [ ] 点击后消息内容变为可编辑文本框，确认后删除后续消息并重新发送
-- [ ] **系统 Prompt 自定义**：
-  - [ ] 新增 IPC 通道 `ai:updateSystemPrompt`
-  - [ ] 在 AI Service `chat()` 中读取 conversation.systemPrompt 并注入
-  - [ ] 在 ChatView 中添加系统 Prompt 设置入口（对话级别的齿轮图标或菜单）
-  - [ ] 弹出文本框让用户编辑系统 Prompt，保存到数据库
-- [ ] 编写测试覆盖：
-  - [ ] clipboard handler 测试
-  - [ ] store regenerateMessage 测试（消息删除 + 重发逻辑）
-  - [ ] store editAndResendMessage 测试
-  - [ ] CRUD deleteMessagesAfter 测试
-  - [ ] systemPrompt 存储和读取测试
-  - [ ] AI Service 注入 systemPrompt 测试
-- [ ] `pnpm test` 全部通过
+- [x] **数据库 Migration**：
+  - [x] 在 conversations 表新增 `system_prompt` 列
+  - [x] 更新 `src/main/storage/schema.ts` 中 conversations 定义
+  - [x] 更新相关 CRUD 类型定义
+- [x] **复制功能**：
+  - [x] 新增 `src/main/ipc/clipboard.handler.ts`
+  - [x] 在 `src/shared/ipc-channels.ts` 添加 `clipboard:writeText`
+  - [x] 在 `src/preload/index.ts` 暴露 `window.workbox.clipboard.writeText()`
+  - [x] MessageList 中每条消息显示「复制」按钮
+  - [x] 点击后复制消息内容到剪贴板
+- [x] **重新生成**：
+  - [x] 在 chat store 中新增 `removeMessagesFrom` action
+  - [x] 新增 CRUD 方法 `deleteMessagesAfter(conversationId, messageId)`
+  - [x] 新增 IPC 通道 `ai:deleteMessagesAfter`
+  - [x] MessageList 中 assistant 消息显示「重新生成」按钮
+  - [x] 点击后删除该消息及后续消息，重新发送上一条 user 消息
+- [x] **编辑后重发**：
+  - [x] 在 chat store 中新增 `updateLocalMessageContent` action
+  - [x] MessageList 中 user 消息显示「编辑」按钮
+  - [x] 点击后消息内容变为可编辑文本框，确认后删除后续消息并重新发送
+- [x] **系统 Prompt 自定义**：
+  - [x] 新增 IPC 通道 `ai:updateSystemPrompt`
+  - [x] 在 AI Service `chat()` 中读取 conversation.systemPrompt 并注入
+  - [x] 在 ChatView 中添加系统 Prompt 设置入口（对话级别的齿轮图标）
+  - [x] 弹出文本框让用户编辑系统 Prompt，保存到数据库
+- [x] 编写测试覆盖：
+  - [x] clipboard handler 测试
+  - [x] store removeMessagesFrom / updateLocalMessageContent 测试
+  - [x] store updateConversationSystemPrompt 测试
+  - [x] CRUD deleteMessagesAfter / getMessage / updateMessageContent 测试
+  - [x] systemPrompt 存储和读取测试
+  - [x] AI Service 注入 systemPrompt 测试
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `src/main/storage/schema.ts` — 新增 systemPrompt 列
-- [ ] `src/main/storage/crud.ts` — 新增 deleteMessagesAfter、更新 conversation 字段
-- [ ] `src/main/storage/crud.test.ts` — 新增测试
-- [ ] `src/main/ipc/clipboard.handler.ts` — clipboard IPC handler
-- [ ] `src/main/ipc/clipboard.handler.test.ts` — clipboard 测试
-- [ ] `src/shared/ipc-channels.ts` — 新增 clipboard、AI 扩展通道
-- [ ] `src/shared/types.ts` — 更新 Conversation 类型
-- [ ] `src/preload/index.ts` — 暴露 clipboard、新增 AI API
-- [ ] `src/main/ai/service.ts` — systemPrompt 注入逻辑
-- [ ] `src/main/ai/service.test.ts` — systemPrompt 注入测试
-- [ ] `src/main/ipc/ai.handler.ts` — 新增 handler
-- [ ] `src/renderer/src/features/chat/store.ts` — regenerate + edit actions
-- [ ] `src/renderer/src/features/chat/store.test.ts` — 新增测试
-- [ ] `src/renderer/src/features/chat/MessageList.tsx` — 消息操作按钮 UI
+- [x] `src/main/storage/schema.ts` — 新增 systemPrompt 列
+- [x] `src/main/storage/database.ts` — 新增 runMigrations 幂等迁移
+- [x] `src/main/storage/crud.ts` — 新增 deleteMessagesAfter / getMessage / updateMessageContent、更新 UpdateConversationFields
+- [x] `src/main/storage/crud.test.ts` — 新增测试
+- [x] `src/main/ipc/clipboard.handler.ts` — clipboard IPC handler
+- [x] `src/main/ipc/clipboard.handler.test.ts` — clipboard 测试
+- [x] `src/shared/ipc-channels.ts` — 新增 clipboard、AI 扩展通道
+- [x] `src/preload/index.ts` — 暴露 clipboard、新增 AI API
+- [x] `src/main/ai/service.ts` — systemPrompt 注入 + regenerate + updateSystemPrompt + deleteMessagesAfter + updateMessageContent
+- [x] `src/main/ai/service.test.ts` — systemPrompt 注入 + regenerate 测试
+- [x] `src/main/ipc/ai.handler.ts` — 新增 handler（regenerate / updateSystemPrompt / deleteMessagesAfter / updateMessageContent）
+- [x] `src/main/ipc/ai.handler.test.ts` — 新增 handler 测试
+- [x] `src/main/ipc/register.ts` — 注册新 IPC handler
+- [x] `src/renderer/src/features/chat/store.ts` — removeMessagesFrom + updateLocalMessageContent + updateConversationSystemPrompt actions
+- [x] `src/renderer/src/features/chat/store.test.ts` — 新增测试
+- [x] `src/renderer/src/features/chat/MessageList.tsx` — 消息操作按钮 UI（复制/重新生成/编辑 + 内联编辑模式）
+- [x] `src/renderer/src/features/chat/MessageList.test.tsx` — 操作按钮测试
+- [x] `src/renderer/src/features/chat/ChatView.tsx` — handleCopy / handleRegenerate / handleEdit 编排 + 系统 Prompt UI
+- [x] `src/renderer/src/features/chat/ChatView.test.tsx` — 新增测试
 
 **参考文档**：
 

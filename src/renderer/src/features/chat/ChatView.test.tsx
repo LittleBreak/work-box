@@ -14,6 +14,9 @@ const defaultMock = {
   switchConversation: vi.fn(),
   deleteConversation: vi.fn(),
   addMessage: vi.fn(),
+  removeMessagesFrom: vi.fn(),
+  updateLocalMessageContent: vi.fn(),
+  updateConversationSystemPrompt: vi.fn(),
   appendStreamingText: vi.fn(),
   setStreaming: vi.fn(),
   setSelectedModel: vi.fn()
@@ -111,5 +114,82 @@ describe("ChatView", () => {
 
     // 应重置 isStreaming(false) 因为 workbox 不可用
     expect(setStreaming).toHaveBeenCalledWith(false);
+  });
+
+  // 正常路径：系统 Prompt 按钮在有对话时显示
+  it("有对话时显示系统 Prompt 齿轮按钮", () => {
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] }
+    });
+
+    render(<ChatView />);
+    expect(screen.getByTitle("系统 Prompt")).toBeInTheDocument();
+  });
+
+  // 正常路径：点击齿轮按钮显示 Prompt 编辑对话框
+  it("点击系统 Prompt 按钮显示编辑对话框", () => {
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] }
+    });
+
+    render(<ChatView />);
+    fireEvent.click(screen.getByTitle("系统 Prompt"));
+    expect(screen.getByPlaceholderText("输入系统 Prompt...")).toBeInTheDocument();
+  });
+
+  // 正常路径：保存系统 Prompt 调用 IPC 和 store
+  it("保存系统 Prompt 后调用 store action", async () => {
+    const updateConversationSystemPrompt = vi.fn();
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] },
+      updateConversationSystemPrompt
+    });
+
+    (window as Record<string, unknown>).workbox = {
+      ai: {
+        updateSystemPrompt: vi.fn().mockResolvedValue(undefined),
+        onStream: vi.fn(() => () => {})
+      }
+    };
+
+    render(<ChatView />);
+    fireEvent.click(screen.getByTitle("系统 Prompt"));
+
+    const textarea = screen.getByPlaceholderText("输入系统 Prompt...");
+    fireEvent.change(textarea, { target: { value: "Be helpful" } });
+    fireEvent.click(screen.getByText("保存"));
+
+    await waitFor(() => {
+      expect(updateConversationSystemPrompt).toHaveBeenCalledWith("conv-1", "Be helpful");
+    });
+  });
+
+  // 正常路径：MessageList 的 onCopy 调用 clipboard.writeText
+  it("复制消息调用 clipboard.writeText", () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    (window as Record<string, unknown>).workbox = {
+      clipboard: { writeText },
+      ai: { onStream: vi.fn(() => () => {}) }
+    };
+
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [{ id: "msg-1", role: "user" as const, content: "Copy me" }] }
+    });
+
+    render(<ChatView />);
+    fireEvent.click(screen.getByTitle("复制"));
+    expect(writeText).toHaveBeenCalledWith("Copy me");
   });
 });

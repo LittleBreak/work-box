@@ -18,7 +18,11 @@ export const IPC_CHANNELS = {
     getConversations: "ai:getConversations",
     getHistory: "ai:getHistory",
     deleteConversation: "ai:deleteConversation",
-    stream: "ai:stream"
+    stream: "ai:stream",
+    updateSystemPrompt: "ai:updateSystemPrompt",
+    deleteMessagesAfter: "ai:deleteMessagesAfter",
+    regenerate: "ai:regenerate",
+    updateMessageContent: "ai:updateMessageContent"
   },
   plugin: {
     list: "plugin:list",
@@ -29,6 +33,9 @@ export const IPC_CHANNELS = {
     get: "settings:get",
     update: "settings:update",
     reset: "settings:reset"
+  },
+  clipboard: {
+    writeText: "clipboard:writeText"
   },
   terminal: {
     create: "terminal:create",

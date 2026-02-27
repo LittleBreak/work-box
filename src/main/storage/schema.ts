@@ -6,6 +6,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const conversations = sqliteTable("conversations", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
+  systemPrompt: text("system_prompt"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull()
 });

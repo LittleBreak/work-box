@@ -20,6 +20,22 @@ function createMockService() {
       });
       return { conversationId: "conv-1", messageId: "msg-1" };
     }),
+    regenerate: vi.fn(async (convId: string, onEvent: (e: StreamEvent) => void) => {
+      onEvent({
+        type: "text-delta",
+        conversationId: convId,
+        textDelta: "Regenerated"
+      });
+      onEvent({
+        type: "finish",
+        conversationId: convId,
+        finishReason: "stop"
+      });
+      return { conversationId: convId, messageId: "msg-regen" };
+    }),
+    updateSystemPrompt: vi.fn(),
+    deleteMessagesAfter: vi.fn(),
+    updateMessageContent: vi.fn(),
     getConversations: vi.fn(() => [
       { id: "conv-1", title: "Test conversation", createdAt: 1000, updatedAt: 2000 }
     ]),
@@ -101,6 +117,42 @@ describe("createAIHandler", () => {
     it("调用 service.deleteConversation", () => {
       handler.deleteConversation("conv-1");
       expect(mockService.deleteConversation).toHaveBeenCalledWith("conv-1");
+    });
+  });
+
+  describe("updateSystemPrompt", () => {
+    it("代理到 service.updateSystemPrompt", () => {
+      handler.updateSystemPrompt("conv-1", "New prompt");
+      expect(mockService.updateSystemPrompt).toHaveBeenCalledWith("conv-1", "New prompt");
+    });
+  });
+
+  describe("deleteMessagesAfter", () => {
+    it("代理到 service.deleteMessagesAfter", () => {
+      handler.deleteMessagesAfter("conv-1", "msg-1");
+      expect(mockService.deleteMessagesAfter).toHaveBeenCalledWith("conv-1", "msg-1");
+    });
+  });
+
+  describe("updateMessageContent", () => {
+    it("代理到 service.updateMessageContent", () => {
+      handler.updateMessageContent("msg-1", "Updated content");
+      expect(mockService.updateMessageContent).toHaveBeenCalledWith("msg-1", "Updated content");
+    });
+  });
+
+  describe("regenerate", () => {
+    it("调用 service.regenerate 并返回结果", async () => {
+      const mockSend = vi.fn();
+      const result = await handler.regenerate("conv-1", mockSend);
+      expect(mockService.regenerate).toHaveBeenCalledWith("conv-1", expect.any(Function));
+      expect(result.conversationId).toBe("conv-1");
+    });
+
+    it("流式事件通过 send 回调推送", async () => {
+      const mockSend = vi.fn();
+      await handler.regenerate("conv-1", mockSend);
+      expect(mockSend).toHaveBeenCalled();
     });
   });
 });
