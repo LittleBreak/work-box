@@ -60,8 +60,7 @@ export const useChatStore = create<ChatState>((set) => ({
 
   deleteConversation(id) {
     set((state) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { [id]: _removed, ...remainingMessages } = state.messages;
+      const { [id]: _, ...remainingMessages } = state.messages;
       const filtered = state.conversations.filter((c) => c.id !== id);
       return {
         conversations: filtered,

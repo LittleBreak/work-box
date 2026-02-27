@@ -110,8 +110,7 @@ export function createPluginContext(options: CreatePluginContextOptions): Plugin
     // ---- ai ----
     ai: {
       // Phase 2 placeholder - will be connected to AI service in Phase 3
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      chat(..._args: unknown[]): AsyncIterable<unknown> {
+      chat(): AsyncIterable<unknown> {
         return {
           [Symbol.asyncIterator]() {
             return {
