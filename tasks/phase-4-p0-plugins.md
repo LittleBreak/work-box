@@ -825,40 +825,40 @@ clearAttachments(): void;
 
 **验收标准**：
 
-- [ ] **Store 扩展**：
-  - [ ] 在 chat store 中新增 `attachments` 状态
-  - [ ] 实现 `addAttachment` / `removeAttachment` / `clearAttachments` actions
-  - [ ] 发送消息时将 attachments 内容注入 user message 前缀
-  - [ ] 发送成功后自动 clearAttachments
-- [ ] **MessageInput 拖拽支持**：
-  - [ ] 添加 `onDragOver` / `onDrop` 事件处理
-  - [ ] Drop 时读取文件路径，调用 `window.workbox.fs.readFile()` 获取内容
-  - [ ] 检查文件大小（≤100KB），超出提示用户
-  - [ ] 添加到 store attachments
-- [ ] **附件按钮**：
-  - [ ] 在 MessageInput 中添加「附件」图标按钮
-  - [ ] 点击后调用 `window.workbox.workspace.selectFile()` 选择文件
-  - [ ] 选择后读取文件内容并添加到 attachments
-- [ ] **附件预览**：
-  - [ ] 在输入框上方显示已添加的附件列表（文件名 + 大小 + 删除按钮）
-  - [ ] 支持点击删除单个附件
-- [ ] **上下文注入**：
-  - [ ] 发送消息时，将附件内容按格式 `[File: {name}]\n{content}` 拼接到消息前
-  - [ ] 拼接后的完整消息发送给 AI
-- [ ] 编写测试覆盖：
-  - [ ] store attachments CRUD 测试
-  - [ ] 文件内容注入格式测试
-  - [ ] 大小限制检查测试
-  - [ ] 发送后自动清理测试
-  - [ ] MessageInput 拖拽交互测试（mock drop event）
-- [ ] `pnpm test` 全部通过
+- [x] **Store 扩展**：
+  - [x] 在 chat store 中新增 `attachments` 状态
+  - [x] 实现 `addAttachment` / `removeAttachment` / `clearAttachments` actions
+  - [x] 发送消息时将 attachments 内容注入 user message 前缀
+  - [x] 发送成功后自动 clearAttachments
+- [x] **MessageInput 拖拽支持**：
+  - [x] 添加 `onDragOver` / `onDrop` 事件处理
+  - [x] Drop 时读取文件路径，调用 `window.workbox.fs.readFile()` 获取内容
+  - [x] 检查文件大小（≤100KB），超出提示用户
+  - [x] 添加到 store attachments
+- [x] **附件按钮**：
+  - [x] 在 MessageInput 中添加「附件」图标按钮
+  - [x] 点击后调用 `window.workbox.workspace.selectFile()` 选择文件
+  - [x] 选择后读取文件内容并添加到 attachments
+- [x] **附件预览**：
+  - [x] 在输入框上方显示已添加的附件列表（文件名 + 大小 + 删除按钮）
+  - [x] 支持点击删除单个附件
+- [x] **上下文注入**：
+  - [x] 发送消息时，将附件内容按格式 `[File: {name}]\n{content}` 拼接到消息前
+  - [x] 拼接后的完整消息发送给 AI
+- [x] 编写测试覆盖：
+  - [x] store attachments CRUD 测试
+  - [x] 文件内容注入格式测试
+  - [x] 大小限制检查测试
+  - [x] 发送后自动清理测试
+  - [x] MessageInput 拖拽交互测试（mock drop event）
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `src/renderer/src/features/chat/store.ts` — 新增 attachment 状态和 actions
-- [ ] `src/renderer/src/features/chat/store.test.ts` — attachment 测试
-- [ ] `src/renderer/src/features/chat/MessageInput.tsx` — 拖拽 + 附件按钮 + 预览
-- [ ] `src/renderer/src/features/chat/MessageInput.test.tsx` — 拖拽交互测试
+- [x] `src/renderer/src/features/chat/store.ts` — 新增 attachment 状态和 actions
+- [x] `src/renderer/src/features/chat/store.test.ts` — attachment 测试
+- [x] `src/renderer/src/features/chat/MessageInput.tsx` — 拖拽 + 附件按钮 + 预览
+- [x] `src/renderer/src/features/chat/MessageInput.test.tsx` — 拖拽交互测试
 
 **参考文档**：
 

@@ -9,6 +9,18 @@ export interface ChatMessage {
   toolResult?: string;
 }
 
+/** 文件附件 */
+export interface Attachment {
+  id: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  content: string;
+}
+
+/** 附件数量上限 */
+const MAX_ATTACHMENTS = 5;
+
 /** 对话摘要 */
 export interface ConversationSummary {
   id: string;
@@ -28,6 +40,7 @@ interface ChatState {
   selectedModel: string;
   searchQuery: string;
   searchResults: ConversationSummary[] | null;
+  attachments: Attachment[];
   createConversation: (id: string, title: string) => void;
   switchConversation: (id: string) => void;
   deleteConversation: (id: string) => void;
@@ -45,6 +58,9 @@ interface ChatState {
   setSearchQuery: (query: string) => void;
   setSearchResults: (results: ConversationSummary[]) => void;
   clearSearch: () => void;
+  addAttachment: (attachment: Attachment) => void;
+  removeAttachment: (id: string) => void;
+  clearAttachments: () => void;
 }
 
 /** Chat Zustand Store */
@@ -57,6 +73,7 @@ export const useChatStore = create<ChatState>((set) => ({
   selectedModel: "gpt-4o",
   searchQuery: "",
   searchResults: null,
+  attachments: [],
 
   createConversation(id, title) {
     set((state) => ({
@@ -158,5 +175,22 @@ export const useChatStore = create<ChatState>((set) => ({
 
   clearSearch() {
     set({ searchQuery: "", searchResults: null });
+  },
+
+  addAttachment(attachment) {
+    set((state) => {
+      if (state.attachments.length >= MAX_ATTACHMENTS) return state;
+      return { attachments: [...state.attachments, attachment] };
+    });
+  },
+
+  removeAttachment(id) {
+    set((state) => ({
+      attachments: state.attachments.filter((a) => a.id !== id)
+    }));
+  },
+
+  clearAttachments() {
+    set({ attachments: [] });
   }
 }));

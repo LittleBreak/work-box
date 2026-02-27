@@ -71,7 +71,16 @@ app.whenReady().then(() => {
     console.error("[Plugin] Failed to load plugins:", err);
   });
 
-  registerIPCHandlers({ crud, aiService, pluginManager });
+  /** 弹出文件选择对话框 */
+  const showOpenDialog = async (
+    options: Electron.OpenDialogOptions
+  ): Promise<Electron.OpenDialogReturnValue> => {
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) return { canceled: true, filePaths: [] };
+    return dialog.showOpenDialog(win, options);
+  };
+
+  registerIPCHandlers({ crud, aiService, pluginManager, showOpenDialog });
 
   createWindow();
 

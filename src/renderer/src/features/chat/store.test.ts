@@ -26,7 +26,8 @@ describe("useChatStore", () => {
       streamingText: "",
       selectedModel: "gpt-4o",
       searchQuery: "",
-      searchResults: null
+      searchResults: null,
+      attachments: []
     });
     vi.clearAllMocks();
   });
@@ -209,5 +210,139 @@ describe("useChatStore", () => {
     store.clearSearch();
     expect(useChatStore.getState().searchQuery).toBe("");
     expect(useChatStore.getState().searchResults).toBeNull();
+  });
+
+  // ---- 附件相关 ----
+
+  // 正常路径：初始附件列表为空
+  it("初始附件列表为空数组", () => {
+    const state = useChatStore.getState();
+    expect(state.attachments).toEqual([]);
+  });
+
+  // 正常路径：addAttachment 添加附件
+  it("addAttachment 添加文件附件", () => {
+    const store = useChatStore.getState();
+    store.addAttachment({
+      id: "att-1",
+      fileName: "test.ts",
+      filePath: "/path/to/test.ts",
+      fileSize: 1024,
+      content: 'console.log("hello");'
+    });
+    const state = useChatStore.getState();
+    expect(state.attachments).toHaveLength(1);
+    expect(state.attachments[0].fileName).toBe("test.ts");
+    expect(state.attachments[0].content).toBe('console.log("hello");');
+  });
+
+  // 正常路径：addAttachment 多个附件
+  it("addAttachment 支持添加多个附件", () => {
+    const store = useChatStore.getState();
+    store.addAttachment({
+      id: "att-1",
+      fileName: "a.ts",
+      filePath: "/a.ts",
+      fileSize: 100,
+      content: "a"
+    });
+    store.addAttachment({
+      id: "att-2",
+      fileName: "b.ts",
+      filePath: "/b.ts",
+      fileSize: 200,
+      content: "b"
+    });
+    expect(useChatStore.getState().attachments).toHaveLength(2);
+  });
+
+  // 边界条件：addAttachment 最多 5 个附件
+  it("addAttachment 超过 5 个附件时不添加", () => {
+    const store = useChatStore.getState();
+    for (let i = 1; i <= 5; i++) {
+      store.addAttachment({
+        id: `att-${i}`,
+        fileName: `file${i}.ts`,
+        filePath: `/file${i}.ts`,
+        fileSize: 100,
+        content: `content ${i}`
+      });
+    }
+    expect(useChatStore.getState().attachments).toHaveLength(5);
+
+    // 第 6 个不应被添加
+    store.addAttachment({
+      id: "att-6",
+      fileName: "file6.ts",
+      filePath: "/file6.ts",
+      fileSize: 100,
+      content: "content 6"
+    });
+    expect(useChatStore.getState().attachments).toHaveLength(5);
+  });
+
+  // 正常路径：removeAttachment 删除指定附件
+  it("removeAttachment 删除指定附件", () => {
+    const store = useChatStore.getState();
+    store.addAttachment({
+      id: "att-1",
+      fileName: "a.ts",
+      filePath: "/a.ts",
+      fileSize: 100,
+      content: "a"
+    });
+    store.addAttachment({
+      id: "att-2",
+      fileName: "b.ts",
+      filePath: "/b.ts",
+      fileSize: 200,
+      content: "b"
+    });
+    store.removeAttachment("att-1");
+    const state = useChatStore.getState();
+    expect(state.attachments).toHaveLength(1);
+    expect(state.attachments[0].id).toBe("att-2");
+  });
+
+  // 边界条件：removeAttachment 不存在的 ID 不崩溃
+  it("removeAttachment 不存在的 ID 不崩溃", () => {
+    const store = useChatStore.getState();
+    store.addAttachment({
+      id: "att-1",
+      fileName: "a.ts",
+      filePath: "/a.ts",
+      fileSize: 100,
+      content: "a"
+    });
+    expect(() => store.removeAttachment("nonexistent")).not.toThrow();
+    expect(useChatStore.getState().attachments).toHaveLength(1);
+  });
+
+  // 正常路径：clearAttachments 清空所有附件
+  it("clearAttachments 清空所有附件", () => {
+    const store = useChatStore.getState();
+    store.addAttachment({
+      id: "att-1",
+      fileName: "a.ts",
+      filePath: "/a.ts",
+      fileSize: 100,
+      content: "a"
+    });
+    store.addAttachment({
+      id: "att-2",
+      fileName: "b.ts",
+      filePath: "/b.ts",
+      fileSize: 200,
+      content: "b"
+    });
+    store.clearAttachments();
+    expect(useChatStore.getState().attachments).toEqual([]);
+  });
+
+  // 边界条件：clearAttachments 空列表不崩溃
+  it("clearAttachments 空列表不崩溃", () => {
+    const store = useChatStore.getState();
+    expect(() => store.clearAttachments()).not.toThrow();
+    expect(useChatStore.getState().attachments).toEqual([]);
   });
 });

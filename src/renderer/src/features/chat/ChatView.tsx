@@ -40,6 +40,7 @@ export function ChatView(): React.JSX.Element {
     streamingText,
     searchQuery,
     searchResults,
+    attachments,
     createConversation,
     switchConversation,
     deleteConversation,
@@ -51,7 +52,10 @@ export function ChatView(): React.JSX.Element {
     setStreaming,
     setSearchQuery,
     setSearchResults,
-    clearSearch
+    clearSearch,
+    addAttachment,
+    removeAttachment,
+    clearAttachments
   } = useChatStore();
 
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
@@ -108,11 +112,21 @@ export function ChatView(): React.JSX.Element {
   const handleSend = (content: string): void => {
     if (!currentConversationId) return;
 
+    // 将附件内容注入消息前缀
+    let fullContent = content;
+    if (attachments.length > 0) {
+      const prefix = attachments
+        .map((att) => `[File: ${att.fileName}]\n${att.content}`)
+        .join("\n\n");
+      fullContent = `${prefix}\n\n${content}`;
+      clearAttachments();
+    }
+
     // 添加用户消息到本地 store
     addMessage(currentConversationId, {
       id: crypto.randomUUID(),
       role: "user",
-      content
+      content: fullContent
     });
 
     // 开始流式响应
@@ -144,7 +158,7 @@ export function ChatView(): React.JSX.Element {
       }
     });
 
-    workbox.ai.chat(currentConversationId, content).catch(() => {
+    workbox.ai.chat(currentConversationId, fullContent).catch(() => {
       setStreaming(false);
       unsubscribe();
     });
@@ -378,7 +392,13 @@ export function ChatView(): React.JSX.Element {
               onRegenerate={handleRegenerate}
               onEdit={handleEdit}
             />
-            <MessageInput onSend={handleSend} disabled={isStreaming} />
+            <MessageInput
+              onSend={handleSend}
+              disabled={isStreaming}
+              attachments={attachments}
+              onAddAttachment={addAttachment}
+              onRemoveAttachment={removeAttachment}
+            />
 
             {/* 系统 Prompt 对话框 */}
             {showSystemPrompt && (

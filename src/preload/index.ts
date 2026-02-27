@@ -58,6 +58,10 @@ const workboxAPI = {
     writeText: (text: string): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.clipboard.writeText, text)
   },
+  workspace: {
+    selectFile: (filters?: Array<{ name: string; extensions: string[] }>): Promise<string | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.workspace.selectFile, filters)
+  },
   plugin: {
     list: (): Promise<unknown> => ipcRenderer.invoke(IPC_CHANNELS.plugin.list),
     enable: (id: string): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.plugin.enable, id),

@@ -39,6 +39,9 @@ export const IPC_CHANNELS = {
   clipboard: {
     writeText: "clipboard:writeText"
   },
+  workspace: {
+    selectFile: "workspace:selectFile"
+  },
   terminal: {
     create: "terminal:create",
     write: "terminal:write",

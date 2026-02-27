@@ -12,6 +12,7 @@ const defaultMock = {
   selectedModel: "gpt-4o",
   searchQuery: "",
   searchResults: null,
+  attachments: [],
   createConversation: vi.fn(),
   switchConversation: vi.fn(),
   deleteConversation: vi.fn(),
@@ -24,7 +25,10 @@ const defaultMock = {
   setSelectedModel: vi.fn(),
   setSearchQuery: vi.fn(),
   setSearchResults: vi.fn(),
-  clearSearch: vi.fn()
+  clearSearch: vi.fn(),
+  addAttachment: vi.fn(),
+  removeAttachment: vi.fn(),
+  clearAttachments: vi.fn()
 };
 
 // Mock store
@@ -290,5 +294,109 @@ describe("ChatView", () => {
     await waitFor(() => {
       expect(exportConversation).toHaveBeenCalledWith("conv-1", "markdown");
     });
+  });
+
+  // ---- 附件相关 ----
+
+  // 正常路径：发送带附件的消息时注入文件内容
+  it("发送带附件消息时注入文件内容到消息前缀", async () => {
+    const addMessage = vi.fn();
+    const clearAttachments = vi.fn();
+
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] },
+      attachments: [
+        {
+          id: "att-1",
+          fileName: "main.ts",
+          filePath: "/main.ts",
+          fileSize: 100,
+          content: "const x = 1;"
+        }
+      ],
+      addMessage,
+      clearAttachments
+    });
+
+    const unsubscribeFn = vi.fn();
+    (window as Record<string, unknown>).workbox = {
+      ai: {
+        chat: vi.fn().mockResolvedValue({ conversationId: "conv-1", messageId: "m1" }),
+        onStream: vi.fn(() => unsubscribeFn)
+      }
+    };
+
+    render(<ChatView />);
+
+    const textarea = screen.getByPlaceholderText("输入消息... (Ctrl+Enter 发送)");
+    fireEvent.change(textarea, { target: { value: "帮我分析这个文件" } });
+    fireEvent.click(screen.getByLabelText("发送"));
+
+    // 应将附件内容注入消息
+    expect(addMessage).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        role: "user",
+        content: expect.stringContaining("[File: main.ts]")
+      })
+    );
+
+    // 应包含文件内容
+    expect(addMessage).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        content: expect.stringContaining("const x = 1;")
+      })
+    );
+
+    // 应包含用户实际消息
+    expect(addMessage).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        content: expect.stringContaining("帮我分析这个文件")
+      })
+    );
+
+    // 发送后应清理附件
+    expect(clearAttachments).toHaveBeenCalled();
+  });
+
+  // 正常路径：无附件时正常发送不注入内容
+  it("无附件时消息不含文件前缀", async () => {
+    const addMessage = vi.fn();
+
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] },
+      attachments: [],
+      addMessage
+    });
+
+    const unsubscribeFn = vi.fn();
+    (window as Record<string, unknown>).workbox = {
+      ai: {
+        chat: vi.fn().mockResolvedValue({ conversationId: "conv-1", messageId: "m1" }),
+        onStream: vi.fn(() => unsubscribeFn)
+      }
+    };
+
+    render(<ChatView />);
+
+    const textarea = screen.getByPlaceholderText("输入消息... (Ctrl+Enter 发送)");
+    fireEvent.change(textarea, { target: { value: "hello" } });
+    fireEvent.click(screen.getByLabelText("发送"));
+
+    expect(addMessage).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        role: "user",
+        content: "hello"
+      })
+    );
   });
 });

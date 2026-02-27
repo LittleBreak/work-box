@@ -4,6 +4,7 @@ import { setupFSHandlers } from "./fs.handler";
 import { setupShellHandlers } from "./shell.handler";
 import { setupSettingsHandlers } from "./settings.handler";
 import { setupClipboardHandlers } from "./clipboard.handler";
+import { setupWorkspaceHandlers } from "./workspace.handler";
 import { createAIHandler } from "./ai.handler";
 import type { Crud } from "../storage/crud";
 import type { PluginManager } from "../plugin/manager";
@@ -11,11 +12,17 @@ import type { AIService } from "../ai/service";
 
 let registered = false;
 
+/** showOpenDialog 函数签名 */
+type ShowOpenDialogFn = (
+  options: Electron.OpenDialogOptions
+) => Promise<Electron.OpenDialogReturnValue>;
+
 /** registerIPCHandlers 选项 */
 export interface RegisterIPCOptions {
   crud?: Crud;
   pluginManager?: PluginManager;
   aiService?: AIService;
+  showOpenDialog?: ShowOpenDialogFn;
 }
 
 /**
@@ -37,6 +44,13 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
 
   // clipboard 领域（Task 4.5 实现）
   setupClipboardHandlers(ipcMain);
+
+  // workspace 领域（Task 4.7 实现）
+  if (options?.showOpenDialog) {
+    setupWorkspaceHandlers(ipcMain, options.showOpenDialog);
+  } else {
+    ipcMain.handle(IPC_CHANNELS.workspace.selectFile, notImplemented);
+  }
 
   // shell 领域（Task 1.3 实现）
   setupShellHandlers(ipcMain);
