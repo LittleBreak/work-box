@@ -18,6 +18,18 @@ export default defineWorkspace([
   {
     resolve: {
       alias: {
+        "@shared": resolve(__dirname, "src/shared")
+      }
+    },
+    test: {
+      name: "packages",
+      include: ["packages/**/*.test.ts"],
+      environment: "node"
+    }
+  },
+  {
+    resolve: {
+      alias: {
         "@renderer": resolve(__dirname, "src/renderer/src"),
         "@shared": resolve(__dirname, "src/shared")
       }

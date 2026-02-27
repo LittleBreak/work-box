@@ -4,12 +4,14 @@ import { setupFSHandlers } from "./fs.handler";
 import { setupShellHandlers } from "./shell.handler";
 import { setupSettingsHandlers } from "./settings.handler";
 import type { Crud } from "../storage/crud";
+import type { PluginManager } from "../plugin/manager";
 
 let registered = false;
 
 /** registerIPCHandlers 选项 */
 export interface RegisterIPCOptions {
   crud?: Crud;
+  pluginManager?: PluginManager;
 }
 
 /**
@@ -37,9 +39,16 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
   ipcMain.handle(IPC_CHANNELS.ai.getModels, notImplemented);
 
   // plugin 领域
-  ipcMain.handle(IPC_CHANNELS.plugin.list, notImplemented);
-  ipcMain.handle(IPC_CHANNELS.plugin.enable, notImplemented);
-  ipcMain.handle(IPC_CHANNELS.plugin.disable, notImplemented);
+  if (options?.pluginManager) {
+    const pm = options.pluginManager;
+    ipcMain.handle(IPC_CHANNELS.plugin.list, async () => pm.getPluginList());
+    ipcMain.handle(IPC_CHANNELS.plugin.enable, async (_event, id: string) => pm.enablePlugin(id));
+    ipcMain.handle(IPC_CHANNELS.plugin.disable, async (_event, id: string) => pm.disablePlugin(id));
+  } else {
+    ipcMain.handle(IPC_CHANNELS.plugin.list, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.plugin.enable, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.plugin.disable, notImplemented);
+  }
 
   // settings 领域（Task 1.6 实现）
   if (options?.crud) {

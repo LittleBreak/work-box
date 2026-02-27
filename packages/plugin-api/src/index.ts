@@ -1,11 +1,24 @@
-import type { PluginManifest } from "./types";
+export type {
+  PluginManifest,
+  PluginDefinition,
+  PluginContext,
+  WorkboxPluginConfig,
+  Permission,
+  Disposable,
+  CommandDefinition,
+  ToolDefinition,
+  WatchCallback,
+  ExecResult,
+  ExecOptions,
+  FileStat
+} from "./types";
 
-export type { PluginManifest };
+import type { PluginDefinition } from "./types";
 
 /**
- * Define a Work-Box plugin with the given manifest.
- * Returns the manifest object for registration.
+ * Define a Work-Box plugin with lifecycle callbacks.
+ * Returns the definition object unchanged for registration.
  */
-export function definePlugin(manifest: PluginManifest): PluginManifest {
-  return manifest;
+export function definePlugin(definition: PluginDefinition): PluginDefinition {
+  return definition;
 }

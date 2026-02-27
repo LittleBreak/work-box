@@ -16,16 +16,16 @@ Phase 2 共 6 个任务（2.1–2.6），覆盖 Plugin API 类型定义、插件
 
 在开始任何 Task 前，先记录并确认以下信息：
 
-- [ ] Phase 1 所有任务已完成且 `pnpm test` 全部通过
-- [ ] `packages/plugin-api/src/index.ts` 和 `packages/plugin-api/src/types.ts` 已存在（Phase 0.2 创建，当前含基础 `PluginManifest` 和 `definePlugin()`）
-- [ ] `src/main/plugin/index.ts` 占位文件已存在（当前为空 `export {}`）
-- [ ] `src/shared/ipc-channels.ts` 已定义 `plugin:list`、`plugin:enable`、`plugin:disable` 通道
-- [ ] `src/main/storage/crud.ts` 已实现 `getPluginData`、`setPluginData`、`deletePluginData`、`deleteAllPluginData`
-- [ ] `src/preload/index.ts` 已暴露 `window.workbox.plugin.list/enable/disable` 存根
-- [ ] `src/renderer/features/plugins/PluginListView.tsx` 占位 UI 已存在
-- [ ] 路径别名 `@main`、`@renderer`、`@shared` 可用
-- [ ] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖
-- [ ] 执行任务后必须更新任务状态：任务成功完成时，将对应的验收标准和交付物清单项标记为 `[x]`（已完成）
+- [x] Phase 1 所有任务已完成且 `pnpm test` 全部通过
+- [x] `packages/plugin-api/src/index.ts` 和 `packages/plugin-api/src/types.ts` 已存在（Phase 0.2 创建，当前含基础 `PluginManifest` 和 `definePlugin()`）
+- [x] `src/main/plugin/index.ts` 占位文件已存在（当前为空 `export {}`）
+- [x] `src/shared/ipc-channels.ts` 已定义 `plugin:list`、`plugin:enable`、`plugin:disable` 通道
+- [x] `src/main/storage/crud.ts` 已实现 `getPluginData`、`setPluginData`、`deletePluginData`、`deleteAllPluginData`
+- [x] `src/preload/index.ts` 已暴露 `window.workbox.plugin.list/enable/disable` 存根
+- [x] `src/renderer/features/plugins/PluginListView.tsx` 占位 UI 已存在
+- [x] 路径别名 `@main`、`@renderer`、`@shared` 可用
+- [x] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖
+- [x] 执行任务后必须更新任务状态：任务成功完成时，将对应的验收标准和交付物清单项标记为 `[x]`（已完成）
 
 ---
 
@@ -83,10 +83,10 @@ Phase 2 共 6 个任务（2.1–2.6），覆盖 Plugin API 类型定义、插件
 
 ### 统一留痕要求
 
-- [ ] A 类任务：记录 Red 阶段失败测试名称、Green 阶段通过结果、最终回归结果
-- [ ] B 类任务：记录验证式测试通过结果
-- [ ] 所有任务：`pnpm test` 通过
-- [ ] 测试文件与源文件同目录：`*.test.ts` / `*.test.tsx`
+- [x] A 类任务：记录 Red 阶段失败测试名称、Green 阶段通过结果、最终回归结果
+- [x] B 类任务：记录验证式测试通过结果
+- [x] 所有任务：`pnpm test` 通过
+- [x] 测试文件与源文件同目录：`*.test.ts` / `*.test.tsx`
 
 ---
 
@@ -119,9 +119,9 @@ Phase 2 共 6 个任务（2.1–2.6），覆盖 Plugin API 类型定义、插件
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现完整类型定义和 `definePlugin()` 升级
-- [ ] Refactor：整理导出和 JSDoc 注释，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现完整类型定义和 `definePlugin()` 升级
+- [x] Refactor：整理导出和 JSDoc 注释，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -265,22 +265,22 @@ describe("类型完整性检查", () => {
 
 **验收标准**：
 
-- [ ] `PluginContext` 接口包含 8 个子模块，与 `ARCHITECTURE.md` 4.3 一致
-- [ ] `WorkboxPluginConfig` 涵盖 name, description, icon, permissions, entry, commands, ai 字段
-- [ ] `Permission` 覆盖全部 7 种权限（与 ARCHITECTURE.md 4.5 一致）
-- [ ] `definePlugin()` 接受 `PluginDefinition`（含 activate/deactivate 生命周期回调）
-- [ ] 所有导出类型有 JSDoc 注释
-- [ ] 插件开发者可 `import { definePlugin, type PluginContext } from '@workbox/plugin-api'` 并获得完整类型提示
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `tsc --noEmit` 无类型错误
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
+- [x] `PluginContext` 接口包含 8 个子模块，与 `ARCHITECTURE.md` 4.3 一致
+- [x] `WorkboxPluginConfig` 涵盖 name, description, icon, permissions, entry, commands, ai 字段
+- [x] `Permission` 覆盖全部 7 种权限（与 ARCHITECTURE.md 4.5 一致）
+- [x] `definePlugin()` 接受 `PluginDefinition`（含 activate/deactivate 生命周期回调）
+- [x] 所有导出类型有 JSDoc 注释
+- [x] 插件开发者可 `import { definePlugin, type PluginContext } from '@workbox/plugin-api'` 并获得完整类型提示
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `tsc --noEmit` 无类型错误
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `packages/plugin-api/src/types.ts`（完整类型定义：PluginContext、WorkboxPluginConfig、Permission 等）
-- [ ] `packages/plugin-api/src/index.ts`（更新 definePlugin + 类型导出）
-- [ ] `packages/plugin-api/src/index.test.ts`（类型完整性 + definePlugin 单元测试）
+- [x] `packages/plugin-api/src/types.ts`（完整类型定义：PluginContext、WorkboxPluginConfig、Permission 等）
+- [x] `packages/plugin-api/src/index.ts`（更新 definePlugin + 类型导出）
+- [x] `packages/plugin-api/src/index.test.ts`（类型完整性 + definePlugin 单元测试）
 
 ---
 
@@ -310,9 +310,9 @@ describe("类型完整性检查", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现扫描、解析、校验功能
-- [ ] Refactor：提取校验逻辑、整理错误消息，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现扫描、解析、校验功能
+- [x] Refactor：提取校验逻辑、整理错误消息，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -555,21 +555,21 @@ describe("resolveLoadOrder", () => {
 
 **验收标准**：
 
-- [ ] `scanPlugins(dirs)` 可扫描多个目录，正确识别含 `workbox` 字段的插件
-- [ ] `parseManifest()` 校验 `workbox.name` 和 `workbox.entry.main` 必填，无效 permission 报错
-- [ ] 非法清单不中断扫描流程，记录到 errors 数组
-- [ ] 不存在的目录不报错，返回空结果
-- [ ] `PluginStatus` 和 `PluginInfo` 类型已定义在 `src/shared/types.ts`
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `tsc --noEmit` 无类型错误
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
+- [x] `scanPlugins(dirs)` 可扫描多个目录，正确识别含 `workbox` 字段的插件
+- [x] `parseManifest()` 校验 `workbox.name` 和 `workbox.entry.main` 必填，无效 permission 报错
+- [x] 非法清单不中断扫描流程，记录到 errors 数组
+- [x] 不存在的目录不报错，返回空结果
+- [x] `PluginStatus` 和 `PluginInfo` 类型已定义在 `src/shared/types.ts`
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `tsc --noEmit` 无类型错误
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `src/main/plugin/engine.ts`（scanPlugins, parseManifest, resolveLoadOrder）
-- [ ] `src/main/plugin/engine.test.ts`（对应测试）
-- [ ] `src/shared/types.ts`（新增 PluginStatus、PluginInfo 类型）
+- [x] `src/main/plugin/engine.ts`（scanPlugins, parseManifest, resolveLoadOrder）
+- [x] `src/main/plugin/engine.test.ts`（对应测试）
+- [x] `src/shared/types.ts`（新增 PluginStatus、PluginInfo 类型）
 
 ---
 
@@ -598,9 +598,9 @@ describe("resolveLoadOrder", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 PermissionManager 和 PermissionDeniedError
-- [ ] Refactor：整理代码结构，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 PermissionManager 和 PermissionDeniedError
+- [x] Refactor：整理代码结构，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -771,20 +771,20 @@ describe("PermissionDeniedError", () => {
 
 **验收标准**：
 
-- [ ] `PermissionManager.check(perm)` 正确判断权限是否声明
-- [ ] `PermissionManager.require(perm)` 未声明时抛出 `PermissionDeniedError`
-- [ ] `PermissionManager.requireWithConfirm(perm)` 高风险权限触发回调，结果缓存
-- [ ] `PermissionDeniedError` 携带 `pluginId` 和 `permission` 信息
-- [ ] `isHighRisk()` 正确标识 `shell:exec` 和 `fs:write` 为高风险
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `tsc --noEmit` 无类型错误
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
+- [x] `PermissionManager.check(perm)` 正确判断权限是否声明
+- [x] `PermissionManager.require(perm)` 未声明时抛出 `PermissionDeniedError`
+- [x] `PermissionManager.requireWithConfirm(perm)` 高风险权限触发回调，结果缓存
+- [x] `PermissionDeniedError` 携带 `pluginId` 和 `permission` 信息
+- [x] `isHighRisk()` 正确标识 `shell:exec` 和 `fs:write` 为高风险
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `tsc --noEmit` 无类型错误
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `src/main/plugin/permission.ts`（PermissionManager, PermissionDeniedError, isHighRisk, VALID_PERMISSIONS）
-- [ ] `src/main/plugin/permission.test.ts`（对应测试）
+- [x] `src/main/plugin/permission.ts`（PermissionManager, PermissionDeniedError, isHighRisk, VALID_PERMISSIONS）
+- [x] `src/main/plugin/permission.test.ts`（对应测试）
 
 ---
 
@@ -820,9 +820,9 @@ describe("PermissionDeniedError", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 createPluginContext 和 SystemServices
-- [ ] Refactor：整理代码结构，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 createPluginContext 和 SystemServices
+- [x] Refactor：整理代码结构，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -1046,23 +1046,23 @@ describe("createPluginContext", () => {
 
 **验收标准**：
 
-- [ ] `createPluginContext()` 返回完整 `PluginContext` 实例（8 个子模块）
-- [ ] `fs` 操作无 `fs:read`/`fs:write` 权限时被拦截抛错
-- [ ] `shell` 操作无 `shell:exec` 权限时被拦截抛错
-- [ ] `storage` 操作自动按 `pluginId` 隔离，值自动 JSON 序列化/反序列化
-- [ ] `commands.register()` 注册到全局命令注册表，返回 `Disposable`
-- [ ] `notification` 通过注入的回调转发，不直接依赖 Electron
-- [ ] `workspace` 通过注入的回调代理，不直接依赖 Electron dialog
-- [ ] 所有依赖通过 `SystemServices` 注入，100% 可 mock 测试
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `tsc --noEmit` 无类型错误
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
+- [x] `createPluginContext()` 返回完整 `PluginContext` 实例（8 个子模块）
+- [x] `fs` 操作无 `fs:read`/`fs:write` 权限时被拦截抛错
+- [x] `shell` 操作无 `shell:exec` 权限时被拦截抛错
+- [x] `storage` 操作自动按 `pluginId` 隔离，值自动 JSON 序列化/反序列化
+- [x] `commands.register()` 注册到全局命令注册表，返回 `Disposable`
+- [x] `notification` 通过注入的回调转发，不直接依赖 Electron
+- [x] `workspace` 通过注入的回调代理，不直接依赖 Electron dialog
+- [x] 所有依赖通过 `SystemServices` 注入，100% 可 mock 测试
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `tsc --noEmit` 无类型错误
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `src/main/plugin/context.ts`（createPluginContext, SystemServices 接口）
-- [ ] `src/main/plugin/context.test.ts`（对应测试）
+- [x] `src/main/plugin/context.ts`（createPluginContext, SystemServices 接口）
+- [x] `src/main/plugin/context.test.ts`（对应测试）
 
 ---
 
@@ -1097,9 +1097,9 @@ describe("createPluginContext", () => {
 
 **TDD 要求**：
 
-- [ ] Red：先写测试，确认失败。具体测试用例见下方。
-- [ ] Green：实现 PluginManager 和 IPC handler 集成
-- [ ] Refactor：整理代码结构，测试保持通过
+- [x] Red：先写测试，确认失败。具体测试用例见下方。
+- [x] Green：实现 PluginManager 和 IPC handler 集成
+- [x] Refactor：整理代码结构，测试保持通过
 
 **测试用例设计**（Red 阶段编写）：
 
@@ -1273,24 +1273,24 @@ describe("PluginManager", () => {
 
 **验收标准**：
 
-- [ ] `PluginManager.loadAll(dirs)` 完成完整加载流程：扫描→解析→排序→创建 Context→activate
-- [ ] `getPluginList()` 返回 `PluginInfo[]`，状态正确反映（active/disabled/error）
-- [ ] `enablePlugin(id)` 重新激活禁用的插件
-- [ ] `disablePlugin(id)` 调用 deactivate 并设为 disabled
-- [ ] `shutdown()` 清理所有 active 插件
-- [ ] 单个插件 activate 失败不阻塞其他插件加载
-- [ ] IPC handler `plugin:list/enable/disable` 委托给 PluginManager
-- [ ] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
-- [ ] `tsc --noEmit` 无类型错误
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
+- [x] `PluginManager.loadAll(dirs)` 完成完整加载流程：扫描→解析→排序→创建 Context→activate
+- [x] `getPluginList()` 返回 `PluginInfo[]`，状态正确反映（active/disabled/error）
+- [x] `enablePlugin(id)` 重新激活禁用的插件
+- [x] `disablePlugin(id)` 调用 deactivate 并设为 disabled
+- [x] `shutdown()` 清理所有 active 插件
+- [x] 单个插件 activate 失败不阻塞其他插件加载
+- [x] IPC handler `plugin:list/enable/disable` 委托给 PluginManager
+- [x] TDD 留痕完整：Red 阶段测试失败日志 + Green 阶段通过日志
+- [x] `tsc --noEmit` 无类型错误
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出 + `tsc --noEmit` 输出
 
 **交付物**：
 
-- [ ] `src/main/plugin/manager.ts`（PluginManager 类）
-- [ ] `src/main/plugin/manager.test.ts`（对应测试）
-- [ ] `src/main/plugin/index.ts`（更新，统一导出）
-- [ ] `src/main/ipc/register.ts`（更新 plugin handler 实现）
+- [x] `src/main/plugin/manager.ts`（PluginManager 类）
+- [x] `src/main/plugin/manager.test.ts`（对应测试）
+- [x] `src/main/plugin/index.ts`（更新，统一导出）
+- [x] `src/main/ipc/register.ts`（更新 plugin handler 实现）
 
 ---
 
@@ -1322,9 +1322,9 @@ describe("PluginManager", () => {
 
 **TDD 要求（B 类）**：
 
-- [ ] 编写验证式测试：组件可渲染、列表展示、交互响应
-- [ ] 实现功能
-- [ ] 运行测试确认通过
+- [x] 编写验证式测试：组件可渲染、列表展示、交互响应
+- [x] 实现功能
+- [x] 运行测试确认通过
 
 **测试用例设计**：
 
@@ -1408,20 +1408,20 @@ describe("usePluginStore", () => {
 
 **验收标准**：
 
-- [ ] 插件列表正确展示已安装插件的名称、版本、状态
-- [ ] 状态标记颜色区分：active 绿色、disabled 灰色、error 红色
-- [ ] 可点击启停开关切换插件状态
-- [ ] 详情面板展示插件描述和权限列表
-- [ ] Zustand store 正确管理 plugins 状态
-- [ ] `pnpm test` 回归通过
-- [ ] 提供可复核证据：测试输出
+- [x] 插件列表正确展示已安装插件的名称、版本、状态
+- [x] 状态标记颜色区分：active 绿色、disabled 灰色、error 红色
+- [x] 可点击启停开关切换插件状态
+- [x] 详情面板展示插件描述和权限列表
+- [x] Zustand store 正确管理 plugins 状态
+- [x] `pnpm test` 回归通过
+- [x] 提供可复核证据：测试输出
 
 **交付物**：
 
-- [ ] `src/renderer/stores/plugin.store.ts`（Zustand 状态管理）
-- [ ] `src/renderer/stores/plugin.store.test.ts`（对应测试）
-- [ ] `src/renderer/features/plugins/PluginListView.tsx`（重写，列表 + 详情）
-- [ ] `src/renderer/features/plugins/PluginListView.test.tsx`（对应测试）
+- [x] `src/renderer/stores/plugin.store.ts`（Zustand 状态管理）
+- [x] `src/renderer/stores/plugin.store.test.ts`（对应测试）
+- [x] `src/renderer/features/plugins/PluginListView.tsx`（重写，列表 + 详情）
+- [x] `src/renderer/features/plugins/PluginListView.test.tsx`（对应测试）
 
 ---
 
@@ -1441,6 +1441,6 @@ describe("usePluginStore", () => {
 
 ### 低优先级问题（记录参考）
 
-- [ ] **[L1]** Task 2.1 的 `ToolDefinition` 类型中 `parameters` 字段的 Zod schema 类型定义可考虑使用 `z.ZodType<any>` 或保持为 `Record<string, unknown>` 以避免引入 zod 依赖到 plugin-api 包
-- [ ] **[L2]** Task 2.5 的状态变化通知（`plugin:statusChanged` 事件）当前仅定义接口、不实现实际推送，可在后续迭代中补充
-- [ ] **[L3]** Task 2.6 的权限确认弹窗 UI（Task 2.3 中定义的 `onHighRiskConfirm` 回调对接渲染进程弹窗）未在本 Phase 实现，可在 Phase 4 插件实际使用时补充
+- [x] **[L1]** Task 2.1 的 `ToolDefinition` 类型中 `parameters` 字段的 Zod schema 类型定义可考虑使用 `z.ZodType<any>` 或保持为 `Record<string, unknown>` 以避免引入 zod 依赖到 plugin-api 包
+- [x] **[L2]** Task 2.5 的状态变化通知（`plugin:statusChanged` 事件）当前仅定义接口、不实现实际推送，可在后续迭代中补充
+- [x] **[L3]** Task 2.6 的权限确认弹窗 UI（Task 2.3 中定义的 `onHighRiskConfirm` 回调对接渲染进程弹窗）未在本 Phase 实现，可在 Phase 4 插件实际使用时补充

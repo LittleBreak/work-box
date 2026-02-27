@@ -136,3 +136,19 @@ export function isExecResult(value: unknown): value is ExecResult {
     typeof obj.exitCode === "number"
   );
 }
+
+// ---- 插件系统 ----
+
+/** Plugin runtime status */
+export type PluginStatus = "unloaded" | "loading" | "active" | "error" | "disabled";
+
+/** Plugin info for IPC transport between main and renderer */
+export interface PluginInfo {
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
+  status: PluginStatus;
+  permissions: string[];
+  error?: string;
+}
