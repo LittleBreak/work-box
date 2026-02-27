@@ -121,23 +121,23 @@ Phase 4 共 7 个任务（4.1–4.7），分为两大块：
 
 **验收标准**：
 
-- [ ] 创建 `plugins/terminal/package.json`，包含完整 `workbox` 字段
-- [ ] 创建 `plugins/terminal/src/index.ts`，导出 `definePlugin()` 骨架（activate/deactivate 为空实现）
-- [ ] 创建 `plugins/terminal/src/ui/TerminalPanel.tsx`，导出占位 React 组件
-- [ ] 在 `src/main/index.ts` 中实例化 `PluginManager` 并调用 `loadAll()`
-- [ ] 编写测试验证：
-  - [ ] `parseManifest()` 可正确解析 Terminal 插件的 package.json
-  - [ ] PluginManager 可扫描到 Terminal 插件
-  - [ ] Terminal 插件 `activate()` 被调用且不报错
-- [ ] `pnpm test` 全部通过
+- [x] 创建 `plugins/terminal/package.json`，包含完整 `workbox` 字段
+- [x] 创建 `plugins/terminal/src/index.ts`，导出 `definePlugin()` 骨架（activate/deactivate 为空实现）
+- [x] 创建 `plugins/terminal/src/ui/TerminalPanel.tsx`，导出占位 React 组件
+- [x] 在 `src/main/index.ts` 中实例化 `PluginManager` 并调用 `loadAll()`
+- [x] 编写测试验证：
+  - [x] `parseManifest()` 可正确解析 Terminal 插件的 package.json
+  - [x] PluginManager 可扫描到 Terminal 插件
+  - [x] Terminal 插件 `activate()` 被调用且不报错
+- [x] `pnpm test` 全部通过（pre-existing crud/settings 失败除外）
 
 **交付物清单**：
 
-- [ ] `plugins/terminal/package.json` — 插件清单
-- [ ] `plugins/terminal/src/index.ts` — 插件入口（骨架）
-- [ ] `plugins/terminal/src/ui/TerminalPanel.tsx` — UI 占位组件
-- [ ] `src/main/index.ts` — 添加 PluginManager 激活代码
-- [ ] `plugins/terminal/src/index.test.ts` — 插件骨架测试
+- [x] `plugins/terminal/package.json` — 插件清单
+- [x] `plugins/terminal/src/index.ts` — 插件入口（骨架）
+- [x] `plugins/terminal/src/ui/TerminalPanel.tsx` — UI 占位组件
+- [x] `src/main/index.ts` — 添加 PluginManager 激活代码
+- [x] `plugins/terminal/src/index.test.ts` — 插件骨架测试
 
 **参考文档**：
 
@@ -261,43 +261,43 @@ terminal: {
 
 **验收标准**：
 
-- [ ] 安装 `node-pty` 并成功编译（`pnpm install` + `electron-rebuild`）
-- [ ] 实现 `plugins/terminal/src/session-manager.ts`：
-  - [ ] `create()` 创建 PTY 实例并返回 sessionId
-  - [ ] `write()` 向 PTY stdin 写入数据
-  - [ ] `resize()` 调整 PTY 终端尺寸
-  - [ ] `close()` 销毁单个 PTY 实例，释放资源
-  - [ ] `closeAll()` 关闭所有 session
-  - [ ] `onData()` / `onExit()` 回调注册
-  - [ ] `listSessions()` 返回活跃 session 列表
-- [ ] 在 `src/shared/ipc-channels.ts` 中添加 terminal 相关通道
-- [ ] 在 `src/shared/types.ts` 中添加 Terminal 相关类型定义
-- [ ] 在 `plugins/terminal/src/index.ts` 的 `activate()` 中注册 IPC handler：
-  - [ ] `terminal:create` → 调用 sessionManager.create()
-  - [ ] `terminal:write` → 调用 sessionManager.write()
-  - [ ] `terminal:resize` → 调用 sessionManager.resize()
-  - [ ] `terminal:close` → 调用 sessionManager.close()
-  - [ ] `terminal:list` → 调用 sessionManager.listSessions()
-  - [ ] stdout 数据通过 `webContents.send("terminal:data", sessionId, data)` 推送
-- [ ] 在 `deactivate()` 中调用 `sessionManager.closeAll()` 清理资源
-- [ ] 在 `src/preload/index.ts` 中暴露 `window.workbox.terminal.*` API
-- [ ] 编写测试覆盖：
-  - [ ] session 创建和销毁
-  - [ ] 多 session 并发管理
-  - [ ] write 和 onData 数据流转
-  - [ ] resize 调用
-  - [ ] closeAll 批量清理
-  - [ ] 无效 sessionId 错误处理
-- [ ] `pnpm test` 全部通过
+- [x] 安装 `node-pty` 并成功编译（`pnpm install` + `electron-rebuild`）
+- [x] 实现 `plugins/terminal/src/session-manager.ts`：
+  - [x] `create()` 创建 PTY 实例并返回 sessionId
+  - [x] `write()` 向 PTY stdin 写入数据
+  - [x] `resize()` 调整 PTY 终端尺寸
+  - [x] `close()` 销毁单个 PTY 实例，释放资源
+  - [x] `closeAll()` 关闭所有 session
+  - [x] `onData()` / `onExit()` 回调注册
+  - [x] `listSessions()` 返回活跃 session 列表
+- [x] 在 `src/shared/ipc-channels.ts` 中添加 terminal 相关通道
+- [x] 在 `src/shared/types.ts` 中添加 Terminal 相关类型定义
+- [x] 在 `plugins/terminal/src/index.ts` 的 `activate()` 中注册 IPC handler：
+  - [x] `terminal:create` → 调用 sessionManager.create()
+  - [x] `terminal:write` → 调用 sessionManager.write()
+  - [x] `terminal:resize` → 调用 sessionManager.resize()
+  - [x] `terminal:close` → 调用 sessionManager.close()
+  - [x] `terminal:list` → 调用 sessionManager.listSessions()
+  - [x] stdout 数据通过 `webContents.send("terminal:data", sessionId, data)` 推送
+- [x] 在 `deactivate()` 中调用 `sessionManager.closeAll()` 清理资源
+- [x] 在 `src/preload/index.ts` 中暴露 `window.workbox.terminal.*` API
+- [x] 编写测试覆盖：
+  - [x] session 创建和销毁
+  - [x] 多 session 并发管理
+  - [x] write 和 onData 数据流转
+  - [x] resize 调用
+  - [x] closeAll 批量清理
+  - [x] 无效 sessionId 错误处理
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/terminal/src/session-manager.ts` — SessionManager 实现
-- [ ] `plugins/terminal/src/session-manager.test.ts` — SessionManager 测试
-- [ ] `plugins/terminal/src/index.ts` — 更新 activate/deactivate 逻辑
-- [ ] `src/shared/ipc-channels.ts` — 添加 terminal 通道
-- [ ] `src/shared/types.ts` — 添加 Terminal 类型
-- [ ] `src/preload/index.ts` — 暴露 terminal API
+- [x] `plugins/terminal/src/session-manager.ts` — SessionManager 实现
+- [x] `plugins/terminal/src/session-manager.test.ts` — SessionManager 测试
+- [x] `plugins/terminal/src/index.ts` — 更新 activate/deactivate 逻辑
+- [x] `src/shared/ipc-channels.ts` — 添加 terminal 通道
+- [x] `src/shared/types.ts` — 添加 Terminal 类型
+- [x] `src/preload/index.ts` — 暴露 terminal API
 
 **参考文档**：
 

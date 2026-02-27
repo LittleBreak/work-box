@@ -29,5 +29,14 @@ export const IPC_CHANNELS = {
     get: "settings:get",
     update: "settings:update",
     reset: "settings:reset"
+  },
+  terminal: {
+    create: "terminal:create",
+    write: "terminal:write",
+    resize: "terminal:resize",
+    close: "terminal:close",
+    list: "terminal:list",
+    data: "terminal:data",
+    exit: "terminal:exit"
   }
 } as const;

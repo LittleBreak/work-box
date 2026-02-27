@@ -40,5 +40,18 @@ export default defineWorkspace([
       environment: "jsdom",
       setupFiles: ["src/renderer/src/vitest.setup.ts"]
     }
+  },
+  {
+    resolve: {
+      alias: {
+        "@main": resolve(__dirname, "src/main"),
+        "@shared": resolve(__dirname, "src/shared")
+      }
+    },
+    test: {
+      name: "plugins",
+      include: ["plugins/**/*.test.ts"],
+      environment: "node"
+    }
   }
 ]);

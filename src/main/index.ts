@@ -6,9 +6,13 @@ import { Database } from "./storage/database";
 import { createCrud } from "./storage/crud";
 import { createAIService, createProviderAdapter } from "./ai";
 import { createSettingsHandler } from "./ipc/settings.handler";
+import { PluginManager } from "./plugin/manager";
+import { createSystemServices } from "./plugin/services";
 import type { Crud } from "./storage/crud";
 import type { AIService } from "./ai";
 import icon from "../../resources/icon.png?asset";
+
+let pluginManager: PluginManager | undefined;
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -59,7 +63,15 @@ app.whenReady().then(() => {
   // 初始化 AI 服务
   const aiService = initAIService(crud);
 
-  registerIPCHandlers({ crud, aiService });
+  // 初始化插件系统
+  const services = createSystemServices({ crud });
+  pluginManager = new PluginManager(services);
+  const pluginsDir = join(__dirname, "../../plugins");
+  pluginManager.loadAll([pluginsDir]).catch((err) => {
+    console.error("[Plugin] Failed to load plugins:", err);
+  });
+
+  registerIPCHandlers({ crud, aiService, pluginManager });
 
   createWindow();
 
@@ -69,6 +81,9 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
+  pluginManager?.shutdown().catch((err) => {
+    console.error("[Plugin] Failed to shutdown plugins:", err);
+  });
   if (process.platform !== "darwin") {
     app.quit();
   }

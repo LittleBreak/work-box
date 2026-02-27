@@ -1,0 +1,31 @@
+{
+  "name": "@workbox/plugin-terminal",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@workbox/plugin-api": "workspace:*"
+  },
+  "workbox": {
+    "name": "Terminal",
+    "description": "内置终端插件，提供终端 Tab 和 AI 命令执行能力",
+    "permissions": [
+      "shell:exec"
+    ],
+    "entry": {
+      "main": "./src/index.ts",
+      "ui": "./src/ui/TerminalPanel.tsx"
+    },
+    "commands": [
+      {
+        "id": "open-terminal",
+        "title": "打开终端",
+        "shortcut": "CmdOrCtrl+`"
+      }
+    ],
+    "ai": {
+      "tools": [
+        "run_command"
+      ]
+    }
+  }
+}

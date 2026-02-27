@@ -205,6 +205,20 @@ export interface ChatResult {
 /** Plugin runtime status */
 export type PluginStatus = "unloaded" | "loading" | "active" | "error" | "disabled";
 
+// ---- Terminal 类型 ----
+
+/** Terminal session 创建选项 */
+export interface TerminalCreateOptions {
+  cols?: number;
+  rows?: number;
+  cwd?: string;
+}
+
+/** Terminal session 信息 */
+export interface TerminalSessionInfo {
+  sessionId: string;
+}
+
 /** Plugin info for IPC transport between main and renderer */
 export interface PluginInfo {
   id: string;

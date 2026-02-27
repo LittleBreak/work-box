@@ -52,6 +52,43 @@ const workboxAPI = {
     update: (settings: Record<string, unknown>): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.settings.update, settings),
     reset: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.settings.reset)
+  },
+  terminal: {
+    create: (options?: import("@shared/types").TerminalCreateOptions): Promise<string> =>
+      ipcRenderer.invoke(IPC_CHANNELS.terminal.create, options),
+    write: (sessionId: string, data: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.terminal.write, sessionId, data),
+    resize: (sessionId: string, cols: number, rows: number): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.terminal.resize, sessionId, cols, rows),
+    close: (sessionId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.terminal.close, sessionId),
+    list: (): Promise<string[]> => ipcRenderer.invoke(IPC_CHANNELS.terminal.list),
+    onData: (callback: (sessionId: string, data: string) => void): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        sessionId: string,
+        data: string
+      ): void => {
+        callback(sessionId, data);
+      };
+      ipcRenderer.on(IPC_CHANNELS.terminal.data, handler);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.terminal.data, handler);
+      };
+    },
+    onExit: (callback: (sessionId: string, exitCode: number) => void): (() => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        sessionId: string,
+        exitCode: number
+      ): void => {
+        callback(sessionId, exitCode);
+      };
+      ipcRenderer.on(IPC_CHANNELS.terminal.exit, handler);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.terminal.exit, handler);
+      };
+    }
   }
 };
 
