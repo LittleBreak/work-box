@@ -1,26 +1,34 @@
 /**
  * Terminal Plugin Entry
  *
- * 内置终端插件，提供多终端 session 管理和 IPC 通道。
- * activate() 中创建 SessionManager 并注册 IPC handler，
- * deactivate() 中清理所有 session 并移除 IPC handler。
+ * 内置终端插件，提供多终端 session 管理、IPC 通道和 AI Tool 集成。
+ * activate() 中创建 SessionManager、注册 IPC handler 和 run_command AI Tool，
+ * deactivate() 中清理所有资源（session、IPC handler、AI Tool 注册）。
  */
 import { ipcMain, BrowserWindow } from "electron";
 import * as pty from "node-pty";
 import { IPC_CHANNELS } from "@shared/ipc-channels";
 import { TerminalSessionManager } from "./session-manager";
-import type { PluginContext, PluginDefinition } from "@workbox/plugin-api";
+import { CommandExecutor } from "./command-executor";
+import type { PluginContext, PluginDefinition, Disposable } from "@workbox/plugin-api";
 import type { TerminalCreateOptions } from "@shared/types";
 
 /** 模块级 SessionManager 引用，供 deactivate 访问 */
 let sessionManager: TerminalSessionManager | null = null;
 
+/** 模块级 run_command Tool 注册句柄，供 deactivate 释放 */
+let toolDisposable: Disposable | null = null;
+
 /** Terminal 插件定义 */
 const terminalPlugin: PluginDefinition = {
   name: "Terminal",
 
-  async activate(_ctx: PluginContext): Promise<void> {
+  async activate(ctx: PluginContext): Promise<void> {
     sessionManager = new TerminalSessionManager(pty);
+
+    // 注册 run_command AI Tool
+    const executor = new CommandExecutor(pty);
+    toolDisposable = ctx.ai.registerTool(executor.getToolDefinition());
 
     // terminal:create — 创建新终端 session
     ipcMain.handle(
@@ -84,6 +92,12 @@ const terminalPlugin: PluginDefinition = {
   },
 
   async deactivate(): Promise<void> {
+    // 注销 run_command AI Tool
+    if (toolDisposable) {
+      toolDisposable.dispose();
+      toolDisposable = null;
+    }
+
     if (sessionManager) {
       sessionManager.closeAll();
       sessionManager = null;

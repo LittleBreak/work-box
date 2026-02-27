@@ -511,29 +511,29 @@ ctx.ai.registerTool({
 
 **验收标准**：
 
-- [ ] 在 Terminal 插件 `activate()` 中调用 `ctx.ai.registerTool()` 注册 `run_command`
-- [ ] 实现 `plugins/terminal/src/command-executor.ts`：
-  - [ ] 接收命令字符串，创建临时 PTY 执行
-  - [ ] 收集 stdout 输出
-  - [ ] 支持超时控制（默认 30s）
-  - [ ] 输出长度截断（最大 10000 字符）
-  - [ ] 危险命令检测（复用已有逻辑）
-  - [ ] 返回 `{ stdout: string; exitCode: number }` 或错误信息
-- [ ] 在 `deactivate()` 中清理 tool 注册（通过 `Disposable` 返回值）
-- [ ] 编写测试覆盖：
-  - [ ] 简单命令执行并返回正确输出
-  - [ ] 命令超时处理
-  - [ ] 输出截断
-  - [ ] 危险命令被拦截
-  - [ ] 无效命令的错误处理
-  - [ ] Tool 注册和注销
-- [ ] `pnpm test` 全部通过
+- [x] 在 Terminal 插件 `activate()` 中调用 `ctx.ai.registerTool()` 注册 `run_command`
+- [x] 实现 `plugins/terminal/src/command-executor.ts`：
+  - [x] 接收命令字符串，创建临时 PTY 执行
+  - [x] 收集 stdout 输出
+  - [x] 支持超时控制（默认 30s）
+  - [x] 输出长度截断（最大 10000 字符）
+  - [x] 危险命令检测（复用已有逻辑）
+  - [x] 返回 `{ stdout: string; exitCode: number }` 或错误信息
+- [x] 在 `deactivate()` 中清理 tool 注册（通过 `Disposable` 返回值）
+- [x] 编写测试覆盖：
+  - [x] 简单命令执行并返回正确输出
+  - [x] 命令超时处理
+  - [x] 输出截断
+  - [x] 危险命令被拦截
+  - [x] 无效命令的错误处理
+  - [x] Tool 注册和注销
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/terminal/src/command-executor.ts` — 命令执行器
-- [ ] `plugins/terminal/src/command-executor.test.ts` — 执行器测试
-- [ ] `plugins/terminal/src/index.ts` — 更新：注册 run_command AI Tool
+- [x] `plugins/terminal/src/command-executor.ts` — 命令执行器
+- [x] `plugins/terminal/src/command-executor.test.ts` — 执行器测试
+- [x] `plugins/terminal/src/index.ts` — 更新：注册 run_command AI Tool
 
 **参考文档**：
 
