@@ -19,21 +19,21 @@ Phase 4 共 7 个任务（4.1–4.7），分为两大块：
 
 在开始任何 Task 前，先记录并确认以下信息：
 
-- [ ] Phase 2 + Phase 3 所有任务已完成且 `pnpm test` 全部通过
-- [ ] `src/main/plugin/engine.ts` 已实现 `scanPlugins()`、`parseManifest()`、`resolveLoadOrder()`
-- [ ] `src/main/plugin/context.ts` 已实现完整 `PluginContext`（fs/shell/ai/commands/notification/workspace/storage）
-- [ ] `src/main/plugin/manager.ts` 已实现 `loadAll()`、`enablePlugin()`、`disablePlugin()`、`shutdown()`
-- [ ] `src/main/ai/service.ts` 已实现 `createConversation()`、`chat()`、`getHistory()`、`deleteConversation()`
-- [ ] `src/main/ai/tool-router.ts` 已实现 Tool 注册表和路由执行
-- [ ] `src/main/ipc/ai.handler.ts` 已实现 AI 相关 IPC handler
-- [ ] `src/renderer/src/features/chat/` 下 ChatView、MessageList、MessageInput、store 已实现
-- [ ] `src/main/storage/schema.ts` 已定义 conversations、messages、plugin_storage、settings 表
-- [ ] `src/main/storage/crud.ts` 已实现对话和消息 CRUD 操作
-- [ ] `packages/plugin-api/src/types.ts` 已定义 `PluginDefinition`、`PluginContext`、`ToolDefinition`
-- [ ] `src/shared/ipc-channels.ts` 已定义 fs/shell/ai/plugin/settings 通道
-- [ ] 路径别名 `@main`、`@renderer`、`@shared` 可用
-- [ ] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖（`node-pty`、`@xterm/xterm`、`@xterm/addon-fit`）
-- [ ] 执行任务后必须更新任务状态：将对应的验收标准和交付物清单项标记为 `[x]`
+- [x] Phase 2 + Phase 3 所有任务已完成且 `pnpm test` 全部通过
+- [x] `src/main/plugin/engine.ts` 已实现 `scanPlugins()`、`parseManifest()`、`resolveLoadOrder()`
+- [x] `src/main/plugin/context.ts` 已实现完整 `PluginContext`（fs/shell/ai/commands/notification/workspace/storage）
+- [x] `src/main/plugin/manager.ts` 已实现 `loadAll()`、`enablePlugin()`、`disablePlugin()`、`shutdown()`
+- [x] `src/main/ai/service.ts` 已实现 `createConversation()`、`chat()`、`getHistory()`、`deleteConversation()`
+- [x] `src/main/ai/tool-router.ts` 已实现 Tool 注册表和路由执行
+- [x] `src/main/ipc/ai.handler.ts` 已实现 AI 相关 IPC handler
+- [x] `src/renderer/src/features/chat/` 下 ChatView、MessageList、MessageInput、store 已实现
+- [x] `src/main/storage/schema.ts` 已定义 conversations、messages、plugin_storage、settings 表
+- [x] `src/main/storage/crud.ts` 已实现对话和消息 CRUD 操作
+- [x] `packages/plugin-api/src/types.ts` 已定义 `PluginDefinition`、`PluginContext`、`ToolDefinition`
+- [x] `src/shared/ipc-channels.ts` 已定义 fs/shell/ai/plugin/settings 通道
+- [x] 路径别名 `@main`、`@renderer`、`@shared` 可用
+- [x] 本阶段只引入 `ARCHITECTURE.md` 与 `ROADMAP.md` 已声明依赖（`node-pty`、`@xterm/xterm`、`@xterm/addon-fit`）
+- [x] 执行任务后必须更新任务状态：将对应的验收标准和交付物清单项标记为 `[x]`
 
 ---
 
