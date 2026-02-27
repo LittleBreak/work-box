@@ -1,5 +1,6 @@
 import { resolve } from "path";
 import { defineWorkspace } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
 export default defineWorkspace([
   {
@@ -52,6 +53,21 @@ export default defineWorkspace([
       name: "plugins",
       include: ["plugins/**/*.test.ts"],
       environment: "node"
+    }
+  },
+  {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        "@renderer": resolve(__dirname, "src/renderer/src"),
+        "@shared": resolve(__dirname, "src/shared")
+      }
+    },
+    test: {
+      name: "plugins-ui",
+      include: ["plugins/**/*.test.tsx"],
+      environment: "jsdom",
+      setupFiles: ["src/renderer/src/vitest.setup.ts"]
     }
   }
 ]);

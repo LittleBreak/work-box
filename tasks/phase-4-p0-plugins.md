@@ -86,10 +86,10 @@ Phase 4 共 7 个任务（4.1–4.7），分为两大块：
 
 ### 统一留痕要求
 
-- [ ] A 类任务：记录 Red 阶段失败测试名称、Green 阶段通过结果、最终回归结果
-- [ ] B 类任务：记录验证式测试通过结果
-- [ ] 所有任务：`pnpm test` 通过
-- [ ] 测试文件与源文件同目录：`*.test.ts` / `*.test.tsx`
+- [x] A 类任务：记录 Red 阶段失败测试名称、Green 阶段通过结果、最终回归结果
+- [x] B 类任务：记录验证式测试通过结果
+- [x] 所有任务：`pnpm test` 通过
+- [x] 测试文件与源文件同目录：`*.test.ts` / `*.test.tsx`
 
 ---
 
@@ -416,35 +416,35 @@ interface TerminalState {
 
 **验收标准**：
 
-- [ ] 安装 `@xterm/xterm` 和 `@xterm/addon-fit`
-- [ ] 实现 `plugins/terminal/src/ui/TerminalPanel.tsx`：
-  - [ ] 显示 Tab 栏，支持创建新 Tab、切换 Tab、关闭 Tab
-  - [ ] 每个 Tab 对应一个 xterm.js Terminal 实例
-  - [ ] 关闭 Tab 时同时关闭对应 PTY session
-- [ ] 实现 `plugins/terminal/src/ui/TerminalInstance.tsx`：
-  - [ ] 使用 `useRef` + `useEffect` mount xterm.js Terminal
-  - [ ] 用户键入 → 通过 IPC 发送到 PTY stdin
-  - [ ] PTY stdout → 通过 IPC 接收并 `terminal.write()`
-  - [ ] 容器 resize → `fitAddon.fit()` + IPC `terminal:resize`
-  - [ ] 组件卸载时 `terminal.dispose()` + 清理 listeners
-- [ ] 实现 `plugins/terminal/src/ui/store.ts`：
-  - [ ] Tab 列表状态管理
-  - [ ] createTab / closeTab / setActiveTab 操作
-- [ ] 支持自定义字体、字号（从 AppSettings 读取或使用默认值）
-- [ ] 支持暗色/亮色主题切换
-- [ ] 编写测试：
-  - [ ] store 状态管理测试（createTab、closeTab、setActiveTab）
-  - [ ] TerminalPanel 组件渲染测试（Tab 栏展示、新建按钮）
-- [ ] `pnpm test` 全部通过
+- [x] 安装 `@xterm/xterm` 和 `@xterm/addon-fit`
+- [x] 实现 `plugins/terminal/src/ui/TerminalPanel.tsx`：
+  - [x] 显示 Tab 栏，支持创建新 Tab、切换 Tab、关闭 Tab
+  - [x] 每个 Tab 对应一个 xterm.js Terminal 实例
+  - [x] 关闭 Tab 时同时关闭对应 PTY session
+- [x] 实现 `plugins/terminal/src/ui/TerminalInstance.tsx`：
+  - [x] 使用 `useRef` + `useEffect` mount xterm.js Terminal
+  - [x] 用户键入 → 通过 IPC 发送到 PTY stdin
+  - [x] PTY stdout → 通过 IPC 接收并 `terminal.write()`
+  - [x] 容器 resize → `fitAddon.fit()` + IPC `terminal:resize`
+  - [x] 组件卸载时 `terminal.dispose()` + 清理 listeners
+- [x] 实现 `plugins/terminal/src/ui/store.ts`：
+  - [x] Tab 列表状态管理
+  - [x] createTab / closeTab / setActiveTab 操作
+- [x] 支持自定义字体、字号（从 AppSettings 读取或使用默认值）
+- [x] 支持暗色/亮色主题切换
+- [x] 编写测试：
+  - [x] store 状态管理测试（createTab、closeTab、setActiveTab）
+  - [x] TerminalPanel 组件渲染测试（Tab 栏展示、新建按钮）
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/terminal/src/ui/TerminalPanel.tsx` — 终端面板主组件
-- [ ] `plugins/terminal/src/ui/TerminalInstance.tsx` — 单终端实例组件
-- [ ] `plugins/terminal/src/ui/TerminalTabs.tsx` — Tab 栏组件
-- [ ] `plugins/terminal/src/ui/store.ts` — Terminal UI 状态管理
-- [ ] `plugins/terminal/src/ui/store.test.ts` — store 测试
-- [ ] `plugins/terminal/src/ui/TerminalPanel.test.tsx` — UI 组件测试
+- [x] `plugins/terminal/src/ui/TerminalPanel.tsx` — 终端面板主组件
+- [x] `plugins/terminal/src/ui/TerminalInstance.tsx` — 单终端实例组件
+- [x] `plugins/terminal/src/ui/TerminalTabs.tsx` — Tab 栏组件
+- [x] `plugins/terminal/src/ui/store.ts` — Terminal UI 状态管理
+- [x] `plugins/terminal/src/ui/store.test.ts` — store 测试
+- [x] `plugins/terminal/src/ui/TerminalPanel.test.tsx` — UI 组件测试
 
 **参考文档**：
 
