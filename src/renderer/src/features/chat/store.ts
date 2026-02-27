@@ -26,6 +26,8 @@ interface ChatState {
   isStreaming: boolean;
   streamingText: string;
   selectedModel: string;
+  searchQuery: string;
+  searchResults: ConversationSummary[] | null;
   createConversation: (id: string, title: string) => void;
   switchConversation: (id: string) => void;
   deleteConversation: (id: string) => void;
@@ -40,6 +42,9 @@ interface ChatState {
   appendStreamingText: (text: string) => void;
   setStreaming: (streaming: boolean) => void;
   setSelectedModel: (model: string) => void;
+  setSearchQuery: (query: string) => void;
+  setSearchResults: (results: ConversationSummary[]) => void;
+  clearSearch: () => void;
 }
 
 /** Chat Zustand Store */
@@ -50,6 +55,8 @@ export const useChatStore = create<ChatState>((set) => ({
   isStreaming: false,
   streamingText: "",
   selectedModel: "gpt-4o",
+  searchQuery: "",
+  searchResults: null,
 
   createConversation(id, title) {
     set((state) => ({
@@ -139,5 +146,17 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setSelectedModel(model) {
     set({ selectedModel: model });
+  },
+
+  setSearchQuery(query) {
+    set({ searchQuery: query });
+  },
+
+  setSearchResults(results) {
+    set({ searchResults: results });
+  },
+
+  clearSearch() {
+    set({ searchQuery: "", searchResults: null });
   }
 }));

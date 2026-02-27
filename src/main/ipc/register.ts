@@ -78,6 +78,14 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
       async (_event, messageId: string, content: string) =>
         handler.updateMessageContent(messageId, content)
     );
+    ipcMain.handle(IPC_CHANNELS.ai.searchConversations, async (_event, query: string) =>
+      handler.searchConversations(query)
+    );
+    ipcMain.handle(
+      IPC_CHANNELS.ai.exportConversation,
+      async (_event, conversationId: string, format: string) =>
+        handler.exportConversation(conversationId, format)
+    );
   } else {
     ipcMain.handle(IPC_CHANNELS.ai.chat, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.getModels, notImplemented);
@@ -88,6 +96,8 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
     ipcMain.handle(IPC_CHANNELS.ai.deleteMessagesAfter, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.regenerate, notImplemented);
     ipcMain.handle(IPC_CHANNELS.ai.updateMessageContent, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.searchConversations, notImplemented);
+    ipcMain.handle(IPC_CHANNELS.ai.exportConversation, notImplemented);
   }
 
   // plugin 领域

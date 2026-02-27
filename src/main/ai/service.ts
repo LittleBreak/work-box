@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
 import { streamText } from "ai";
 import type { Crud, Conversation, Message } from "../storage/crud";
 import type { AIProviderAdapter } from "./types";
 import type { StreamEvent, ChatResult } from "@shared/types";
+import { formatConversationAsMarkdown, formatConversationAsJSON } from "./export";
 
 /** AI Service 依赖注入参数 */
 export interface AIServiceDeps {
@@ -11,6 +13,16 @@ export interface AIServiceDeps {
   /** 使用的模型名称（如 "gpt-4o"），默认取 adapter 第一个可用模型 */
   model?: string;
   maxContextMessages?: number;
+  /** 弹出文件保存对话框（用于导出），不传时使用 Electron dialog */
+  showSaveDialog?: ExportDialogFn;
+}
+
+/** 对话导出选项（用于 showSaveDialog） */
+export interface ExportDialogFn {
+  (
+    defaultName: string,
+    filters: Array<{ name: string; extensions: string[] }>
+  ): Promise<string | undefined>;
 }
 
 /** AI Service 接口 */
@@ -28,6 +40,8 @@ export interface AIService {
   getConversations(): Conversation[];
   getHistory(conversationId: string): Message[];
   deleteConversation(conversationId: string): void;
+  searchConversations(query: string): Conversation[];
+  exportConversation(conversationId: string, format: string): Promise<string | null>;
 }
 
 /** 默认最大上下文消息数 */
@@ -38,7 +52,13 @@ const DEFAULT_MAX_CONTEXT_MESSAGES = 50;
  * 协调 Provider 适配器、CRUD 存储和流式转发。
  */
 export function createAIService(deps: AIServiceDeps): AIService {
-  const { crud, adapter, model, maxContextMessages = DEFAULT_MAX_CONTEXT_MESSAGES } = deps;
+  const {
+    crud,
+    adapter,
+    model,
+    maxContextMessages = DEFAULT_MAX_CONTEXT_MESSAGES,
+    showSaveDialog
+  } = deps;
   const resolvedModel = model || adapter.getModels()[0]?.id || "default";
 
   /** 跟踪每个对话是否已发送过消息（用于首次消息更新标题） */
@@ -274,6 +294,36 @@ export function createAIService(deps: AIServiceDeps): AIService {
     deleteConversation(conversationId) {
       crud.deleteConversation(conversationId);
       conversationMessageCount.delete(conversationId);
+    },
+
+    searchConversations(query) {
+      return crud.searchConversations(query);
+    },
+
+    async exportConversation(conversationId, format) {
+      const conversation = crud.getConversation(conversationId);
+      if (!conversation) return null;
+
+      const msgs = crud.getMessagesByConversation(conversationId);
+
+      const isMarkdown = format === "markdown";
+      const content = isMarkdown
+        ? formatConversationAsMarkdown(conversation, msgs)
+        : formatConversationAsJSON(conversation, msgs);
+
+      const ext = isMarkdown ? "md" : "json";
+      const defaultName = `${conversation.title.replace(/[/\\?%*:|"<>]/g, "_")}.${ext}`;
+      const filters = isMarkdown
+        ? [{ name: "Markdown", extensions: ["md"] }]
+        : [{ name: "JSON", extensions: ["json"] }];
+
+      if (!showSaveDialog) return null;
+
+      const filePath = await showSaveDialog(defaultName, filters);
+      if (!filePath) return null;
+
+      writeFileSync(filePath, content, "utf-8");
+      return filePath;
     }
   };
 }

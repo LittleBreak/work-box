@@ -587,4 +587,96 @@ describe("Schema CRUD 操作", () => {
       expect(conv!.systemPrompt).toBe("prompt");
     });
   });
+
+  describe("searchConversations", () => {
+    beforeEach(() => {
+      const now = Date.now();
+      // 创建几个有不同标题的对话
+      crud.insertConversation({
+        id: "conv-search-1",
+        title: "React 性能优化讨论",
+        createdAt: now,
+        updatedAt: now
+      });
+      crud.insertConversation({
+        id: "conv-search-2",
+        title: "TypeScript 泛型教程",
+        createdAt: now + 100,
+        updatedAt: now + 100
+      });
+      crud.insertConversation({
+        id: "conv-search-3",
+        title: "Node.js 后端开发",
+        createdAt: now + 200,
+        updatedAt: now + 200
+      });
+    });
+
+    // 正常路径：按标题关键词匹配
+    it("按标题关键词搜索匹配的对话", () => {
+      const results = crud.searchConversations("React");
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("React 性能优化讨论");
+    });
+
+    // 正常路径：模糊匹配（部分字符串）
+    it("模糊匹配标题中的部分字符串", () => {
+      const results = crud.searchConversations("Script");
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe("conv-search-2");
+    });
+
+    // 正常路径：匹配多个结果
+    it("返回所有匹配的对话", () => {
+      // "开发" 和 "讨论" 都不匹配多个，但可以用通用词
+      crud.insertConversation({
+        id: "conv-search-4",
+        title: "React Native 开发",
+        createdAt: Date.now() + 300,
+        updatedAt: Date.now() + 300
+      });
+      const results = crud.searchConversations("React");
+      expect(results).toHaveLength(2);
+    });
+
+    // 正常路径：大小写不敏感搜索
+    it("搜索不区分大小写", () => {
+      const results = crud.searchConversations("react");
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe("conv-search-1");
+    });
+
+    // 边界条件：无匹配结果
+    it("无匹配时返回空数组", () => {
+      const results = crud.searchConversations("Python");
+      expect(results).toEqual([]);
+    });
+
+    // 边界条件：空查询返回空数组
+    it("空查询返回空数组", () => {
+      const results = crud.searchConversations("");
+      expect(results).toEqual([]);
+    });
+
+    // 边界条件：纯空白查询返回空数组
+    it("纯空白查询返回空数组", () => {
+      const results = crud.searchConversations("   ");
+      expect(results).toEqual([]);
+    });
+
+    // 正常路径：结果按 updatedAt 降序排列
+    it("搜索结果按 updatedAt 降序排列", () => {
+      crud.insertConversation({
+        id: "conv-search-5",
+        title: "Node.js 微服务",
+        createdAt: Date.now() + 400,
+        updatedAt: Date.now() + 400
+      });
+      const results = crud.searchConversations("Node");
+      expect(results).toHaveLength(2);
+      // 最新的在前
+      expect(results[0].id).toBe("conv-search-5");
+      expect(results[1].id).toBe("conv-search-3");
+    });
+  });
 });

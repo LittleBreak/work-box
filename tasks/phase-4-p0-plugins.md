@@ -725,41 +725,41 @@ ai: {
 
 **验收标准**：
 
-- [ ] **对话导出**：
-  - [ ] 实现 `plugins/terminal/` 之外的导出逻辑（可放在 `src/main/ai/export.ts`）
-  - [ ] 实现 `formatConversationAsMarkdown(conversation, messages)` 纯函数
-  - [ ] 实现 `formatConversationAsJSON(conversation, messages)` 纯函数
-  - [ ] 新增 IPC 通道 `ai:exportConversation`
-  - [ ] Handler 中调用 `dialog.showSaveDialog()` 弹出保存对话框
-  - [ ] 写入文件到用户选择的路径
-  - [ ] 在 ChatView 中添加「导出」按钮（支持选择格式）
-- [ ] **对话搜索**：
-  - [ ] 在 `crud.ts` 中新增 `searchConversations(query: string): Conversation[]`
-  - [ ] 使用 SQLite LIKE 匹配 conversation.title
-  - [ ] 新增 IPC 通道 `ai:searchConversations`
-  - [ ] 在 `src/preload/index.ts` 暴露搜索 API
-  - [ ] 在 ChatView 左侧对话列表上方添加搜索框
-  - [ ] 在 chat store 中新增 `searchQuery` / `searchResults` 状态
-  - [ ] 输入关键词时实时过滤对话列表
-- [ ] 编写测试覆盖：
-  - [ ] Markdown 格式化输出测试（正常对话、空对话、含代码块的对话）
-  - [ ] JSON 格式化输出测试
-  - [ ] CRUD searchConversations 测试（匹配、无结果、空查询）
-  - [ ] store 搜索状态管理测试
-- [ ] `pnpm test` 全部通过
+- [x] **对话导出**：
+  - [x] 实现 `plugins/terminal/` 之外的导出逻辑（可放在 `src/main/ai/export.ts`）
+  - [x] 实现 `formatConversationAsMarkdown(conversation, messages)` 纯函数
+  - [x] 实现 `formatConversationAsJSON(conversation, messages)` 纯函数
+  - [x] 新增 IPC 通道 `ai:exportConversation`
+  - [x] Handler 中调用 `dialog.showSaveDialog()` 弹出保存对话框
+  - [x] 写入文件到用户选择的路径
+  - [x] 在 ChatView 中添加「导出」按钮（支持选择格式）
+- [x] **对话搜索**：
+  - [x] 在 `crud.ts` 中新增 `searchConversations(query: string): Conversation[]`
+  - [x] 使用 SQLite LIKE 匹配 conversation.title
+  - [x] 新增 IPC 通道 `ai:searchConversations`
+  - [x] 在 `src/preload/index.ts` 暴露搜索 API
+  - [x] 在 ChatView 左侧对话列表上方添加搜索框
+  - [x] 在 chat store 中新增 `searchQuery` / `searchResults` 状态
+  - [x] 输入关键词时实时过滤对话列表
+- [x] 编写测试覆盖：
+  - [x] Markdown 格式化输出测试（正常对话、空对话、含代码块的对话）
+  - [x] JSON 格式化输出测试
+  - [x] CRUD searchConversations 测试（匹配、无结果、空查询）
+  - [x] store 搜索状态管理测试
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `src/main/ai/export.ts` — 导出格式化逻辑
-- [ ] `src/main/ai/export.test.ts` — 导出格式化测试
-- [ ] `src/main/storage/crud.ts` — 新增 searchConversations
-- [ ] `src/main/storage/crud.test.ts` — 搜索测试
-- [ ] `src/shared/ipc-channels.ts` — 新增导出和搜索通道
-- [ ] `src/preload/index.ts` — 暴露新 API
-- [ ] `src/main/ipc/ai.handler.ts` — 新增 handler
-- [ ] `src/renderer/src/features/chat/store.ts` — 搜索状态
-- [ ] `src/renderer/src/features/chat/store.test.ts` — 搜索测试
-- [ ] `src/renderer/src/features/chat/ChatView.tsx` — 导出按钮 + 搜索框 UI
+- [x] `src/main/ai/export.ts` — 导出格式化逻辑
+- [x] `src/main/ai/export.test.ts` — 导出格式化测试
+- [x] `src/main/storage/crud.ts` — 新增 searchConversations
+- [x] `src/main/storage/crud.test.ts` — 搜索测试
+- [x] `src/shared/ipc-channels.ts` — 新增导出和搜索通道
+- [x] `src/preload/index.ts` — 暴露新 API
+- [x] `src/main/ipc/ai.handler.ts` — 新增 handler
+- [x] `src/renderer/src/features/chat/store.ts` — 搜索状态
+- [x] `src/renderer/src/features/chat/store.test.ts` — 搜索测试
+- [x] `src/renderer/src/features/chat/ChatView.tsx` — 导出按钮 + 搜索框 UI
 
 **参考文档**：
 

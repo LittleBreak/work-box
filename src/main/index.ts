@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron";
+import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { registerIPCHandlers } from "./ipc/register";
@@ -99,7 +99,22 @@ function initAIService(crud: Crud): AIService | undefined {
     const { aiProvider, aiApiKey, aiBaseUrl, aiModel } = settingsHandler.getSettings();
 
     const adapter = createProviderAdapter({ aiProvider, aiApiKey, aiBaseUrl });
-    return createAIService({ crud, adapter, model: aiModel });
+
+    /** 弹出文件保存对话框 */
+    const showSaveDialog = async (
+      defaultName: string,
+      filters: Array<{ name: string; extensions: string[] }>
+    ): Promise<string | undefined> => {
+      const win = BrowserWindow.getFocusedWindow();
+      if (!win) return undefined;
+      const result = await dialog.showSaveDialog(win, {
+        defaultPath: defaultName,
+        filters
+      });
+      return result.canceled ? undefined : result.filePath;
+    };
+
+    return createAIService({ crud, adapter, model: aiModel, showSaveDialog });
   } catch (err) {
     console.error("[AI] Failed to initialize AI service:", err);
     return undefined;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useChatStore } from "./store";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
@@ -13,6 +13,8 @@ function getWorkbox():
         updateSystemPrompt?: (id: string, prompt: string | null) => Promise<void>;
         deleteMessagesAfter?: (convId: string, msgId: string) => Promise<void>;
         updateMessageContent?: (msgId: string, content: string) => Promise<void>;
+        searchConversations?: (query: string) => Promise<unknown[]>;
+        exportConversation?: (convId: string, format: string) => Promise<string | null>;
       };
       clipboard?: {
         writeText?: (text: string) => Promise<void>;
@@ -22,9 +24,12 @@ function getWorkbox():
   return (window as Record<string, unknown>).workbox as ReturnType<typeof getWorkbox>;
 }
 
+/** 搜索 debounce 延迟（毫秒） */
+const SEARCH_DEBOUNCE_MS = 300;
+
 /**
  * AI 对话主视图。
- * 左右分栏：左侧对话列表，右侧消息区 + 输入区。
+ * 左右分栏：左侧对话列表（含搜索），右侧消息区 + 输入区。
  */
 export function ChatView(): React.JSX.Element {
   const {
@@ -33,6 +38,8 @@ export function ChatView(): React.JSX.Element {
     messages,
     isStreaming,
     streamingText,
+    searchQuery,
+    searchResults,
     createConversation,
     switchConversation,
     deleteConversation,
@@ -41,19 +48,62 @@ export function ChatView(): React.JSX.Element {
     updateLocalMessageContent,
     updateConversationSystemPrompt,
     appendStreamingText,
-    setStreaming
+    setStreaming,
+    setSearchQuery,
+    setSearchResults,
+    clearSearch
   } = useChatStore();
 
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
   const [systemPromptDraft, setSystemPromptDraft] = useState("");
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentMessages = currentConversationId ? (messages[currentConversationId] ?? []) : [];
   const currentConversation = conversations.find((c) => c.id === currentConversationId);
+
+  // 决定左侧显示的对话列表：有搜索结果时显示搜索结果，否则显示全部
+  const displayedConversations = searchResults ?? conversations;
 
   const handleNewConversation = (): void => {
     const id = crypto.randomUUID();
     createConversation(id, "新对话");
   };
+
+  /** 搜索输入处理（debounce 300ms） */
+  const handleSearchInput = useCallback(
+    (value: string): void => {
+      setSearchQuery(value);
+
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+
+      if (!value.trim()) {
+        clearSearch();
+        return;
+      }
+
+      searchTimerRef.current = setTimeout(() => {
+        const workbox = getWorkbox();
+        workbox?.ai?.searchConversations?.(value).then((results) => {
+          setSearchResults(
+            results as Array<{ id: string; title: string; systemPrompt?: string | null }>
+          );
+        });
+      }, SEARCH_DEBOUNCE_MS);
+    },
+    [setSearchQuery, setSearchResults, clearSearch]
+  );
+
+  // 清理 debounce timer
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSend = (content: string): void => {
     if (!currentConversationId) return;
@@ -224,6 +274,14 @@ export function ChatView(): React.JSX.Element {
     setShowSystemPrompt(false);
   };
 
+  /** 导出对话 */
+  const handleExport = (format: string): void => {
+    if (!currentConversationId) return;
+    const workbox = getWorkbox();
+    workbox?.ai?.exportConversation?.(currentConversationId, format);
+    setShowExportMenu(false);
+  };
+
   return (
     <div data-testid="page-chat" className="flex h-full">
       {/* 左侧：对话列表 */}
@@ -237,8 +295,20 @@ export function ChatView(): React.JSX.Element {
             新建对话
           </button>
         </div>
+
+        {/* 搜索框 */}
+        <div className="border-b px-3 py-2">
+          <input
+            type="text"
+            placeholder="搜索对话..."
+            value={searchQuery}
+            onChange={(e) => handleSearchInput(e.target.value)}
+            className="w-full rounded border bg-background px-2 py-1 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((conv) => (
+          {displayedConversations.map((conv) => (
             <div
               key={conv.id}
               onClick={() => switchConversation(conv.id)}
@@ -266,7 +336,32 @@ export function ChatView(): React.JSX.Element {
         {currentConversationId ? (
           <>
             {/* 顶部工具栏 */}
-            <div className="flex items-center justify-end border-b px-4 py-2">
+            <div className="flex items-center justify-end gap-1 border-b px-4 py-2">
+              <div className="relative">
+                <button
+                  title="导出对话"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  &#8681;
+                </button>
+                {showExportMenu && (
+                  <div className="absolute right-0 top-full z-10 mt-1 w-32 rounded-md border bg-background shadow-md">
+                    <button
+                      onClick={() => handleExport("markdown")}
+                      className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                    >
+                      Markdown
+                    </button>
+                    <button
+                      onClick={() => handleExport("json")}
+                      className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                    >
+                      JSON
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 title="系统 Prompt"
                 onClick={handleOpenSystemPrompt}

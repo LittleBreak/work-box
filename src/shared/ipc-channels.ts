@@ -22,7 +22,9 @@ export const IPC_CHANNELS = {
     updateSystemPrompt: "ai:updateSystemPrompt",
     deleteMessagesAfter: "ai:deleteMessagesAfter",
     regenerate: "ai:regenerate",
-    updateMessageContent: "ai:updateMessageContent"
+    updateMessageContent: "ai:updateMessageContent",
+    exportConversation: "ai:exportConversation",
+    searchConversations: "ai:searchConversations"
   },
   plugin: {
     list: "plugin:list",

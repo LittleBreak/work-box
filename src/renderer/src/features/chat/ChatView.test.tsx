@@ -10,6 +10,8 @@ const defaultMock = {
   isStreaming: false,
   streamingText: "",
   selectedModel: "gpt-4o",
+  searchQuery: "",
+  searchResults: null,
   createConversation: vi.fn(),
   switchConversation: vi.fn(),
   deleteConversation: vi.fn(),
@@ -19,7 +21,10 @@ const defaultMock = {
   updateConversationSystemPrompt: vi.fn(),
   appendStreamingText: vi.fn(),
   setStreaming: vi.fn(),
-  setSelectedModel: vi.fn()
+  setSelectedModel: vi.fn(),
+  setSearchQuery: vi.fn(),
+  setSearchResults: vi.fn(),
+  clearSearch: vi.fn()
 };
 
 // Mock store
@@ -75,7 +80,7 @@ describe("ChatView", () => {
     render(<ChatView />);
 
     // 模拟用户输入并发送消息
-    const textarea = screen.getByRole("textbox");
+    const textarea = screen.getByPlaceholderText("输入消息... (Ctrl+Enter 发送)");
     fireEvent.change(textarea, { target: { value: "hello" } });
     fireEvent.click(screen.getByLabelText("发送"));
 
@@ -108,7 +113,7 @@ describe("ChatView", () => {
 
     render(<ChatView />);
 
-    const textarea = screen.getByRole("textbox");
+    const textarea = screen.getByPlaceholderText("输入消息... (Ctrl+Enter 发送)");
     fireEvent.change(textarea, { target: { value: "hello" } });
     fireEvent.click(screen.getByLabelText("发送"));
 
@@ -191,5 +196,99 @@ describe("ChatView", () => {
     render(<ChatView />);
     fireEvent.click(screen.getByTitle("复制"));
     expect(writeText).toHaveBeenCalledWith("Copy me");
+  });
+
+  // ---- 搜索相关 ----
+
+  // 正常路径：显示搜索输入框
+  it("左侧面板显示搜索输入框", () => {
+    render(<ChatView />);
+    expect(screen.getByPlaceholderText("搜索对话...")).toBeInTheDocument();
+  });
+
+  // 正常路径：搜索输入触发搜索
+  it("搜索输入调用 setSearchQuery", () => {
+    const setSearchQuery = vi.fn();
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      setSearchQuery
+    });
+
+    render(<ChatView />);
+    const input = screen.getByPlaceholderText("搜索对话...");
+    fireEvent.change(input, { target: { value: "React" } });
+    expect(setSearchQuery).toHaveBeenCalledWith("React");
+  });
+
+  // 正常路径：有搜索结果时显示搜索结果列表
+  it("有搜索结果时显示搜索结果", () => {
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      searchQuery: "React",
+      searchResults: [
+        { id: "conv-s1", title: "React 教程" },
+        { id: "conv-s2", title: "React 优化" }
+      ]
+    });
+
+    render(<ChatView />);
+    expect(screen.getByText("React 教程")).toBeInTheDocument();
+    expect(screen.getByText("React 优化")).toBeInTheDocument();
+  });
+
+  // ---- 导出相关 ----
+
+  // 正常路径：有对话时显示导出按钮
+  it("有对话时显示导出按钮", () => {
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] }
+    });
+
+    render(<ChatView />);
+    expect(screen.getByTitle("导出对话")).toBeInTheDocument();
+  });
+
+  // 正常路径：点击导出按钮显示格式选择
+  it("点击导出按钮显示格式选择", () => {
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] }
+    });
+
+    render(<ChatView />);
+    fireEvent.click(screen.getByTitle("导出对话"));
+    expect(screen.getByText("Markdown")).toBeInTheDocument();
+    expect(screen.getByText("JSON")).toBeInTheDocument();
+  });
+
+  // 正常路径：选择 Markdown 格式导出
+  it("选择 Markdown 格式调用 exportConversation", async () => {
+    const exportConversation = vi.fn().mockResolvedValue("/tmp/test.md");
+    (window as Record<string, unknown>).workbox = {
+      ai: {
+        exportConversation,
+        onStream: vi.fn(() => () => {})
+      }
+    };
+
+    vi.mocked(useChatStore).mockReturnValue({
+      ...defaultMock,
+      currentConversationId: "conv-1",
+      conversations: [{ id: "conv-1", title: "测试" }],
+      messages: { "conv-1": [] }
+    });
+
+    render(<ChatView />);
+    fireEvent.click(screen.getByTitle("导出对话"));
+    fireEvent.click(screen.getByText("Markdown"));
+
+    await waitFor(() => {
+      expect(exportConversation).toHaveBeenCalledWith("conv-1", "markdown");
+    });
   });
 });

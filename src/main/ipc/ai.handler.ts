@@ -17,6 +17,8 @@ export interface AIHandler {
   getConversations(): Conversation[];
   getHistory(conversationId: string): Message[];
   deleteConversation(conversationId: string): void;
+  searchConversations(query: string): Conversation[];
+  exportConversation(conversationId: string, format: string): Promise<string | null>;
 }
 
 /** AI Service 所需的最小接口（便于 mock 测试） */
@@ -34,6 +36,8 @@ interface AIServiceLike {
   getHistory(conversationId: string): Message[];
   deleteConversation(conversationId: string): void;
   getModels?: () => ModelInfo[];
+  searchConversations?: (query: string) => Conversation[];
+  exportConversation?: (conversationId: string, format: string) => Promise<string | null>;
 }
 
 /**
@@ -85,6 +89,20 @@ export function createAIHandler(service: AIServiceLike): AIHandler {
 
     deleteConversation(conversationId) {
       service.deleteConversation(conversationId);
+    },
+
+    searchConversations(query) {
+      if (service.searchConversations) {
+        return service.searchConversations(query);
+      }
+      return [];
+    },
+
+    async exportConversation(conversationId, format) {
+      if (service.exportConversation) {
+        return service.exportConversation(conversationId, format);
+      }
+      return null;
     }
   };
 }

@@ -49,7 +49,22 @@ function createMockService() {
       }
     ]),
     deleteConversation: vi.fn(),
-    getModels: vi.fn(() => [{ id: "gpt-4o", name: "GPT-4o", provider: "openai" }])
+    getModels: vi.fn(() => [{ id: "gpt-4o", name: "GPT-4o", provider: "openai" }]),
+    searchConversations: vi.fn((query: string) => {
+      if (query === "React") {
+        return [
+          {
+            id: "conv-1",
+            title: "React 教程",
+            systemPrompt: null,
+            createdAt: 1000,
+            updatedAt: 2000
+          }
+        ];
+      }
+      return [];
+    }),
+    exportConversation: vi.fn(async (_convId: string, _format: string) => "/tmp/export.md")
   };
 }
 
@@ -153,6 +168,28 @@ describe("createAIHandler", () => {
       const mockSend = vi.fn();
       await handler.regenerate("conv-1", mockSend);
       expect(mockSend).toHaveBeenCalled();
+    });
+  });
+
+  describe("searchConversations", () => {
+    it("代理到 service.searchConversations 并返回结果", () => {
+      const results = handler.searchConversations("React");
+      expect(mockService.searchConversations).toHaveBeenCalledWith("React");
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("React 教程");
+    });
+
+    it("空查询返回空数组", () => {
+      const results = handler.searchConversations("Python");
+      expect(results).toEqual([]);
+    });
+  });
+
+  describe("exportConversation", () => {
+    it("代理到 service.exportConversation 并返回文件路径", async () => {
+      const result = await handler.exportConversation("conv-1", "markdown");
+      expect(mockService.exportConversation).toHaveBeenCalledWith("conv-1", "markdown");
+      expect(result).toBe("/tmp/export.md");
     });
   });
 });

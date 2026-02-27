@@ -1,4 +1,4 @@
-import { eq, and, asc, desc, gte, InferSelectModel } from "drizzle-orm";
+import { eq, and, asc, desc, gte, like, InferSelectModel } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { conversations, messages, pluginStorage, settings } from "./schema";
 
@@ -49,6 +49,7 @@ export interface Crud {
   getMessagesByConversation(conversationId: string): Message[];
   updateMessageContent(messageId: string, content: string): void;
   deleteMessagesAfter(conversationId: string, messageId: string): void;
+  searchConversations(query: string): Conversation[];
   getSetting(key: string): string | undefined;
   setSetting(key: string, value: string): void;
   deleteSetting(key: string): void;
@@ -146,6 +147,18 @@ export function createCrud(db: BetterSQLite3Database): Crud {
           )
         )
         .run();
+    },
+
+    /** 按标题搜索对话，使用 SQLite LIKE 模糊匹配，结果按 updatedAt 降序 */
+    searchConversations(query: string): Conversation[] {
+      const trimmed = query.trim();
+      if (!trimmed) return [];
+      return db
+        .select()
+        .from(conversations)
+        .where(like(conversations.title, `%${trimmed}%`))
+        .orderBy(desc(conversations.updatedAt))
+        .all();
     },
 
     // ---- settings ----

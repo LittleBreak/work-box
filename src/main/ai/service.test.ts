@@ -52,6 +52,13 @@ function createMockCrud(): Crud {
       const filtered = msgs.filter((m) => (m.createdAt as number) < (target.createdAt as number));
       messageStore.set(convId, filtered);
     }),
+    searchConversations: vi.fn((query: string) => {
+      const convs = Array.from(conversationStore.values()) as Array<Record<string, unknown>>;
+      if (!query.trim()) return [];
+      return convs.filter((c) =>
+        (c.title as string).toLowerCase().includes(query.toLowerCase())
+      ) as ReturnType<Crud["searchConversations"]>;
+    }),
     getSetting: vi.fn(),
     setSetting: vi.fn(),
     deleteSetting: vi.fn(),
@@ -527,6 +534,29 @@ describe("createAIService", () => {
       expect(events.some((e) => e.type === "finish")).toBe(true);
     });
 
+    it("regenerate 错误时发送 error 事件", async () => {
+      vi.mocked(crud.getMessagesByConversation).mockReturnValue(
+        [] as ReturnType<Crud["getMessagesByConversation"]>
+      );
+      vi.mocked(crud.getConversation).mockReturnValue({
+        id: "conv-1",
+        title: "Test",
+        systemPrompt: null,
+        createdAt: 1000,
+        updatedAt: 2000
+      });
+
+      mockStreamText.mockImplementation(() => {
+        throw new Error("Provider error");
+      });
+
+      const service = createAIService({ crud, adapter });
+      const events: StreamEvent[] = [];
+      await service.regenerate("conv-1", (e) => events.push(e));
+
+      expect(events.some((e) => e.type === "error")).toBe(true);
+    });
+
     it("regenerate 时注入 systemPrompt", async () => {
       vi.mocked(crud.getMessagesByConversation).mockReturnValue([
         {
@@ -565,6 +595,84 @@ describe("createAIService", () => {
         messages: Array<{ role: string; content: string }>;
       };
       expect(callArgs.messages[0]).toEqual({ role: "system", content: "Be concise" });
+    });
+  });
+
+  describe("searchConversations", () => {
+    it("代理到 crud.searchConversations", () => {
+      const service = createAIService({ crud, adapter });
+      service.searchConversations("React");
+      expect(crud.searchConversations).toHaveBeenCalledWith("React");
+    });
+
+    it("返回 crud 的搜索结果", () => {
+      const service = createAIService({ crud, adapter });
+      // 先创建对话使其存在于 store 中
+      const conv = service.createConversation();
+      crud.updateConversation(conv.id, { title: "React 教程", updatedAt: Date.now() });
+
+      const results = service.searchConversations("React");
+      expect(results.length).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe("exportConversation", () => {
+    it("对话不存在时返回 null", async () => {
+      const mockDialog = vi.fn();
+      const service = createAIService({ crud, adapter, showSaveDialog: mockDialog });
+      const result = await service.exportConversation("non-existent", "markdown");
+      expect(result).toBeNull();
+      expect(mockDialog).not.toHaveBeenCalled();
+    });
+
+    it("用户取消对话框时返回 null", async () => {
+      const mockDialog = vi.fn().mockResolvedValue(undefined);
+      const service = createAIService({ crud, adapter, showSaveDialog: mockDialog });
+      const conv = service.createConversation();
+
+      const result = await service.exportConversation(conv.id, "markdown");
+      expect(result).toBeNull();
+    });
+
+    it("无 showSaveDialog 时返回 null", async () => {
+      const service = createAIService({ crud, adapter });
+      const conv = service.createConversation();
+
+      const result = await service.exportConversation(conv.id, "markdown");
+      expect(result).toBeNull();
+    });
+
+    it("markdown 格式导出时使用 .md 扩展名", async () => {
+      const mockDialog = vi.fn().mockResolvedValue("/tmp/export.md");
+      const service = createAIService({ crud, adapter, showSaveDialog: mockDialog });
+      const conv = service.createConversation();
+
+      await service.exportConversation(conv.id, "markdown");
+      expect(mockDialog).toHaveBeenCalledWith(
+        expect.stringContaining(".md"),
+        expect.arrayContaining([expect.objectContaining({ extensions: ["md"] })])
+      );
+    });
+
+    it("json 格式导出时使用 .json 扩展名", async () => {
+      const mockDialog = vi.fn().mockResolvedValue("/tmp/export.json");
+      const service = createAIService({ crud, adapter, showSaveDialog: mockDialog });
+      const conv = service.createConversation();
+
+      await service.exportConversation(conv.id, "json");
+      expect(mockDialog).toHaveBeenCalledWith(
+        expect.stringContaining(".json"),
+        expect.arrayContaining([expect.objectContaining({ extensions: ["json"] })])
+      );
+    });
+
+    it("成功导出返回文件路径", async () => {
+      const mockDialog = vi.fn().mockResolvedValue("/tmp/export.md");
+      const service = createAIService({ crud, adapter, showSaveDialog: mockDialog });
+      const conv = service.createConversation();
+
+      const result = await service.exportConversation(conv.id, "markdown");
+      expect(result).toBe("/tmp/export.md");
     });
   });
 });

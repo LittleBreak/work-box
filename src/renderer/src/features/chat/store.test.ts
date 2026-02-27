@@ -24,7 +24,9 @@ describe("useChatStore", () => {
       messages: {},
       isStreaming: false,
       streamingText: "",
-      selectedModel: "gpt-4o"
+      selectedModel: "gpt-4o",
+      searchQuery: "",
+      searchResults: null
     });
     vi.clearAllMocks();
   });
@@ -172,5 +174,40 @@ describe("useChatStore", () => {
 
     const conv = useChatStore.getState().conversations.find((c) => c.id === "conv-sp2");
     expect(conv!.systemPrompt).toBeNull();
+  });
+
+  // ---- 搜索相关 ----
+
+  // 正常路径：setSearchQuery 更新搜索关键词
+  it("setSearchQuery 更新搜索关键词", () => {
+    const store = useChatStore.getState();
+    store.setSearchQuery("React");
+    expect(useChatStore.getState().searchQuery).toBe("React");
+  });
+
+  // 正常路径：setSearchResults 设置搜索结果
+  it("setSearchResults 设置搜索结果", () => {
+    const store = useChatStore.getState();
+    const results = [{ id: "c1", title: "React 教程" }];
+    store.setSearchResults(results);
+    expect(useChatStore.getState().searchResults).toEqual(results);
+  });
+
+  // 边界条件：setSearchQuery 空字符串
+  it("setSearchQuery 设置空字符串", () => {
+    const store = useChatStore.getState();
+    store.setSearchQuery("React");
+    store.setSearchQuery("");
+    expect(useChatStore.getState().searchQuery).toBe("");
+  });
+
+  // 正常路径：clearSearch 清空搜索状态
+  it("clearSearch 清空搜索查询和结果", () => {
+    const store = useChatStore.getState();
+    store.setSearchQuery("React");
+    store.setSearchResults([{ id: "c1", title: "React" }]);
+    store.clearSearch();
+    expect(useChatStore.getState().searchQuery).toBe("");
+    expect(useChatStore.getState().searchResults).toBeNull();
   });
 });

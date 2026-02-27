@@ -37,6 +37,10 @@ const workboxAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.ai.regenerate, conversationId),
     updateMessageContent: (messageId: string, content: string): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.ai.updateMessageContent, messageId, content),
+    searchConversations: (query: string): Promise<unknown[]> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.searchConversations, query),
+    exportConversation: (conversationId: string, format: string): Promise<string | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ai.exportConversation, conversationId, format),
     onStream: (callback: (event: import("@shared/types").StreamEvent) => void): (() => void) => {
       const handler = (
         _event: Electron.IpcRendererEvent,
