@@ -6,8 +6,8 @@
  * 支持超时控制、输出截断和危险命令拦截。
  */
 import { homedir } from "node:os";
-import { isDangerousCommand } from "@main/ipc/shell.handler";
-import type { PtyFactory } from "./session-manager";
+import { isDangerousCommand } from "./constants.ts";
+import type { PtyFactory } from "./session-manager.ts";
 import type { ToolDefinition } from "@workbox/plugin-api";
 
 /** 最大输出长度（字符数），超出时截断 */
