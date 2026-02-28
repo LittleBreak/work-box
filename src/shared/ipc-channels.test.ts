@@ -39,7 +39,7 @@ describe("IPC_CHANNELS", () => {
 
   // 正常路径：所有通道值遵循 domain:action 格式
   it("所有通道值遵循 domain:action 命名格式", () => {
-    const pattern = /^[a-z]+:[a-zA-Z]+$/;
+    const pattern = /^[a-zA-Z]+:[a-zA-Z]+$/;
     const allChannels = Object.values(IPC_CHANNELS).flatMap((domain) => Object.values(domain));
     allChannels.forEach((channel) => {
       expect(channel).toMatch(pattern);

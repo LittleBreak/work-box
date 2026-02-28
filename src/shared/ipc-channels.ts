@@ -50,5 +50,14 @@ export const IPC_CHANNELS = {
     list: "terminal:list",
     data: "terminal:data",
     exit: "terminal:exit"
+  },
+  fileExplorer: {
+    listDir: "fileExplorer:listDir",
+    readPreview: "fileExplorer:readPreview",
+    searchFiles: "fileExplorer:searchFiles",
+    createFile: "fileExplorer:createFile",
+    createDir: "fileExplorer:createDir",
+    rename: "fileExplorer:rename",
+    deleteItem: "fileExplorer:deleteItem"
   }
 } as const;

@@ -73,6 +73,37 @@ const workboxAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.settings.update, settings),
     reset: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.settings.reset)
   },
+  fileExplorer: {
+    listDir: (
+      dirPath: string
+    ): Promise<
+      Array<{
+        name: string;
+        path: string;
+        isDirectory: boolean;
+        size: number;
+        mtime: number;
+      }>
+    > => ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.listDir, dirPath),
+    readPreview: (
+      filePath: string
+    ): Promise<{ content: string; truncated: boolean; language: string; size: number }> =>
+      ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.readPreview, filePath),
+    searchFiles: (
+      dirPath: string,
+      query: string,
+      options: { mode: "name" | "content"; maxDepth?: number; maxResults?: number }
+    ): Promise<Array<{ path: string; name: string; matchLine?: string; lineNumber?: number }>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.searchFiles, dirPath, query, options),
+    createFile: (filePath: string, content: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.createFile, filePath, content),
+    createDir: (dirPath: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.createDir, dirPath),
+    rename: (oldPath: string, newPath: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.rename, oldPath, newPath),
+    deleteItem: (targetPath: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.deleteItem, targetPath)
+  },
   terminal: {
     create: (options?: import("@shared/types").TerminalCreateOptions): Promise<string> =>
       ipcRenderer.invoke(IPC_CHANNELS.terminal.create, options),
