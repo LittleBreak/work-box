@@ -19,7 +19,12 @@ const fileExplorerPlugin: PluginDefinition = {
   name: "File Explorer",
 
   async activate(ctx: PluginContext): Promise<void> {
-    fileService = new FileService(ctx);
+    fileService = new FileService(ctx, process.cwd());
+
+    // fileExplorer:getRootPath — 获取工作区根路径
+    ipcMain.handle(FILE_EXPLORER_CHANNELS.getRootPath, () => {
+      return fileService?.getRootPath() ?? process.cwd();
+    });
 
     // fileExplorer:listDir — 列出目录内容
     ipcMain.handle(FILE_EXPLORER_CHANNELS.listDir, async (_event, dirPath: string) => {
@@ -77,6 +82,7 @@ const fileExplorerPlugin: PluginDefinition = {
     fileService = null;
 
     // 移除所有 File Explorer IPC handler
+    ipcMain.removeHandler(FILE_EXPLORER_CHANNELS.getRootPath);
     ipcMain.removeHandler(FILE_EXPLORER_CHANNELS.listDir);
     ipcMain.removeHandler(FILE_EXPLORER_CHANNELS.readPreview);
     ipcMain.removeHandler(FILE_EXPLORER_CHANNELS.searchFiles);

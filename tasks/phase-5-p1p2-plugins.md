@@ -202,40 +202,40 @@ class FileService {
 
 **验收标准**：
 
-- [ ] 创建 `plugins/file-explorer/package.json`，包含完整 `workbox` 字段
-- [ ] 创建 `plugins/file-explorer/src/index.ts`，导出 `definePlugin()` 骨架
-- [ ] 创建 `plugins/file-explorer/src/ui/FileExplorerPanel.tsx`，导出占位 React 组件
-- [ ] 创建 `plugins/file-explorer/src/constants.ts`，定义 IPC 通道和类型
-- [ ] 实现 `plugins/file-explorer/src/file-service.ts`：
-  - [ ] `listDir()` 返回目录内容 + 文件元数据
-  - [ ] `readPreview()` 读取文件预览（含截断处理）
-  - [ ] `searchFiles()` 支持文件名搜索和内容搜索（含深度/大小/结果数限制）
-  - [ ] `createFile()` / `createDir()` 创建文件/目录
-  - [ ] `rename()` 重命名
-  - [ ] `deleteItem()` 删除（需路径安全校验）
-- [ ] 在 `activate()` 中注册 IPC handler（所有 `FILE_EXPLORER_CHANNELS`）
-- [ ] 在 `deactivate()` 中移除 IPC handler
-- [ ] 在 `src/preload/index.ts` 中暴露 `window.workbox.fileExplorer.*` API
-- [ ] 在 `src/shared/ipc-channels.ts` 中添加 `fileExplorer` 通道定义（文档注册）
-- [ ] 编写测试覆盖：
-  - [ ] `listDir` 正常列出、空目录、不存在路径
-  - [ ] `readPreview` 正常读取、大文件截断、二进制文件跳过
-  - [ ] `searchFiles` 文件名匹配、内容匹配、无结果、空查询
-  - [ ] `createFile` / `createDir` / `rename` / `deleteItem` 基本操作
-  - [ ] 路径穿越攻击拦截（如 `../../etc/passwd`）
-- [ ] `pnpm test` 全部通过
+- [x] 创建 `plugins/file-explorer/package.json`，包含完整 `workbox` 字段
+- [x] 创建 `plugins/file-explorer/src/index.ts`，导出 `definePlugin()` 骨架
+- [x] 创建 `plugins/file-explorer/src/ui/FileExplorerPanel.tsx`，导出占位 React 组件
+- [x] 创建 `plugins/file-explorer/src/constants.ts`，定义 IPC 通道和类型
+- [x] 实现 `plugins/file-explorer/src/file-service.ts`：
+  - [x] `listDir()` 返回目录内容 + 文件元数据
+  - [x] `readPreview()` 读取文件预览（含截断处理）
+  - [x] `searchFiles()` 支持文件名搜索和内容搜索（含深度/大小/结果数限制）
+  - [x] `createFile()` / `createDir()` 创建文件/目录
+  - [x] `rename()` 重命名
+  - [x] `deleteItem()` 删除（需路径安全校验）
+- [x] 在 `activate()` 中注册 IPC handler（所有 `FILE_EXPLORER_CHANNELS`）
+- [x] 在 `deactivate()` 中移除 IPC handler
+- [x] 在 `src/preload/index.ts` 中暴露 `window.workbox.fileExplorer.*` API
+- [x] 在 `src/shared/ipc-channels.ts` 中添加 `fileExplorer` 通道定义（文档注册）
+- [x] 编写测试覆盖：
+  - [x] `listDir` 正常列出、空目录、不存在路径
+  - [x] `readPreview` 正常读取、大文件截断、二进制文件跳过
+  - [x] `searchFiles` 文件名匹配、内容匹配、无结果、空查询
+  - [x] `createFile` / `createDir` / `rename` / `deleteItem` 基本操作
+  - [x] 路径穿越攻击拦截（如 `../../etc/passwd`）
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/file-explorer/package.json` — 插件清单
-- [ ] `plugins/file-explorer/src/index.ts` — 插件入口
-- [ ] `plugins/file-explorer/src/index.test.ts` — 插件入口测试
-- [ ] `plugins/file-explorer/src/constants.ts` — IPC 通道 + 类型定义
-- [ ] `plugins/file-explorer/src/file-service.ts` — 文件服务实现
-- [ ] `plugins/file-explorer/src/file-service.test.ts` — 文件服务测试
-- [ ] `plugins/file-explorer/src/ui/FileExplorerPanel.tsx` — UI 占位组件
-- [ ] `src/preload/index.ts` — 新增 `window.workbox.fileExplorer.*`
-- [ ] `src/shared/ipc-channels.ts` — 新增 `fileExplorer` 通道
+- [x] `plugins/file-explorer/package.json` — 插件清单
+- [x] `plugins/file-explorer/src/index.ts` — 插件入口
+- [x] `plugins/file-explorer/src/index.test.ts` — 插件入口测试
+- [x] `plugins/file-explorer/src/constants.ts` — IPC 通道 + 类型定义
+- [x] `plugins/file-explorer/src/file-service.ts` — 文件服务实现
+- [x] `plugins/file-explorer/src/file-service.test.ts` — 文件服务测试
+- [x] `plugins/file-explorer/src/ui/FileExplorerPanel.tsx` — UI 占位组件
+- [x] `src/preload/index.ts` — 新增 `window.workbox.fileExplorer.*`
+- [x] `src/shared/ipc-channels.ts` — 新增 `fileExplorer` 通道
 
 **参考文档**：
 
@@ -314,43 +314,43 @@ interface FileExplorerState {
 
 **验收标准**：
 
-- [ ] 实现 `plugins/file-explorer/src/ui/FileExplorerPanel.tsx`：
-  - [ ] 三区布局：搜索栏 + 文件树 + 预览面板
-  - [ ] 首次渲染加载 `rootPath` 根目录
-- [ ] 实现 `FileTree.tsx` + `FileTreeNode.tsx`：
-  - [ ] 递归渲染目录树，支持展开/折叠
-  - [ ] 点击目录时懒加载子目录内容
-  - [ ] 点击文件时在预览面板显示内容
-  - [ ] 文件/目录图标区分
-  - [ ] 右键菜单或操作按钮（新建、重命名、删除、复制路径）
-- [ ] 实现 `FilePreview.tsx`：
-  - [ ] 文本文件：显示代码高亮预览
-  - [ ] JSON 文件：格式化显示
-  - [ ] 图片文件：显示缩略图
-  - [ ] 大文件：显示截断提示
-- [ ] 实现 `SearchBar.tsx`：
-  - [ ] 搜索输入框 + debounce 300ms
-  - [ ] 搜索模式切换（文件名 / 内容）
-  - [ ] 搜索结果列表，点击跳转到文件
-- [ ] 实现 `store.ts`：
-  - [ ] 目录树状态管理
-  - [ ] 搜索状态管理
-  - [ ] 预览状态管理
-- [ ] 编写测试：
-  - [ ] store 状态管理测试（展开/折叠、选中、搜索）
-  - [ ] FileExplorerPanel 组件渲染测试
-- [ ] `pnpm test` 全部通过
+- [x] 实现 `plugins/file-explorer/src/ui/FileExplorerPanel.tsx`：
+  - [x] 三区布局：搜索栏 + 文件树 + 预览面板
+  - [x] 首次渲染加载 `rootPath` 根目录
+- [x] 实现 `FileTree.tsx` + `FileTreeNode.tsx`：
+  - [x] 递归渲染目录树，支持展开/折叠
+  - [x] 点击目录时懒加载子目录内容
+  - [x] 点击文件时在预览面板显示内容
+  - [x] 文件/目录图标区分
+  - [x] 右键菜单或操作按钮（新建、重命名、删除、复制路径）
+- [x] 实现 `FilePreview.tsx`：
+  - [x] 文本文件：显示代码高亮预览
+  - [x] JSON 文件：格式化显示
+  - [x] 图片文件：显示缩略图
+  - [x] 大文件：显示截断提示
+- [x] 实现 `SearchBar.tsx`：
+  - [x] 搜索输入框 + debounce 300ms
+  - [x] 搜索模式切换（文件名 / 内容）
+  - [x] 搜索结果列表，点击跳转到文件
+- [x] 实现 `store.ts`：
+  - [x] 目录树状态管理
+  - [x] 搜索状态管理
+  - [x] 预览状态管理
+- [x] 编写测试：
+  - [x] store 状态管理测试（展开/折叠、选中、搜索）
+  - [x] FileExplorerPanel 组件渲染测试
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/file-explorer/src/ui/FileExplorerPanel.tsx` — 面板主组件
-- [ ] `plugins/file-explorer/src/ui/FileTree.tsx` — 树形视图
-- [ ] `plugins/file-explorer/src/ui/FileTreeNode.tsx` — 单节点组件
-- [ ] `plugins/file-explorer/src/ui/FilePreview.tsx` — 文件预览
-- [ ] `plugins/file-explorer/src/ui/SearchBar.tsx` — 搜索栏
-- [ ] `plugins/file-explorer/src/ui/store.ts` — 状态管理
-- [ ] `plugins/file-explorer/src/ui/store.test.ts` — 状态测试
-- [ ] `plugins/file-explorer/src/ui/FileExplorerPanel.test.tsx` — 组件测试
+- [x] `plugins/file-explorer/src/ui/FileExplorerPanel.tsx` — 面板主组件
+- [x] `plugins/file-explorer/src/ui/FileTree.tsx` — 树形视图
+- [x] `plugins/file-explorer/src/ui/FileTreeNode.tsx` — 单节点组件
+- [x] `plugins/file-explorer/src/ui/FilePreview.tsx` — 文件预览
+- [x] `plugins/file-explorer/src/ui/SearchBar.tsx` — 搜索栏
+- [x] `plugins/file-explorer/src/ui/store.ts` — 状态管理
+- [x] `plugins/file-explorer/src/ui/store.test.ts` — 状态测试
+- [x] `plugins/file-explorer/src/ui/FileExplorerPanel.test.tsx` — 组件测试
 
 **反模式警告**：
 

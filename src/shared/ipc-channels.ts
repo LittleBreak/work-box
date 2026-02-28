@@ -52,6 +52,7 @@ export const IPC_CHANNELS = {
     exit: "terminal:exit"
   },
   fileExplorer: {
+    getRootPath: "fileExplorer:getRootPath",
     listDir: "fileExplorer:listDir",
     readPreview: "fileExplorer:readPreview",
     searchFiles: "fileExplorer:searchFiles",

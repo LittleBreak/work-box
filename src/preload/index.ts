@@ -74,6 +74,7 @@ const workboxAPI = {
     reset: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.settings.reset)
   },
   fileExplorer: {
+    getRootPath: (): Promise<string> => ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.getRootPath),
     listDir: (
       dirPath: string
     ): Promise<

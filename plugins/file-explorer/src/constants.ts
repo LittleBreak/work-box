@@ -9,6 +9,7 @@ import * as path from "node:path";
 
 /** File Explorer IPC channel names (must match src/shared/ipc-channels.ts) */
 export const FILE_EXPLORER_CHANNELS = {
+  getRootPath: "fileExplorer:getRootPath",
   listDir: "fileExplorer:listDir",
   readPreview: "fileExplorer:readPreview",
   searchFiles: "fileExplorer:searchFiles",

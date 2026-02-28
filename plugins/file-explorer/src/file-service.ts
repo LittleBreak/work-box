@@ -25,9 +25,14 @@ export class FileService {
   private readonly ctx: PluginContext;
   private readonly rootPath: string;
 
-  constructor(ctx: PluginContext) {
+  constructor(ctx: PluginContext, rootPath?: string) {
     this.ctx = ctx;
-    this.rootPath = ctx.workspace.rootPath;
+    this.rootPath = rootPath ?? ctx.workspace.rootPath;
+  }
+
+  /** Get the root path used by this service */
+  getRootPath(): string {
+    return this.rootPath;
   }
 
   /** List directory contents as FileTreeNode array */
