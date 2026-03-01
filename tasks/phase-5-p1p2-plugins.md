@@ -671,27 +671,27 @@ interface GitState {
 
 **验收标准**：
 
-- [ ] 在 `activate()` 中注册四个 AI Tool：
-  - [ ] `git_status`：获取当前仓库状态
-  - [ ] `git_commit`：stage all + commit（参数：message, cwd?）
-  - [ ] `git_diff`：获取 diff 输出（参数：path?, staged?, cwd?）
-  - [ ] `git_log`：获取 commit 历史（参数：count?, cwd?）
-- [ ] 在 `activate()` 中注册 `quick-commit` 命令：
-  - [ ] 快捷键 `CmdOrCtrl+Shift+C`
-  - [ ] 执行流程：检查 status → 如果有更改 → stage all → commit
-- [ ] 在 `deactivate()` 中注销所有 tool 和 command
-- [ ] 编写测试覆盖：
-  - [ ] 四个 AI Tool 正常执行和返回
-  - [ ] `git_diff` 输出截断
-  - [ ] 非 Git 仓库错误处理
-  - [ ] `quick-commit` 无更改时的处理
-  - [ ] Tool 和 command 注册/注销
-- [ ] `pnpm test` 全部通过
+- [x] 在 `activate()` 中注册四个 AI Tool：
+  - [x] `git_status`：获取当前仓库状态
+  - [x] `git_commit`：stage all + commit（参数：message, cwd?）
+  - [x] `git_diff`：获取 diff 输出（参数：path?, staged?, cwd?）
+  - [x] `git_log`：获取 commit 历史（参数：count?, cwd?）
+- [x] 在 `activate()` 中注册 `quick-commit` 命令：
+  - [x] 快捷键 `CmdOrCtrl+Shift+C`
+  - [x] 执行流程：检查 status → 如果有更改 → stage all → commit
+- [x] 在 `deactivate()` 中注销所有 tool 和 command
+- [x] 编写测试覆盖：
+  - [x] 四个 AI Tool 正常执行和返回
+  - [x] `git_diff` 输出截断
+  - [x] 非 Git 仓库错误处理
+  - [x] `quick-commit` 无更改时的处理
+  - [x] Tool 和 command 注册/注销
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/git-helper/src/index.ts` — 更新：注册 AI Tools + command
-- [ ] `plugins/git-helper/src/index.test.ts` — 更新：AI Tool + command 测试
+- [x] `plugins/git-helper/src/index.ts` — 更新：注册 AI Tools + command
+- [x] `plugins/git-helper/src/index.test.ts` — 更新：AI Tool + command 测试
 
 **参考文档**：
 
