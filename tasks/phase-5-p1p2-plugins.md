@@ -8,9 +8,9 @@
 
 ## 任务编号说明
 
-Phase 5 共 11 个任务（5.1–5.11），分为五个插件：
+Phase 5 共 10 个任务（5.1–5.2, 5.4–5.11），分为五个插件：
 
-- **File Explorer 插件**（5.1–5.3）：插件骨架 + 文件服务 → UI → AI Tools + 拖拽集成
+- **File Explorer 插件**（5.1–5.2）：插件骨架 + 文件服务 → UI
 - **Git Helper 插件**（5.4–5.6）：插件骨架 + Git 服务 → UI → AI Tools + 命令注册
 - **Snippet Manager 插件**（5.7–5.8）：后端存储服务 → UI
 - **JSON Formatter 插件**（5.9–5.10）：逻辑层 → UI
@@ -43,7 +43,6 @@ Phase 5 共 11 个任务（5.1–5.11），分为五个插件：
 P1 插件线：
 5.1（File Explorer 骨架 + 文件服务）← Phase 4 完成
   └── 5.2（File Explorer UI）← 依赖 5.1 的 IPC 数据通道
-        └── 5.3（File Explorer AI Tools + 拖拽）← 依赖 5.1 的文件服务
 
 5.4（Git Helper 骨架 + Git 服务）← Phase 4 完成
   └── 5.5（Git Helper UI）← 依赖 5.4 的 IPC 数据通道
@@ -62,10 +61,10 @@ P2 插件线（独立于 P1，互相独立）：
 ### 推荐执行顺序
 
 ```
-[5.1 → 5.2 → 5.3] ∥ [5.4 → 5.5 → 5.6] ∥ [5.7 → 5.8] ∥ [5.9 → 5.10] ∥ [5.11]
+[5.1 → 5.2] ∥ [5.4 → 5.5 → 5.6] ∥ [5.7 → 5.8] ∥ [5.9 → 5.10] ∥ [5.11]
 ```
 
-- P1 线（File Explorer 5.1–5.3）和 P1 线（Git Helper 5.4–5.6）**可并行执行**
+- P1 线（File Explorer 5.1–5.2）和 P1 线（Git Helper 5.4–5.6）**可并行执行**
 - P2 线（5.7–5.8、5.9–5.10、5.11）**可并行执行**，且独立于 P1
 - 每条线内部严格顺序
 
@@ -75,7 +74,7 @@ P2 插件线（独立于 P1，互相独立）：
 
 ### A 类：有可测试行为的任务 → 严格 TDD（Red-Green-Refactor）
 
-适用于：5.1、5.3、5.4、5.6、5.7、5.9、5.11
+适用于：5.1、5.4、5.6、5.7、5.9、5.11
 
 1. **Red**：先编写测试（正常路径 + 边界条件 + 错误处理），运行测试，确认失败
 2. **Green**：编写最小代码使测试通过
@@ -361,128 +360,6 @@ interface FileExplorerState {
 
 ---
 
-## 5.3 File Explorer AI Tools + 拖拽至对话
-
-**目标**：在 File Explorer 插件中注册 AI Tools（`read_file`、`list_directory`、`search_files`），实现文件从文件树拖拽到 AI 对话输入框作为上下文附件。
-
-**输入/前置条件**：
-
-- 依赖：5.1 完成（FileService 可用）
-- 需读取：`ARCHITECTURE.md` 4.2（AI Tool 注册模式）、5.3（Tool Calling 流程）
-- 当前状态：
-  - `ctx.ai.registerTool()` 已可用
-  - Phase 4.7 已实现 MessageInput 文件拖拽附件功能（基于 HTML5 `dataTransfer.files`）
-
-**验证策略**：A 类（严格 TDD）
-
-**关键决策**：
-
-| 决策项            | 方案                                                                   |
-| ----------------- | ---------------------------------------------------------------------- |
-| `read_file` 限制  | 最大 100KB，超出返回截断内容 + 提示                                    |
-| `list_directory`  | 返回一级目录列表（不递归），格式化为人类可读文本                       |
-| `search_files`    | 文件名搜索，返回匹配路径列表，最多 50 条                               |
-| 参数 schema       | 使用 Zod 定义                                                          |
-| 拖拽数据类型      | 在 `dataTransfer` 中设置 `application/workbox-file` 自定义类型         |
-| MessageInput 集成 | 扩展现有 drop 处理逻辑，支持 `application/workbox-file` 类型的拖拽数据 |
-
-**Tool 定义**：
-
-```typescript
-// read_file
-ctx.ai.registerTool({
-  name: "read_file",
-  description: "读取指定文件的内容。可用于查看源代码、配置文件等。",
-  parameters: z.object({
-    path: z.string().describe("文件路径"),
-    maxSize: z.number().optional().describe("最大读取字节数，默认 100KB")
-  }),
-  handler: async ({ path, maxSize }) => {
-    /* ... */
-  }
-});
-
-// list_directory
-ctx.ai.registerTool({
-  name: "list_directory",
-  description: "列出目录中的文件和子目录。",
-  parameters: z.object({
-    path: z.string().describe("目录路径")
-  }),
-  handler: async ({ path }) => {
-    /* ... */
-  }
-});
-
-// search_files
-ctx.ai.registerTool({
-  name: "search_files",
-  description: "按文件名搜索文件。",
-  parameters: z.object({
-    rootPath: z.string().describe("搜索根目录"),
-    query: z.string().describe("搜索关键词")
-  }),
-  handler: async ({ rootPath, query }) => {
-    /* ... */
-  }
-});
-```
-
-**拖拽集成方案**：
-
-```typescript
-// FileTreeNode.tsx — 设置拖拽数据
-onDragStart={(e) => {
-  e.dataTransfer.setData("application/workbox-file",
-    JSON.stringify({ path: node.path, name: node.name })
-  );
-}}
-
-// MessageInput.tsx — 扩展 onDrop 处理
-// 在现有 dataTransfer.files 处理之前，检查 application/workbox-file 类型
-const workboxFile = e.dataTransfer.getData("application/workbox-file");
-if (workboxFile) {
-  const { path, name } = JSON.parse(workboxFile);
-  // 使用现有的 addAttachment 逻辑处理
-}
-```
-
-**验收标准**：
-
-- [ ] 在 `activate()` 中注册三个 AI Tool：`read_file`、`list_directory`、`search_files`
-- [ ] 实现 AI Tool handler（复用 FileService 逻辑）：
-  - [ ] `read_file` 读取文件并返回内容（含大小限制）
-  - [ ] `list_directory` 列出目录并格式化为可读文本
-  - [ ] `search_files` 搜索文件并返回路径列表
-- [ ] 在 `deactivate()` 中通过 `Disposable` 注销 tool
-- [ ] 在 `FileTreeNode.tsx` 中添加 `draggable` + `onDragStart` 设置拖拽数据
-- [ ] 扩展 `src/renderer/src/features/chat/MessageInput.tsx` 的 `onDrop` 处理：
-  - [ ] 检测 `application/workbox-file` 类型数据
-  - [ ] 读取文件内容并作为附件添加到 store
-- [ ] 编写测试覆盖：
-  - [ ] 三个 AI Tool 正常执行和返回
-  - [ ] 大文件截断处理
-  - [ ] 无效路径错误处理
-  - [ ] Tool 注册和注销
-- [ ] `pnpm test` 全部通过
-
-**交付物清单**：
-
-- [ ] `plugins/file-explorer/src/index.ts` — 更新：注册 AI Tools
-- [ ] `plugins/file-explorer/src/index.test.ts` — AI Tool 测试
-- [ ] `plugins/file-explorer/src/ui/FileTreeNode.tsx` — 更新：添加拖拽支持
-- [ ] `src/renderer/src/features/chat/MessageInput.tsx` — 更新：扩展 drop 处理
-- [ ] `src/renderer/src/features/chat/MessageInput.test.tsx` — 更新：拖拽测试
-
-**反模式警告**：
-
-- ❌ 不要让 `read_file` 读取无限大小的文件，会超出 AI 模型上下文限制
-- ❌ 不要在 `list_directory` 中递归列出所有子目录，只列出一级
-- ❌ 不要忘记通过 `Disposable` 在 `deactivate()` 时注销 tool
-- ❌ 不要在拖拽数据中传递文件内容（太大），只传路径，drop 时再读取
-
----
-
 ## 5.4 Git Helper 插件骨架 + Git 操作服务
 
 **目标**：创建 Git Helper 插件目录结构和清单，实现 Git 操作服务层（状态查询、stage/unstage、commit、分支管理、diff、log），通过 IPC 通道供 UI 使用。
@@ -604,43 +481,43 @@ git log --format="%H|%h|%s|%an|%aI" -n 50
 
 **验收标准**：
 
-- [ ] 创建 `plugins/git-helper/package.json`（参照 ARCHITECTURE.md 4.2 示例）
-- [ ] 创建 `plugins/git-helper/src/index.ts`，导出 `definePlugin()` 骨架
-- [ ] 创建 `plugins/git-helper/src/ui/GitPanel.tsx`，导出占位 React 组件
-- [ ] 创建 `plugins/git-helper/src/constants.ts`，定义 IPC 通道和类型
-- [ ] 实现 `plugins/git-helper/src/git-service.ts`：
-  - [ ] `getStatus()` 解析 `git status --porcelain` 输出
-  - [ ] `stage()` / `unstage()` 批量操作
-  - [ ] `commit()` 提交（校验 commit message 非空）
-  - [ ] `getBranches()` 解析分支列表
-  - [ ] `checkout()` 切换分支（校验分支名合法性）
-  - [ ] `getDiff()` 解析 unified diff 格式输出
-  - [ ] `getLog()` 解析 log 格式输出
-- [ ] 在 `activate()` 中注册 IPC handler（所有 `GIT_CHANNELS`）
-- [ ] 在 `deactivate()` 中移除 IPC handler
-- [ ] 在 `src/preload/index.ts` 中暴露 `window.workbox.git.*` API
-- [ ] 在 `src/shared/ipc-channels.ts` 中添加 `git` 通道定义（文档注册）
-- [ ] 编写测试覆盖：
-  - [ ] `getStatus` 输出解析（modified, added, deleted, untracked, renamed）
-  - [ ] `getBranches` 输出解析
-  - [ ] `getDiff` unified diff 解析
-  - [ ] `getLog` 格式解析
-  - [ ] `checkout` 分支名校验（合法/非法）
-  - [ ] `commit` 空 message 拒绝
-  - [ ] 非 Git 仓库目录的错误处理
-- [ ] `pnpm test` 全部通过
+- [x] 创建 `plugins/git-helper/package.json`（参照 ARCHITECTURE.md 4.2 示例）
+- [x] 创建 `plugins/git-helper/src/index.ts`，导出 `definePlugin()` 骨架
+- [x] 创建 `plugins/git-helper/src/ui/GitPanel.tsx`，导出占位 React 组件
+- [x] 创建 `plugins/git-helper/src/constants.ts`，定义 IPC 通道和类型
+- [x] 实现 `plugins/git-helper/src/git-service.ts`：
+  - [x] `getStatus()` 解析 `git status --porcelain` 输出
+  - [x] `stage()` / `unstage()` 批量操作
+  - [x] `commit()` 提交（校验 commit message 非空）
+  - [x] `getBranches()` 解析分支列表
+  - [x] `checkout()` 切换分支（校验分支名合法性）
+  - [x] `getDiff()` 解析 unified diff 格式输出
+  - [x] `getLog()` 解析 log 格式输出
+- [x] 在 `activate()` 中注册 IPC handler（所有 `GIT_CHANNELS`）
+- [x] 在 `deactivate()` 中移除 IPC handler
+- [x] 在 `src/preload/index.ts` 中暴露 `window.workbox.git.*` API
+- [x] 在 `src/shared/ipc-channels.ts` 中添加 `git` 通道定义（文档注册）
+- [x] 编写测试覆盖：
+  - [x] `getStatus` 输出解析（modified, added, deleted, untracked, renamed）
+  - [x] `getBranches` 输出解析
+  - [x] `getDiff` unified diff 解析
+  - [x] `getLog` 格式解析
+  - [x] `checkout` 分支名校验（合法/非法）
+  - [x] `commit` 空 message 拒绝
+  - [x] 非 Git 仓库目录的错误处理
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/git-helper/package.json` — 插件清单
-- [ ] `plugins/git-helper/src/index.ts` — 插件入口
-- [ ] `plugins/git-helper/src/index.test.ts` — 插件入口测试
-- [ ] `plugins/git-helper/src/constants.ts` — IPC 通道 + 类型定义
-- [ ] `plugins/git-helper/src/git-service.ts` — Git 操作服务
-- [ ] `plugins/git-helper/src/git-service.test.ts` — Git 服务测试
-- [ ] `plugins/git-helper/src/ui/GitPanel.tsx` — UI 占位组件
-- [ ] `src/preload/index.ts` — 新增 `window.workbox.git.*`
-- [ ] `src/shared/ipc-channels.ts` — 新增 `git` 通道
+- [x] `plugins/git-helper/package.json` — 插件清单
+- [x] `plugins/git-helper/src/index.ts` — 插件入口
+- [x] `plugins/git-helper/src/index.test.ts` — 插件入口测试
+- [x] `plugins/git-helper/src/constants.ts` — IPC 通道 + 类型定义
+- [x] `plugins/git-helper/src/git-service.ts` — Git 操作服务
+- [x] `plugins/git-helper/src/git-service.test.ts` — Git 服务测试
+- [x] `plugins/git-helper/src/ui/GitPanel.tsx` — UI 占位组件
+- [x] `src/preload/index.ts` — 新增 `window.workbox.git.*`
+- [x] `src/shared/ipc-channels.ts` — 新增 `git` 通道
 
 **参考文档**：
 
@@ -1396,7 +1273,7 @@ RegexTesterPanel.tsx        — 顶层容器
 
 ## Phase 5 完成后验证清单
 
-完成所有 11 个任务后，执行以下最终验证：
+完成所有 10 个任务后，执行以下最终验证：
 
 ### 功能验证
 
@@ -1406,8 +1283,6 @@ RegexTesterPanel.tsx        — 顶层容器
   - [ ] 可预览文本文件、JSON 文件、图片文件
   - [ ] 可搜索文件（按文件名和内容）
   - [ ] 可新建、重命名、删除文件
-  - [ ] 可将文件拖拽到 AI 对话作为上下文
-  - [ ] AI 可调用 `read_file`、`list_directory`、`search_files`
 - [ ] Git Helper 插件：
   - [ ] 可查看文件修改状态（modified/staged/untracked）
   - [ ] 可 stage/unstage/commit 操作
@@ -1462,7 +1337,6 @@ RegexTesterPanel.tsx        — 顶层容器
 
 - [x] **[M1]** JSON ↔ TS 转换范围未明确，TS→JSON 需解析 TypeScript AST 过于复杂 → 已在 5.9 关键决策中限定 TS→JSON 仅支持基础 interface（string/number/boolean/array/nested object），明确不支持泛型/联合类型/枚举
 - [x] **[M2]** File Explorer 文件搜索缺少性能限制，大型项目（node_modules）可能导致卡顿 → 已在 5.1 关键决策中添加搜索深度限制（文件名 10 层、内容 5 层）、文件大小限制（跳过 > 1MB）、结果数限制（100 条）
-- [x] **[M3]** File Explorer 拖拽至 Chat 需修改 `MessageInput.tsx`（Phase 4 交付物），跨模块耦合 → 已在 5.3 中明确集成方案：使用 `application/workbox-file` 自定义数据类型，扩展现有 drop 处理逻辑而非重写
 - [x] **[M4]** Regex Tester 未考虑 ReDoS（正则拒绝服务）攻击风险 → 已在 5.11 反模式中添加匹配次数上限（1000 次），防止恶意正则导致浏览器卡死
 
 ### 低优先级问题（记录参考）

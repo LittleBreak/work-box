@@ -2,11 +2,23 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AppLayout } from "./AppLayout";
 import { useAppStore, initialAppState } from "../../stores/app.store";
+import { usePluginStore } from "../../stores/plugin.store";
+
+// Mock plugin panel components to avoid importing real implementations
+vi.mock("../../features/plugins/plugin-panels", () => ({
+  PLUGIN_PANELS: {},
+  getPluginPanel: vi.fn()
+}));
+
+import { getPluginPanel } from "../../features/plugins/plugin-panels";
+const mockGetPluginPanel = vi.mocked(getPluginPanel);
 
 describe("AppLayout", () => {
   beforeEach(() => {
     useAppStore.setState(initialAppState);
-    // SettingsView 需要 window.workbox.settings
+    usePluginStore.setState({ plugins: [], loading: false, selectedPluginId: null });
+    mockGetPluginPanel.mockReturnValue(undefined);
+    // SettingsView 需要 window.workbox.settings; Sidebar needs plugin.list
     Object.defineProperty(window, "workbox", {
       value: {
         settings: {
@@ -22,6 +34,11 @@ describe("AppLayout", () => {
           }),
           update: vi.fn().mockResolvedValue(undefined),
           reset: vi.fn().mockResolvedValue(undefined)
+        },
+        plugin: {
+          list: vi.fn().mockResolvedValue([]),
+          enable: vi.fn().mockResolvedValue(undefined),
+          disable: vi.fn().mockResolvedValue(undefined)
         }
       },
       writable: true,
@@ -58,5 +75,28 @@ describe("AppLayout", () => {
     useAppStore.setState({ currentPage: "settings" });
     render(<AppLayout />);
     expect(screen.getByTestId("page-settings")).toBeInTheDocument();
+  });
+
+  // ---- 插件页面路由测试 ----
+
+  it("插件页面渲染对应的插件组件", () => {
+    function MockTerminal(): React.JSX.Element {
+      return <div data-testid="mock-terminal">Terminal</div>;
+    }
+    mockGetPluginPanel.mockReturnValue({
+      component: MockTerminal,
+      icon: () => null
+    });
+
+    useAppStore.setState({ currentPage: "plugin:@workbox/plugin-terminal" });
+    render(<AppLayout />);
+    expect(screen.getByTestId("mock-terminal")).toBeInTheDocument();
+  });
+
+  it("未注册的插件页面 fallback 到 HomeView", () => {
+    mockGetPluginPanel.mockReturnValue(undefined);
+    useAppStore.setState({ currentPage: "plugin:unknown-plugin" });
+    render(<AppLayout />);
+    expect(screen.getByTestId("page-home")).toBeInTheDocument();
   });
 });

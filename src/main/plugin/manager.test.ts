@@ -44,10 +44,14 @@ function createMockServices(): SystemServices {
 function createTestPlugin(
   baseDir: string,
   name: string,
-  options?: { activateError?: boolean; hasDeactivate?: boolean }
+  options?: { activateError?: boolean; hasDeactivate?: boolean; hasUI?: boolean }
 ): string {
   const pluginDir = path.join(baseDir, name);
   fs.mkdirSync(pluginDir, { recursive: true });
+  const entry: Record<string, string> = { main: "./index.js" };
+  if (options?.hasUI) {
+    entry.ui = "./ui/Panel.tsx";
+  }
   fs.writeFileSync(
     path.join(pluginDir, "package.json"),
     JSON.stringify({
@@ -56,7 +60,7 @@ function createTestPlugin(
       workbox: {
         name: `Plugin ${name}`,
         permissions: [],
-        entry: { main: "./index.js" }
+        entry
       }
     })
   );
@@ -194,5 +198,23 @@ describe("PluginManager", () => {
     expect(info).toHaveProperty("version");
     expect(info).toHaveProperty("status");
     expect(info).toHaveProperty("permissions");
+    expect(info).toHaveProperty("hasUI");
+  });
+
+  // hasUI 字段
+  it("有 entry.ui 的插件返回 hasUI: true", async () => {
+    createTestPlugin(tmpDir, "plugin-with-ui", { hasUI: true });
+    const pm = new PluginManager(mockServices);
+    await pm.loadAll([tmpDir]);
+    const info = pm.getPluginList().find((p) => p.id === "plugin-with-ui");
+    expect(info?.hasUI).toBe(true);
+  });
+
+  it("无 entry.ui 的插件返回 hasUI: false", async () => {
+    createTestPlugin(tmpDir, "plugin-no-ui");
+    const pm = new PluginManager(mockServices);
+    await pm.loadAll([tmpDir]);
+    const info = pm.getPluginList().find((p) => p.id === "plugin-no-ui");
+    expect(info?.hasUI).toBe(false);
   });
 });

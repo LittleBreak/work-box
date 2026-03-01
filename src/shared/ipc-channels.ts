@@ -51,6 +51,16 @@ export const IPC_CHANNELS = {
     data: "terminal:data",
     exit: "terminal:exit"
   },
+  git: {
+    status: "git:status",
+    stage: "git:stage",
+    unstage: "git:unstage",
+    commit: "git:commit",
+    branches: "git:branches",
+    checkout: "git:checkout",
+    diff: "git:diff",
+    log: "git:log"
+  },
   fileExplorer: {
     getRootPath: "fileExplorer:getRootPath",
     listDir: "fileExplorer:listDir",

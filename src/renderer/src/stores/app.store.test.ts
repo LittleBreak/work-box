@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useAppStore, initialAppState } from "./app.store";
+import { useAppStore, initialAppState, isPluginPage, extractPluginId } from "./app.store";
 
 describe("useAppStore", () => {
   beforeEach(() => {
@@ -47,6 +47,36 @@ describe("useAppStore", () => {
     it("setTheme 切换主题", () => {
       useAppStore.getState().setTheme("light");
       expect(useAppStore.getState().theme).toBe("light");
+    });
+  });
+
+  describe("插件页面支持", () => {
+    it("setCurrentPage 支持插件页面 ID", () => {
+      useAppStore.getState().setCurrentPage("plugin:@workbox/plugin-terminal");
+      expect(useAppStore.getState().currentPage).toBe("plugin:@workbox/plugin-terminal");
+    });
+  });
+
+  describe("isPluginPage", () => {
+    it("核心页面返回 false", () => {
+      expect(isPluginPage("home")).toBe(false);
+      expect(isPluginPage("chat")).toBe(false);
+      expect(isPluginPage("plugins")).toBe(false);
+      expect(isPluginPage("settings")).toBe(false);
+    });
+
+    it("插件页面返回 true", () => {
+      expect(isPluginPage("plugin:@workbox/plugin-terminal")).toBe(true);
+      expect(isPluginPage("plugin:@workbox/plugin-file-explorer")).toBe(true);
+    });
+  });
+
+  describe("extractPluginId", () => {
+    it("从插件页面 ID 提取插件 ID", () => {
+      expect(extractPluginId("plugin:@workbox/plugin-terminal")).toBe("@workbox/plugin-terminal");
+      expect(extractPluginId("plugin:@workbox/plugin-file-explorer")).toBe(
+        "@workbox/plugin-file-explorer"
+      );
     });
   });
 });

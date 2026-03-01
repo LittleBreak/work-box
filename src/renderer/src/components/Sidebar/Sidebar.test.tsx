@@ -1,16 +1,58 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Sidebar } from "./Sidebar";
 import { useAppStore, initialAppState } from "../../stores/app.store";
+import { usePluginStore } from "../../stores/plugin.store";
+import type { PluginInfo } from "@shared/types";
+
+/** Mock active plugins with UI */
+const activePluginsWithUI: PluginInfo[] = [
+  {
+    id: "@workbox/plugin-terminal",
+    name: "Terminal",
+    version: "1.0.0",
+    status: "active",
+    permissions: [],
+    hasUI: true
+  },
+  {
+    id: "@workbox/plugin-file-explorer",
+    name: "File Explorer",
+    version: "1.0.0",
+    status: "active",
+    permissions: [],
+    hasUI: true
+  }
+];
+
+/** Helper to set up window.workbox mock with given plugin list */
+function mockWorkbox(plugins: PluginInfo[] = []): void {
+  Object.defineProperty(window, "workbox", {
+    value: {
+      plugin: {
+        list: vi.fn().mockResolvedValue(plugins),
+        enable: vi.fn().mockResolvedValue(undefined),
+        disable: vi.fn().mockResolvedValue(undefined)
+      }
+    },
+    writable: true,
+    configurable: true
+  });
+}
+
+beforeEach(() => {
+  mockWorkbox();
+});
 
 describe("Sidebar", () => {
   beforeEach(() => {
     useAppStore.setState(initialAppState);
+    usePluginStore.setState({ plugins: [], loading: false, selectedPluginId: null });
   });
 
   // 正常路径：通过 data-testid 定位导航项
-  it("渲染所有导航项", () => {
+  it("渲染所有核心导航项", () => {
     render(<Sidebar />);
     expect(screen.getByTestId("nav-home")).toBeInTheDocument();
     expect(screen.getByTestId("nav-chat")).toBeInTheDocument();
@@ -48,5 +90,76 @@ describe("Sidebar", () => {
     const toggleBtn = screen.getByTestId("sidebar-toggle");
     await userEvent.click(toggleBtn);
     expect(useAppStore.getState().sidebarCollapsed).toBe(true);
+  });
+
+  // ---- 插件导航项测试 ----
+
+  it("无活跃插件时不显示分割线", () => {
+    render(<Sidebar />);
+    expect(screen.queryByTestId("divider-top")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("divider-bottom")).not.toBeInTheDocument();
+  });
+
+  it("有活跃 UI 插件时显示对应导航项和分割线", () => {
+    mockWorkbox(activePluginsWithUI);
+    usePluginStore.setState({ plugins: activePluginsWithUI });
+    render(<Sidebar />);
+    expect(screen.getByTestId("nav-plugin:@workbox/plugin-terminal")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-plugin:@workbox/plugin-file-explorer")).toBeInTheDocument();
+    expect(screen.getByTestId("divider-top")).toBeInTheDocument();
+    expect(screen.getByTestId("divider-bottom")).toBeInTheDocument();
+  });
+
+  it("disabled 插件不显示导航项", () => {
+    const disabledPlugin: PluginInfo = {
+      id: "@workbox/plugin-terminal",
+      name: "Terminal",
+      version: "1.0.0",
+      status: "disabled",
+      permissions: [],
+      hasUI: true
+    };
+    mockWorkbox([disabledPlugin]);
+    usePluginStore.setState({ plugins: [disabledPlugin] });
+    render(<Sidebar />);
+    expect(screen.queryByTestId("nav-plugin:@workbox/plugin-terminal")).not.toBeInTheDocument();
+  });
+
+  it("hasUI: false 的插件不显示导航项", () => {
+    const noUIPlugin: PluginInfo = {
+      id: "@workbox/plugin-terminal",
+      name: "Terminal",
+      version: "1.0.0",
+      status: "active",
+      permissions: [],
+      hasUI: false
+    };
+    mockWorkbox([noUIPlugin]);
+    usePluginStore.setState({ plugins: [noUIPlugin] });
+    render(<Sidebar />);
+    expect(screen.queryByTestId("nav-plugin:@workbox/plugin-terminal")).not.toBeInTheDocument();
+  });
+
+  it("点击插件导航项设置 currentPage 为 plugin:xxx", async () => {
+    mockWorkbox(activePluginsWithUI);
+    usePluginStore.setState({ plugins: activePluginsWithUI });
+    render(<Sidebar />);
+    await userEvent.click(screen.getByTestId("nav-plugin:@workbox/plugin-terminal"));
+    expect(useAppStore.getState().currentPage).toBe("plugin:@workbox/plugin-terminal");
+  });
+
+  it("插件导航项支持 data-active 高亮", () => {
+    mockWorkbox(activePluginsWithUI);
+    usePluginStore.setState({ plugins: activePluginsWithUI });
+    useAppStore.setState({ currentPage: "plugin:@workbox/plugin-terminal" });
+    render(<Sidebar />);
+    expect(screen.getByTestId("nav-plugin:@workbox/plugin-terminal")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+    expect(screen.getByTestId("nav-plugin:@workbox/plugin-file-explorer")).toHaveAttribute(
+      "data-active",
+      "false"
+    );
   });
 });

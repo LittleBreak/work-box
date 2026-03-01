@@ -1,0 +1,33 @@
+{
+  "name": "@workbox/plugin-git-helper",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@workbox/plugin-api": "workspace:*"
+  },
+  "workbox": {
+    "name": "Git Helper",
+    "description": "一键 Git 操作助手，提供 Git 状态查询、提交、分支管理等功能",
+    "permissions": [
+      "fs:read",
+      "shell:exec"
+    ],
+    "entry": {
+      "main": "./src/index.ts",
+      "ui": "./src/ui/GitPanel.tsx"
+    },
+    "commands": [
+      {
+        "id": "quick-commit",
+        "title": "Quick Commit",
+        "shortcut": "CmdOrCtrl+Shift+C"
+      }
+    ],
+    "ai": {
+      "tools": [
+        "git_status",
+        "git_commit"
+      ]
+    }
+  }
+}

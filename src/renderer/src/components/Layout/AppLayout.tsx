@@ -1,9 +1,11 @@
-import { useAppStore } from "../../stores/app.store";
+import { useAppStore, isPluginPage, extractPluginId } from "../../stores/app.store";
+import type { PluginPageId } from "../../stores/app.store";
 import { Sidebar } from "../Sidebar/Sidebar";
 import { HomeView } from "../../features/home/HomeView";
 import { ChatView } from "../../features/chat/ChatView";
 import { PluginListView } from "../../features/plugins/PluginListView";
 import { SettingsView } from "../../features/settings/SettingsView";
+import { getPluginPanel } from "../../features/plugins/plugin-panels";
 
 function PageContent(): React.JSX.Element {
   const currentPage = useAppStore((s) => s.currentPage);
@@ -17,6 +19,17 @@ function PageContent(): React.JSX.Element {
       return <PluginListView />;
     case "settings":
       return <SettingsView />;
+    default: {
+      if (isPluginPage(currentPage)) {
+        const pluginId = extractPluginId(currentPage as PluginPageId);
+        const entry = getPluginPanel(pluginId);
+        if (entry) {
+          const PluginComponent = entry.component;
+          return <PluginComponent />;
+        }
+      }
+      return <HomeView />;
+    }
   }
 }
 

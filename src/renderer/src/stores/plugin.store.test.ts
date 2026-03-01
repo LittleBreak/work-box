@@ -6,8 +6,22 @@ beforeEach(() => {
     value: {
       plugin: {
         list: vi.fn().mockResolvedValue([
-          { id: "p1", name: "P1", version: "1.0.0", status: "active", permissions: [] },
-          { id: "p2", name: "P2", version: "2.0.0", status: "disabled", permissions: ["fs:read"] }
+          {
+            id: "p1",
+            name: "P1",
+            version: "1.0.0",
+            status: "active",
+            permissions: [],
+            hasUI: true
+          },
+          {
+            id: "p2",
+            name: "P2",
+            version: "2.0.0",
+            status: "disabled",
+            permissions: ["fs:read"],
+            hasUI: false
+          }
         ]),
         enable: vi.fn().mockResolvedValue(undefined),
         disable: vi.fn().mockResolvedValue(undefined)

@@ -73,6 +73,53 @@ const workboxAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.settings.update, settings),
     reset: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.settings.reset)
   },
+  git: {
+    getStatus: (): Promise<
+      Array<{
+        path: string;
+        status: "modified" | "added" | "deleted" | "untracked" | "renamed" | "copied";
+        staged: boolean;
+        oldPath?: string;
+      }>
+    > => ipcRenderer.invoke(IPC_CHANNELS.git.status),
+    stage: (paths: string[]): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.git.stage, paths),
+    unstage: (paths: string[]): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.git.unstage, paths),
+    commit: (message: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.git.commit, message),
+    getBranches: (): Promise<Array<{ name: string; current: boolean; remote?: string }>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.git.branches),
+    checkout: (branch: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.git.checkout, branch),
+    getDiff: (options?: {
+      path?: string;
+      staged?: boolean;
+      cwd?: string;
+    }): Promise<
+      Array<{
+        filePath: string;
+        hunks: Array<{
+          oldStart: number;
+          oldCount: number;
+          newStart: number;
+          newCount: number;
+          lines: Array<{ type: "add" | "remove" | "context"; content: string }>;
+        }>;
+      }>
+    > => ipcRenderer.invoke(IPC_CHANNELS.git.diff, options),
+    getLog: (options?: {
+      count?: number;
+      cwd?: string;
+    }): Promise<
+      Array<{
+        hash: string;
+        shortHash: string;
+        message: string;
+        author: string;
+        date: string;
+      }>
+    > => ipcRenderer.invoke(IPC_CHANNELS.git.log, options)
+  },
   fileExplorer: {
     getRootPath: (): Promise<string> => ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.getRootPath),
     listDir: (
