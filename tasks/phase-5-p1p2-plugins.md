@@ -598,45 +598,45 @@ interface GitState {
 
 **验收标准**：
 
-- [ ] 实现 `GitPanel.tsx`：
-  - [ ] Tab 切换：Status / Branches / History
-  - [ ] 切换 Tab 时自动加载对应数据
-- [ ] 实现 `StatusTab.tsx` + 子组件：
-  - [ ] 显示文件状态列表（modified/added/deleted/untracked 区分颜色/图标）
-  - [ ] 每个文件可 stage/unstage（checkbox 或按钮）
-  - [ ] 点击文件显示 diff 内容
-  - [ ] 底部 commit message 输入框 + 提交按钮
-  - [ ] 提交后自动刷新状态
-- [ ] 实现 `DiffViewer.tsx`：
-  - [ ] 渲染 unified diff 格式（`+` 绿 / `-` 红 / context 灰）
-  - [ ] 显示文件路径和 hunk header
-- [ ] 实现 `BranchTab.tsx`：
-  - [ ] 显示本地分支列表，当前分支高亮
-  - [ ] 点击切换分支（有未提交更改时提示确认）
-- [ ] 实现 `HistoryTab.tsx`：
-  - [ ] 显示 commit 历史列表（hash、message、author、date）
-  - [ ] 时间线样式展示
-- [ ] 实现 `store.ts`：
-  - [ ] 完整状态管理
-- [ ] 编写测试：
-  - [ ] store 测试（refreshStatus、toggleStage、commit、checkout）
-  - [ ] GitPanel 组件渲染测试（Tab 切换、状态列表展示）
-  - [ ] DiffViewer 渲染测试（正确颜色标记）
-- [ ] `pnpm test` 全部通过
+- [x] 实现 `GitPanel.tsx`：
+  - [x] Tab 切换：Status / Branches / History
+  - [x] 切换 Tab 时自动加载对应数据
+- [x] 实现 `StatusTab.tsx` + 子组件：
+  - [x] 显示文件状态列表（modified/added/deleted/untracked 区分颜色/图标）
+  - [x] 每个文件可 stage/unstage（checkbox 或按钮）
+  - [x] 点击文件显示 diff 内容
+  - [x] 底部 commit message 输入框 + 提交按钮
+  - [x] 提交后自动刷新状态
+- [x] 实现 `DiffViewer.tsx`：
+  - [x] 渲染 unified diff 格式（`+` 绿 / `-` 红 / context 灰）
+  - [x] 显示文件路径和 hunk header
+- [x] 实现 `BranchTab.tsx`：
+  - [x] 显示本地分支列表，当前分支高亮
+  - [x] 点击切换分支（有未提交更改时提示确认）
+- [x] 实现 `HistoryTab.tsx`：
+  - [x] 显示 commit 历史列表（hash、message、author、date）
+  - [x] 时间线样式展示
+- [x] 实现 `store.ts`：
+  - [x] 完整状态管理
+- [x] 编写测试：
+  - [x] store 测试（refreshStatus、toggleStage、commit、checkout）
+  - [x] GitPanel 组件渲染测试（Tab 切换、状态列表展示）
+  - [x] DiffViewer 渲染测试（正确颜色标记）
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/git-helper/src/ui/GitPanel.tsx` — 面板主组件
-- [ ] `plugins/git-helper/src/ui/GitPanel.test.tsx` — 面板测试
-- [ ] `plugins/git-helper/src/ui/StatusTab.tsx` — 状态 Tab
-- [ ] `plugins/git-helper/src/ui/StatusList.tsx` — 文件状态列表
-- [ ] `plugins/git-helper/src/ui/DiffViewer.tsx` — Diff 查看器
-- [ ] `plugins/git-helper/src/ui/DiffViewer.test.tsx` — Diff 渲染测试
-- [ ] `plugins/git-helper/src/ui/CommitInput.tsx` — 提交输入
-- [ ] `plugins/git-helper/src/ui/BranchTab.tsx` — 分支 Tab
-- [ ] `plugins/git-helper/src/ui/HistoryTab.tsx` — 历史 Tab
-- [ ] `plugins/git-helper/src/ui/store.ts` — 状态管理
-- [ ] `plugins/git-helper/src/ui/store.test.ts` — 状态测试
+- [x] `plugins/git-helper/src/ui/GitPanel.tsx` — 面板主组件
+- [x] `plugins/git-helper/src/ui/GitPanel.test.tsx` — 面板测试
+- [x] `plugins/git-helper/src/ui/StatusTab.tsx` — 状态 Tab
+- [x] `plugins/git-helper/src/ui/StatusList.tsx` — 文件状态列表
+- [x] `plugins/git-helper/src/ui/DiffViewer.tsx` — Diff 查看器
+- [x] `plugins/git-helper/src/ui/DiffViewer.test.tsx` — Diff 渲染测试
+- [x] `plugins/git-helper/src/ui/CommitInput.tsx` — 提交输入
+- [x] `plugins/git-helper/src/ui/BranchTab.tsx` — 分支 Tab
+- [x] `plugins/git-helper/src/ui/HistoryTab.tsx` — 历史 Tab
+- [x] `plugins/git-helper/src/ui/store.ts` — 状态管理
+- [x] `plugins/git-helper/src/ui/store.test.ts` — 状态测试
 
 **反模式警告**：
 
