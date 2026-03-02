@@ -1,0 +1,19 @@
+{
+  "name": "@workbox/plugin-regex-tester",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@workbox/plugin-api": "workspace:*"
+  },
+  "workbox": {
+    "name": "Regex Tester",
+    "description": "正则表达式测试工具，支持实时匹配高亮、匹配组提取、常用模板和 Flag 切换",
+    "permissions": [
+      "clipboard"
+    ],
+    "entry": {
+      "main": "./src/index.ts",
+      "ui": "./src/ui/RegexTesterPanel.tsx"
+    }
+  }
+}

@@ -1215,47 +1215,47 @@ RegexTesterPanel.tsx        — 顶层容器
 
 **验收标准**：
 
-- [ ] 创建 `plugins/regex-tester/package.json`
-- [ ] 创建 `plugins/regex-tester/src/index.ts`，导出 `definePlugin()` 骨架
-- [ ] 实现 `plugins/regex-tester/src/regex-engine.ts`：
-  - [ ] `executeRegex()` 获取所有匹配结果和捕获组
-  - [ ] `validateRegex()` 校验正则合法性
-  - [ ] `generateHighlightSegments()` 生成高亮分段
-- [ ] 实现 `plugins/regex-tester/src/templates.ts`：
-  - [ ] 至少 10 个常用正则模板
-- [ ] 实现 `RegexTesterPanel.tsx`：
-  - [ ] 正则输入框 + Flag 开关（g/i/m/s/u）
-  - [ ] 测试文本输入区（多行 textarea）
-  - [ ] 实时匹配高亮显示（输入变化时自动执行）
-  - [ ] 匹配详情面板：匹配数量、各匹配的位置和捕获组
-  - [ ] 模板选择器：点击模板自动填充正则和示例文本
-  - [ ] 无效正则时显示错误提示
-  - [ ] 复制正则按钮
-- [ ] 实现 `store.ts`：
-  - [ ] 正则 pattern、flags、测试文本、匹配结果
-- [ ] 编写测试覆盖：
-  - [ ] `executeRegex` 正常匹配、全局匹配、分组捕获、命名分组
-  - [ ] `validateRegex` 合法/非法正则
-  - [ ] `generateHighlightSegments` 分段正确性
-  - [ ] 无匹配情况
-  - [ ] 空正则或空文本
-  - [ ] 模板数据结构校验
-  - [ ] store 状态管理测试
-  - [ ] 组件渲染测试
-- [ ] `pnpm test` 全部通过
+- [x] 创建 `plugins/regex-tester/package.json`
+- [x] 创建 `plugins/regex-tester/src/index.ts`，导出 `definePlugin()` 骨架
+- [x] 实现 `plugins/regex-tester/src/regex-engine.ts`：
+  - [x] `executeRegex()` 获取所有匹配结果和捕获组
+  - [x] `validateRegex()` 校验正则合法性
+  - [x] `generateHighlightSegments()` 生成高亮分段
+- [x] 实现 `plugins/regex-tester/src/templates.ts`：
+  - [x] 至少 10 个常用正则模板
+- [x] 实现 `RegexTesterPanel.tsx`：
+  - [x] 正则输入框 + Flag 开关（g/i/m/s/u）
+  - [x] 测试文本输入区（多行 textarea）
+  - [x] 实时匹配高亮显示（输入变化时自动执行）
+  - [x] 匹配详情面板：匹配数量、各匹配的位置和捕获组
+  - [x] 模板选择器：点击模板自动填充正则和示例文本
+  - [x] 无效正则时显示错误提示
+  - [x] 复制正则按钮
+- [x] 实现 `store.ts`：
+  - [x] 正则 pattern、flags、测试文本、匹配结果
+- [x] 编写测试覆盖：
+  - [x] `executeRegex` 正常匹配、全局匹配、分组捕获、命名分组
+  - [x] `validateRegex` 合法/非法正则
+  - [x] `generateHighlightSegments` 分段正确性
+  - [x] 无匹配情况
+  - [x] 空正则或空文本
+  - [x] 模板数据结构校验
+  - [x] store 状态管理测试
+  - [x] 组件渲染测试
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/regex-tester/package.json` — 插件清单
-- [ ] `plugins/regex-tester/src/index.ts` — 插件入口（骨架）
-- [ ] `plugins/regex-tester/src/regex-engine.ts` — 正则匹配引擎
-- [ ] `plugins/regex-tester/src/regex-engine.test.ts` — 引擎测试
-- [ ] `plugins/regex-tester/src/templates.ts` — 常用模板
-- [ ] `plugins/regex-tester/src/templates.test.ts` — 模板校验测试
-- [ ] `plugins/regex-tester/src/ui/RegexTesterPanel.tsx` — 面板主组件
-- [ ] `plugins/regex-tester/src/ui/RegexTesterPanel.test.tsx` — 组件测试
-- [ ] `plugins/regex-tester/src/ui/store.ts` — 状态管理
-- [ ] `plugins/regex-tester/src/ui/store.test.ts` — 状态测试
+- [x] `plugins/regex-tester/package.json` — 插件清单
+- [x] `plugins/regex-tester/src/index.ts` — 插件入口（骨架）
+- [x] `plugins/regex-tester/src/regex-engine.ts` — 正则匹配引擎
+- [x] `plugins/regex-tester/src/regex-engine.test.ts` — 引擎测试
+- [x] `plugins/regex-tester/src/templates.ts` — 常用模板
+- [x] `plugins/regex-tester/src/templates.test.ts` — 模板校验测试
+- [x] `plugins/regex-tester/src/ui/RegexTesterPanel.tsx` — 面板主组件
+- [x] `plugins/regex-tester/src/ui/RegexTesterPanel.test.tsx` — 组件测试
+- [x] `plugins/regex-tester/src/ui/store.ts` — 状态管理
+- [x] `plugins/regex-tester/src/ui/store.test.ts` — 状态测试
 
 **参考文档**：
 
