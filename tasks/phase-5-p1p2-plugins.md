@@ -1000,31 +1000,31 @@ unknown  → null
 
 **验收标准**：
 
-- [ ] 创建 `plugins/json-formatter/package.json`
-- [ ] 创建 `plugins/json-formatter/src/index.ts`，导出 `definePlugin()` 骨架（空 activate）
-- [ ] 创建 `plugins/json-formatter/src/ui/JsonFormatterPanel.tsx`，导出占位组件
-- [ ] 实现 `plugins/json-formatter/src/json-ops.ts`：
-  - [ ] `formatJson()` 格式化 + 自定义缩进
-  - [ ] `compressJson()` 压缩为单行
-  - [ ] `validateJson()` 校验 + 错误行列号解析
-  - [ ] `jsonToTypeScript()` 递归类型推断 + interface 生成
-  - [ ] `typeScriptToJson()` 基础 interface 解析 + 样例生成
-  - [ ] `diffJson()` 结构化递归对比
-- [ ] 编写测试覆盖：
-  - [ ] 格式化/压缩：正常 JSON、嵌套对象、数组
-  - [ ] 校验：有效 JSON、无效 JSON（各种语法错误）、错误行列号准确性
-  - [ ] JSON→TS：基本类型、嵌套对象、数组、混合类型数组、空对象
-  - [ ] TS→JSON：基本 interface、嵌套 interface、可选属性
-  - [ ] Diff：新增属性、删除属性、修改值、嵌套对象变更、数组变更
-- [ ] `pnpm test` 全部通过
+- [x] 创建 `plugins/json-formatter/package.json`
+- [x] 创建 `plugins/json-formatter/src/index.ts`，导出 `definePlugin()` 骨架（空 activate）
+- [x] 创建 `plugins/json-formatter/src/ui/JsonFormatterPanel.tsx`，导出占位组件
+- [x] 实现 `plugins/json-formatter/src/json-ops.ts`：
+  - [x] `formatJson()` 格式化 + 自定义缩进
+  - [x] `compressJson()` 压缩为单行
+  - [x] `validateJson()` 校验 + 错误行列号解析
+  - [x] `jsonToTypeScript()` 递归类型推断 + interface 生成
+  - [x] `typeScriptToJson()` 基础 interface 解析 + 样例生成
+  - [x] `diffJson()` 结构化递归对比
+- [x] 编写测试覆盖：
+  - [x] 格式化/压缩：正常 JSON、嵌套对象、数组
+  - [x] 校验：有效 JSON、无效 JSON（各种语法错误）、错误行列号准确性
+  - [x] JSON→TS：基本类型、嵌套对象、数组、混合类型数组、空对象
+  - [x] TS→JSON：基本 interface、嵌套 interface、可选属性
+  - [x] Diff：新增属性、删除属性、修改值、嵌套对象变更、数组变更
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/json-formatter/package.json` — 插件清单
-- [ ] `plugins/json-formatter/src/index.ts` — 插件入口（骨架）
-- [ ] `plugins/json-formatter/src/json-ops.ts` — JSON 操作逻辑
-- [ ] `plugins/json-formatter/src/json-ops.test.ts` — 操作逻辑测试
-- [ ] `plugins/json-formatter/src/ui/JsonFormatterPanel.tsx` — UI 占位组件
+- [x] `plugins/json-formatter/package.json` — 插件清单
+- [x] `plugins/json-formatter/src/index.ts` — 插件入口（骨架）
+- [x] `plugins/json-formatter/src/json-ops.ts` — JSON 操作逻辑
+- [x] `plugins/json-formatter/src/json-ops.test.ts` — 操作逻辑测试
+- [x] `plugins/json-formatter/src/ui/JsonFormatterPanel.tsx` — UI 占位组件
 
 **反模式警告**：
 

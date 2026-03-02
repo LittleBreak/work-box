@@ -1,0 +1,19 @@
+{
+  "name": "@workbox/plugin-json-formatter",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@workbox/plugin-api": "workspace:*"
+  },
+  "workbox": {
+    "name": "JSON Formatter",
+    "description": "JSON 格式化工具，支持格式化/压缩、校验、JSON-TS 互转、结构化 Diff 和树形可视化",
+    "permissions": [
+      "clipboard"
+    ],
+    "entry": {
+      "main": "./src/index.ts",
+      "ui": "./src/ui/JsonFormatterPanel.tsx"
+    }
+  }
+}
