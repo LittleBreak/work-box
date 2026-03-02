@@ -1,6 +1,6 @@
 # Phase 5：内置插件（P1-P2）
 
-> **目标**：丰富工具箱能力，实现 File Explorer、Git Helper、Snippet Manager、JSON Formatter、Regex Tester 五个内置插件，提升日常开发体验。
+> **目标**：丰富工具箱能力，实现 File Explorer、Git Helper、JSON Formatter、Regex Tester 四个内置插件，提升日常开发体验。
 >
 > **里程碑**：M5 - Beta（全部内置插件完成，基本可分发）
 
@@ -8,11 +8,10 @@
 
 ## 任务编号说明
 
-Phase 5 共 10 个任务（5.1–5.2, 5.4–5.11），分为五个插件：
+Phase 5 共 8 个任务（5.1–5.2, 5.4–5.6, 5.9–5.11），分为四个插件：
 
 - **File Explorer 插件**（5.1–5.2）：插件骨架 + 文件服务 → UI
 - **Git Helper 插件**（5.4–5.6）：插件骨架 + Git 服务 → UI → AI Tools + 命令注册
-- **Snippet Manager 插件**（5.7–5.8）：后端存储服务 → UI
 - **JSON Formatter 插件**（5.9–5.10）：逻辑层 → UI
 - **Regex Tester 插件**（5.11）：完整实现
 
@@ -49,9 +48,6 @@ P1 插件线：
         └── 5.6（Git Helper AI Tools + 命令）← 依赖 5.4 的 Git 服务
 
 P2 插件线（独立于 P1，互相独立）：
-5.7（Snippet Manager 后端）← Phase 4 完成
-  └── 5.8（Snippet Manager UI）← 依赖 5.7 的 IPC 通道
-
 5.9（JSON Formatter 逻辑）← Phase 4 完成
   └── 5.10（JSON Formatter UI）← 依赖 5.9 的逻辑模块
 
@@ -61,11 +57,11 @@ P2 插件线（独立于 P1，互相独立）：
 ### 推荐执行顺序
 
 ```
-[5.1 → 5.2] ∥ [5.4 → 5.5 → 5.6] ∥ [5.7 → 5.8] ∥ [5.9 → 5.10] ∥ [5.11]
+[5.1 → 5.2] ∥ [5.4 → 5.5 → 5.6] ∥ [5.9 → 5.10] ∥ [5.11]
 ```
 
 - P1 线（File Explorer 5.1–5.2）和 P1 线（Git Helper 5.4–5.6）**可并行执行**
-- P2 线（5.7–5.8、5.9–5.10、5.11）**可并行执行**，且独立于 P1
+- P2 线（5.9–5.10、5.11）**可并行执行**，且独立于 P1
 - 每条线内部严格顺序
 
 ---
@@ -74,7 +70,7 @@ P2 插件线（独立于 P1，互相独立）：
 
 ### A 类：有可测试行为的任务 → 严格 TDD（Red-Green-Refactor）
 
-适用于：5.1、5.4、5.6、5.7、5.9、5.11
+适用于：5.1、5.4、5.6、5.9、5.11
 
 1. **Red**：先编写测试（正常路径 + 边界条件 + 错误处理），运行测试，确认失败
 2. **Green**：编写最小代码使测试通过
@@ -82,7 +78,7 @@ P2 插件线（独立于 P1，互相独立）：
 
 ### B 类：纯配置/UI 骨架 → 验证式测试
 
-适用于：5.2、5.5、5.8、5.10
+适用于：5.2、5.5、5.10
 
 1. 编写验证式测试（组件可渲染、交互响应）
 2. 实现功能
@@ -708,211 +704,6 @@ interface GitState {
 
 ---
 
-## 5.7 Snippet Manager 后端 + 存储
-
-**目标**：创建 Snippet Manager 插件骨架，实现代码片段的 CRUD 服务（基于 `ctx.storage` 键值存储），注册 IPC handler 供 UI 使用。
-
-**输入/前置条件**：
-
-- 依赖：Phase 4 完成
-- 需读取：`ARCHITECTURE.md` 4.3（PluginContext.storage API）、9.1（Snippet Manager 功能）
-- 当前状态：
-  - `ctx.storage.get/set/delete` 已可用
-  - 插件键值存储已通过 `plugin_storage` 表实现
-
-**验证策略**：A 类（严格 TDD）
-
-**关键决策**：
-
-| 决策项     | 方案                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------ |
-| 插件包名   | `@workbox/plugin-snippet-manager`                                                    |
-| 权限声明   | `["clipboard"]`（复制到剪贴板需要）                                                  |
-| 存储策略   | 单 key `snippets` 存储 `Snippet[]` JSON 数组（初版简单方案，数据量 < 1000 条可接受） |
-| Snippet ID | `crypto.randomUUID()`                                                                |
-| 搜索方式   | 内存过滤（title + content 包含查询词，大小写不敏感）                                 |
-| 标签管理   | 从所有 snippet 的 tags 字段中聚合去重，无独立标签表                                  |
-| IPC 通道   | 插件本地 `constants.ts` 定义，格式 `snippet:{action}`                                |
-
-**类型定义**（`plugins/snippet-manager/src/constants.ts`）：
-
-```typescript
-interface Snippet {
-  id: string;
-  title: string;
-  content: string;
-  language: string;
-  tags: string[];
-  createdAt: number;
-  updatedAt: number;
-}
-
-interface SnippetInput {
-  title: string;
-  content: string;
-  language: string;
-  tags: string[];
-}
-
-const SNIPPET_CHANNELS = {
-  list: "snippet:list",
-  get: "snippet:get",
-  create: "snippet:create",
-  update: "snippet:update",
-  delete: "snippet:delete",
-  getTags: "snippet:getTags"
-} as const;
-```
-
-**SnippetService API 设计**（`plugins/snippet-manager/src/snippet-service.ts`）：
-
-```typescript
-class SnippetService {
-  constructor(private storage: PluginContext["storage"]) {}
-
-  /** 列出片段，支持按查询词和标签过滤 */
-  async list(query?: string, tag?: string): Promise<Snippet[]>;
-
-  /** 获取单个片段 */
-  async get(id: string): Promise<Snippet | null>;
-
-  /** 创建新片段 */
-  async create(input: SnippetInput): Promise<Snippet>;
-
-  /** 更新片段 */
-  async update(id: string, input: Partial<SnippetInput>): Promise<Snippet>;
-
-  /** 删除片段 */
-  async delete(id: string): Promise<void>;
-
-  /** 获取所有已使用的标签列表 */
-  async getTags(): Promise<string[]>;
-}
-```
-
-**验收标准**：
-
-- [ ] 创建 `plugins/snippet-manager/package.json`
-- [ ] 创建 `plugins/snippet-manager/src/index.ts`，导出 `definePlugin()` 骨架
-- [ ] 创建 `plugins/snippet-manager/src/ui/SnippetPanel.tsx`，导出占位组件
-- [ ] 创建 `plugins/snippet-manager/src/constants.ts`
-- [ ] 实现 `plugins/snippet-manager/src/snippet-service.ts`：
-  - [ ] `list()` 全量列出 + 按 query/tag 过滤
-  - [ ] `get()` 按 ID 获取
-  - [ ] `create()` 创建片段（生成 ID + 时间戳）
-  - [ ] `update()` 部分更新（更新 updatedAt）
-  - [ ] `delete()` 删除
-  - [ ] `getTags()` 聚合去重所有标签
-- [ ] 在 `activate()` 中注册 IPC handler
-- [ ] 在 `src/preload/index.ts` 中暴露 `window.workbox.snippet.*` API
-- [ ] 在 `src/shared/ipc-channels.ts` 中添加 `snippet` 通道定义
-- [ ] 编写测试覆盖：
-  - [ ] CRUD 全流程（create → get → update → list → delete）
-  - [ ] 搜索过滤（按 title、content、tag）
-  - [ ] 空列表处理
-  - [ ] 不存在 ID 的 get/update/delete 错误处理
-  - [ ] 标签聚合去重
-- [ ] `pnpm test` 全部通过
-
-**交付物清单**：
-
-- [ ] `plugins/snippet-manager/package.json` — 插件清单
-- [ ] `plugins/snippet-manager/src/index.ts` — 插件入口
-- [ ] `plugins/snippet-manager/src/index.test.ts` — 插件入口测试
-- [ ] `plugins/snippet-manager/src/constants.ts` — IPC 通道 + 类型
-- [ ] `plugins/snippet-manager/src/snippet-service.ts` — CRUD 服务
-- [ ] `plugins/snippet-manager/src/snippet-service.test.ts` — 服务测试
-- [ ] `plugins/snippet-manager/src/ui/SnippetPanel.tsx` — UI 占位组件
-- [ ] `src/preload/index.ts` — 新增 `window.workbox.snippet.*`
-- [ ] `src/shared/ipc-channels.ts` — 新增 `snippet` 通道
-
-**反模式警告**：
-
-- ❌ 不要为每个 snippet 使用独立 key 存储（`snippet:{id}`），会导致无法高效搜索和列出
-- ❌ 不要忘记在 `update` 时更新 `updatedAt` 时间戳
-- ❌ 不要在 `list` 中返回未排序的结果，按 `updatedAt` 降序排列
-- ❌ 不要允许 `title` 或 `content` 为空字符串
-
----
-
-## 5.8 Snippet Manager UI
-
-**目标**：实现 Snippet Manager 的 UI 组件，包括片段列表、编辑器、搜索栏、标签过滤和剪贴板复制。
-
-**输入/前置条件**：
-
-- 依赖：5.7 完成（Snippet IPC 通道就绪）
-- 当前状态：
-  - `SnippetPanel.tsx` 为占位组件
-  - `window.workbox.snippet.*` 和 `window.workbox.clipboard.writeText()` 已可用
-
-**验证策略**：B 类（验证式测试）
-
-**关键决策**：
-
-| 决策项   | 方案                                                                   |
-| -------- | ---------------------------------------------------------------------- |
-| 布局     | 左右分栏：左侧片段列表（含搜索和标签过滤），右侧编辑/预览              |
-| 编辑模式 | 新建/编辑时显示表单（标题 + 语言选择 + 标签输入 + 代码编辑区）         |
-| 语法高亮 | 复用项目已有的代码高亮方案（Chat 功能中使用的库）                      |
-| 标签输入 | Chip 式标签输入（输入文本 + 回车添加，点击 × 删除）                    |
-| 语言列表 | 内置常用 30+ 语言选项（js, ts, py, go, java, rust, css, html, sql 等） |
-| 复制反馈 | 点击复制按钮后显示 2 秒 "已复制" 提示                                  |
-
-**组件层次结构**：
-
-```
-SnippetPanel.tsx           — 顶层容器，左右分栏
-  ├── SnippetSidebar.tsx   — 左侧：搜索 + 标签过滤 + 片段列表
-  │   ├── SearchInput.tsx — 搜索输入框
-  │   ├── TagFilter.tsx   — 标签筛选 chips
-  │   └── SnippetItem.tsx — 单个片段条目（标题 + 语言 + 标签预览）
-  └── SnippetEditor.tsx    — 右侧：新建/编辑/预览
-      ├── SnippetForm.tsx — 编辑表单
-      └── SnippetView.tsx — 预览模式（代码高亮 + 复制按钮）
-```
-
-**验收标准**：
-
-- [ ] 实现 `SnippetPanel.tsx`：左右分栏布局
-- [ ] 实现 `SnippetSidebar.tsx`：
-  - [ ] 搜索框：debounce 300ms 过滤片段
-  - [ ] 标签过滤：显示所有标签 chip，点击过滤
-  - [ ] 片段列表：显示标题、语言、标签预览
-  - [ ] 新建按钮：打开编辑表单
-- [ ] 实现 `SnippetEditor.tsx`：
-  - [ ] 编辑模式：标题 + 语言下拉 + 标签 chip 输入 + 代码文本区
-  - [ ] 预览模式：语法高亮代码展示 + 一键复制按钮
-  - [ ] 保存/取消按钮
-  - [ ] 删除按钮（带确认）
-- [ ] 实现 `store.ts`：
-  - [ ] snippets 列表状态
-  - [ ] 搜索和过滤状态
-  - [ ] 编辑状态（当前选中、是否编辑中）
-- [ ] 一键复制：调用 `window.workbox.clipboard.writeText()` + 成功提示
-- [ ] 编写测试：
-  - [ ] store 测试（CRUD 操作、搜索过滤、标签选择）
-  - [ ] SnippetPanel 组件渲染测试
-- [ ] `pnpm test` 全部通过
-
-**交付物清单**：
-
-- [ ] `plugins/snippet-manager/src/ui/SnippetPanel.tsx` — 面板主组件
-- [ ] `plugins/snippet-manager/src/ui/SnippetPanel.test.tsx` — 面板测试
-- [ ] `plugins/snippet-manager/src/ui/SnippetSidebar.tsx` — 侧边栏
-- [ ] `plugins/snippet-manager/src/ui/SnippetEditor.tsx` — 编辑器/预览
-- [ ] `plugins/snippet-manager/src/ui/store.ts` — 状态管理
-- [ ] `plugins/snippet-manager/src/ui/store.test.ts` — 状态测试
-
-**反模式警告**：
-
-- ❌ 不要在每次搜索时重新加载所有 snippet，在 store 中缓存完整列表后前端过滤
-- ❌ 不要用 textarea 替代代码高亮编辑区，至少预览模式需要语法高亮
-- ❌ 不要在删除片段时不做确认，需弹出确认对话框
-- ❌ 不要硬编码语言列表在组件中，抽取为常量数组
-
----
-
 ## 5.9 JSON Formatter 逻辑层
 
 **目标**：创建 JSON Formatter 插件骨架，实现 JSON 操作的核心逻辑（格式化/压缩、校验+错误定位、JSON→TS 类型生成、结构化 Diff）。
@@ -1273,7 +1064,7 @@ RegexTesterPanel.tsx        — 顶层容器
 
 ## Phase 5 完成后验证清单
 
-完成所有 10 个任务后，执行以下最终验证：
+完成所有 8 个任务后，执行以下最终验证：
 
 ### 功能验证
 
@@ -1291,12 +1082,6 @@ RegexTesterPanel.tsx        — 顶层容器
   - [ ] 可查看 Commit 历史
   - [ ] `CmdOrCtrl+Shift+C` 快捷键触发 quick-commit
   - [ ] AI 可调用 `git_status`、`git_commit`、`git_diff`、`git_log`
-- [ ] Snippet Manager 插件：
-  - [ ] 可创建/编辑/删除代码片段
-  - [ ] 可按标题/内容搜索片段
-  - [ ] 可按标签过滤片段
-  - [ ] 一键复制片段内容到剪贴板
-  - [ ] 代码片段有语法高亮显示
 - [ ] JSON Formatter 插件：
   - [ ] 可格式化/压缩 JSON
   - [ ] 可校验 JSON 并定位错误
@@ -1341,7 +1126,6 @@ RegexTesterPanel.tsx        — 顶层容器
 
 ### 低优先级问题（记录参考）
 
-- [ ] **[L1]** Snippet Manager 使用单 key 存储所有 snippet，大量数据（> 1000 条）时性能可能下降。初版可接受，后续可优化为分 key 存储或使用 SQLite 直接查询
-- [ ] **[L2]** 各插件 Preload 扩展导致 `src/preload/index.ts` 持续膨胀（File Explorer + Git Helper + Snippet Manager 各添加 7-8 个方法）。未来应考虑通用的 Plugin IPC 机制
+- [ ] **[L1]** 各插件 Preload 扩展导致 `src/preload/index.ts` 持续膨胀（File Explorer + Git Helper 各添加 7-8 个方法）。未来应考虑通用的 Plugin IPC 机制
 - [ ] **[L3]** Git Helper 的 Diff 查看器功能较基础（仅支持 unified diff 格式的内联显示），未来可增强为 side-by-side 对比模式
 - [ ] **[L4]** JSON Formatter 和 Regex Tester 的代码编辑区使用简单 textarea，未来可引入轻量代码编辑器（如 CodeMirror）提升体验
