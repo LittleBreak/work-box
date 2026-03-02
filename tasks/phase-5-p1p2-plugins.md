@@ -1074,48 +1074,48 @@ JsonFormatterPanel.tsx      — 顶层容器
 
 **验收标准**：
 
-- [ ] 实现 `JsonFormatterPanel.tsx`：模式标签切换 + 工具栏
-- [ ] 实现 `FormatView.tsx`：
-  - [ ] 左侧输入 textarea，右侧格式化输出
-  - [ ] 格式化 / 压缩按钮
-  - [ ] 复制输出按钮
-- [ ] 实现 `ValidateView.tsx`：
-  - [ ] 输入 JSON → 实时校验
-  - [ ] 有效：显示绿色 ✓
-  - [ ] 无效：显示错误信息 + 错误行高亮
-- [ ] 实现 `ConvertView.tsx`：
-  - [ ] JSON→TS：输入 JSON → 生成 TypeScript interface
-  - [ ] TS→JSON：输入 TypeScript interface → 生成 JSON 样例
-  - [ ] 方向切换按钮
-- [ ] 实现 `DiffView.tsx`：
-  - [ ] 左右两个 textarea 输入
-  - [ ] Diff 按钮 → 下方显示差异列表
-  - [ ] 颜色编码（added 绿 / removed 红 / changed 黄）
-- [ ] 实现 `TreeView.tsx`：
-  - [ ] 输入 JSON → 树形可视化
-  - [ ] 支持展开/折叠节点
-  - [ ] 显示 key、值类型、值内容
-- [ ] 实现 `store.ts`：
-  - [ ] 当前模式、输入输出内容、校验状态
-- [ ] 编写测试：
-  - [ ] store 测试
-  - [ ] JsonFormatterPanel 组件渲染测试（模式切换）
-  - [ ] TreeView 递归渲染测试
-- [ ] `pnpm test` 全部通过
+- [x] 实现 `JsonFormatterPanel.tsx`：模式标签切换 + 工具栏
+- [x] 实现 `FormatView.tsx`：
+  - [x] 左侧输入 textarea，右侧格式化输出
+  - [x] 格式化 / 压缩按钮
+  - [x] 复制输出按钮
+- [x] 实现 `ValidateView.tsx`：
+  - [x] 输入 JSON → 实时校验
+  - [x] 有效：显示绿色 ✓
+  - [x] 无效：显示错误信息 + 错误行高亮
+- [x] 实现 `ConvertView.tsx`：
+  - [x] JSON→TS：输入 JSON → 生成 TypeScript interface
+  - [x] TS→JSON：输入 TypeScript interface → 生成 JSON 样例
+  - [x] 方向切换按钮
+- [x] 实现 `DiffView.tsx`：
+  - [x] 左右两个 textarea 输入
+  - [x] Diff 按钮 → 下方显示差异列表
+  - [x] 颜色编码（added 绿 / removed 红 / changed 黄）
+- [x] 实现 `TreeView.tsx`：
+  - [x] 输入 JSON → 树形可视化
+  - [x] 支持展开/折叠节点
+  - [x] 显示 key、值类型、值内容
+- [x] 实现 `store.ts`：
+  - [x] 当前模式、输入输出内容、校验状态
+- [x] 编写测试：
+  - [x] store 测试
+  - [x] JsonFormatterPanel 组件渲染测试（模式切换）
+  - [x] TreeView 递归渲染测试
+- [x] `pnpm test` 全部通过
 
 **交付物清单**：
 
-- [ ] `plugins/json-formatter/src/ui/JsonFormatterPanel.tsx` — 面板主组件
-- [ ] `plugins/json-formatter/src/ui/JsonFormatterPanel.test.tsx` — 面板测试
-- [ ] `plugins/json-formatter/src/ui/Toolbar.tsx` — 工具栏
-- [ ] `plugins/json-formatter/src/ui/FormatView.tsx` — 格式化视图
-- [ ] `plugins/json-formatter/src/ui/ValidateView.tsx` — 校验视图
-- [ ] `plugins/json-formatter/src/ui/ConvertView.tsx` — 转换视图
-- [ ] `plugins/json-formatter/src/ui/DiffView.tsx` — Diff 视图
-- [ ] `plugins/json-formatter/src/ui/TreeView.tsx` — 树形视图
-- [ ] `plugins/json-formatter/src/ui/TreeView.test.tsx` — 树形视图测试
-- [ ] `plugins/json-formatter/src/ui/store.ts` — 状态管理
-- [ ] `plugins/json-formatter/src/ui/store.test.ts` — 状态测试
+- [x] `plugins/json-formatter/src/ui/JsonFormatterPanel.tsx` — 面板主组件
+- [x] `plugins/json-formatter/src/ui/JsonFormatterPanel.test.tsx` — 面板测试
+- [x] `plugins/json-formatter/src/ui/Toolbar.tsx` — 工具栏
+- [x] `plugins/json-formatter/src/ui/FormatView.tsx` — 格式化视图
+- [x] `plugins/json-formatter/src/ui/ValidateView.tsx` — 校验视图
+- [x] `plugins/json-formatter/src/ui/ConvertView.tsx` — 转换视图
+- [x] `plugins/json-formatter/src/ui/DiffView.tsx` — Diff 视图
+- [x] `plugins/json-formatter/src/ui/TreeView.tsx` — 树形视图
+- [x] `plugins/json-formatter/src/ui/TreeView.test.tsx` — 树形视图测试
+- [x] `plugins/json-formatter/src/ui/store.ts` — 状态管理
+- [x] `plugins/json-formatter/src/ui/store.test.ts` — 状态测试
 
 **反模式警告**：
 
