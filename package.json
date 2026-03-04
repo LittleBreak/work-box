@@ -1,6 +1,7 @@
 {
   "name": "work-box",
   "version": "0.0.1",
+  "packageManager": "pnpm@9.15.9",
   "description": "A developer productivity desktop tool with Electron + React plugin architecture",
   "main": "./out/main/index.js",
   "author": "work-box",
@@ -14,14 +15,13 @@
     "start": "electron-vite preview",
     "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
     "rebuild:node": "cd node_modules/better-sqlite3 && node-gyp rebuild --release",
-    "predev": "pnpm run rebuild:electron",
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
     "dev": "electron-vite dev",
     "build": "pnpm run typecheck && electron-vite build",
-    "postinstall": "electron-rebuild -f -w better-sqlite3",
     "build:unpack": "pnpm run build && electron-builder --dir",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs run",
+    "test:watch": "ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
