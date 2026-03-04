@@ -98,7 +98,7 @@ export function MessageInput({
 
   /** 处理附件按钮点击（通过 workbox.workspace.selectFile） */
   const handleAttachClick = useCallback(async () => {
-    const workbox = (window as Record<string, unknown>).workbox as
+    const workbox = (window as unknown as Record<string, unknown>).workbox as
       | {
           workspace?: { selectFile?: () => Promise<string | null> };
           fs?: {

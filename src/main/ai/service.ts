@@ -146,7 +146,7 @@ export function createAIService(deps: AIServiceDeps): AIService {
               conversationId: convId,
               toolCallId: chunk.toolCallId,
               toolName: chunk.toolName,
-              args: chunk.args as Record<string, unknown>
+              args: (chunk as unknown as { args: Record<string, unknown> }).args
             });
           } else if (chunk.type === "tool-result") {
             onEvent({
@@ -154,7 +154,7 @@ export function createAIService(deps: AIServiceDeps): AIService {
               conversationId: convId,
               toolCallId: chunk.toolCallId,
               toolName: chunk.toolName,
-              result: chunk.result
+              result: (chunk as unknown as { result: unknown }).result
             });
           } else if (chunk.type === "finish") {
             onEvent({
@@ -230,7 +230,7 @@ export function createAIService(deps: AIServiceDeps): AIService {
               conversationId,
               toolCallId: chunk.toolCallId,
               toolName: chunk.toolName,
-              args: chunk.args as Record<string, unknown>
+              args: (chunk as unknown as { args: Record<string, unknown> }).args
             });
           } else if (chunk.type === "tool-result") {
             onEvent({
@@ -238,7 +238,7 @@ export function createAIService(deps: AIServiceDeps): AIService {
               conversationId,
               toolCallId: chunk.toolCallId,
               toolName: chunk.toolName,
-              result: chunk.result
+              result: (chunk as unknown as { result: unknown }).result
             });
           } else if (chunk.type === "finish") {
             onEvent({

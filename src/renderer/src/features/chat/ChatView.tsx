@@ -21,7 +21,7 @@ function getWorkbox():
       };
     }
   | undefined {
-  return (window as Record<string, unknown>).workbox as ReturnType<typeof getWorkbox>;
+  return (window as unknown as Record<string, unknown>).workbox as ReturnType<typeof getWorkbox>;
 }
 
 /** 搜索 debounce 延迟（毫秒） */

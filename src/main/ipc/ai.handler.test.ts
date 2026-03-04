@@ -37,7 +37,13 @@ function createMockService() {
     deleteMessagesAfter: vi.fn(),
     updateMessageContent: vi.fn(),
     getConversations: vi.fn(() => [
-      { id: "conv-1", title: "Test conversation", createdAt: 1000, updatedAt: 2000 }
+      {
+        id: "conv-1",
+        title: "Test conversation",
+        systemPrompt: null,
+        createdAt: 1000,
+        updatedAt: 2000
+      }
     ]),
     getHistory: vi.fn(() => [
       {
@@ -45,6 +51,8 @@ function createMockService() {
         conversationId: "conv-1",
         role: "user" as const,
         content: "Hello",
+        toolCalls: null,
+        toolResult: null,
         createdAt: 1000
       }
     ]),

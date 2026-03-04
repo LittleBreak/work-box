@@ -43,7 +43,7 @@ describe("ChatView", () => {
 
   afterEach(() => {
     // 清理 window.workbox mock
-    delete (window as Record<string, unknown>).workbox;
+    delete (window as unknown as Record<string, unknown>).workbox;
   });
 
   // 正常路径：组件可渲染
@@ -74,7 +74,7 @@ describe("ChatView", () => {
 
     // Mock window.workbox 让 chat 返回 rejected promise
     const unsubscribeFn = vi.fn();
-    (window as Record<string, unknown>).workbox = {
+    (window as unknown as Record<string, unknown>).workbox = {
       ai: {
         chat: vi.fn().mockRejectedValue(new Error("Not implemented")),
         onStream: vi.fn(() => unsubscribeFn)
@@ -113,7 +113,7 @@ describe("ChatView", () => {
     });
 
     // window.workbox 不存在
-    delete (window as Record<string, unknown>).workbox;
+    delete (window as unknown as Record<string, unknown>).workbox;
 
     render(<ChatView />);
 
@@ -163,7 +163,7 @@ describe("ChatView", () => {
       updateConversationSystemPrompt
     });
 
-    (window as Record<string, unknown>).workbox = {
+    (window as unknown as Record<string, unknown>).workbox = {
       ai: {
         updateSystemPrompt: vi.fn().mockResolvedValue(undefined),
         onStream: vi.fn(() => () => {})
@@ -185,7 +185,7 @@ describe("ChatView", () => {
   // 正常路径：MessageList 的 onCopy 调用 clipboard.writeText
   it("复制消息调用 clipboard.writeText", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
-    (window as Record<string, unknown>).workbox = {
+    (window as unknown as Record<string, unknown>).workbox = {
       clipboard: { writeText },
       ai: { onStream: vi.fn(() => () => {}) }
     };
@@ -273,7 +273,7 @@ describe("ChatView", () => {
   // 正常路径：选择 Markdown 格式导出
   it("选择 Markdown 格式调用 exportConversation", async () => {
     const exportConversation = vi.fn().mockResolvedValue("/tmp/test.md");
-    (window as Record<string, unknown>).workbox = {
+    (window as unknown as Record<string, unknown>).workbox = {
       ai: {
         exportConversation,
         onStream: vi.fn(() => () => {})
@@ -322,7 +322,7 @@ describe("ChatView", () => {
     });
 
     const unsubscribeFn = vi.fn();
-    (window as Record<string, unknown>).workbox = {
+    (window as unknown as Record<string, unknown>).workbox = {
       ai: {
         chat: vi.fn().mockResolvedValue({ conversationId: "conv-1", messageId: "m1" }),
         onStream: vi.fn(() => unsubscribeFn)
@@ -378,7 +378,7 @@ describe("ChatView", () => {
     });
 
     const unsubscribeFn = vi.fn();
-    (window as Record<string, unknown>).workbox = {
+    (window as unknown as Record<string, unknown>).workbox = {
       ai: {
         chat: vi.fn().mockResolvedValue({ conversationId: "conv-1", messageId: "m1" }),
         onStream: vi.fn(() => unsubscribeFn)

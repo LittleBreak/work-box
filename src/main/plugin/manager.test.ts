@@ -217,4 +217,82 @@ describe("PluginManager", () => {
     const info = pm.getPluginList().find((p) => p.id === "plugin-no-ui");
     expect(info?.hasUI).toBe(false);
   });
+
+  // 错误隔离：deactivate 抛异常不影响 disable 操作
+  it("deactivate 抛异常时 disablePlugin 仍将状态设为 disabled", async () => {
+    createTestPlugin(tmpDir, "plugin-deact-error", { hasDeactivate: true });
+    const pm = new PluginManager(mockServices);
+    await pm.loadAll([tmpDir]);
+
+    // The existing test plugin has a normal deactivate. We need one that throws.
+    // We create a special test plugin with a throwing deactivate:
+    const throwDir = path.join(tmpDir, "plugin-throw-deact");
+    fs.mkdirSync(throwDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(throwDir, "package.json"),
+      JSON.stringify({
+        name: "plugin-throw-deact",
+        version: "1.0.0",
+        workbox: {
+          name: "Plugin throw-deact",
+          permissions: [],
+          entry: { main: "./index.js" }
+        }
+      })
+    );
+    fs.writeFileSync(
+      path.join(throwDir, "index.js"),
+      `module.exports = {
+        default: {
+          name: "plugin-throw-deact",
+          activate: async (ctx) => {},
+          deactivate: async () => { throw new Error("deactivate boom"); }
+        }
+      };`
+    );
+
+    const pm2 = new PluginManager(mockServices);
+    await pm2.loadAll([tmpDir]);
+    // disablePlugin should not throw even if deactivate throws
+    await expect(pm2.disablePlugin("plugin-throw-deact")).resolves.toBeUndefined();
+    const info = pm2.getPluginList().find((p) => p.id === "plugin-throw-deact");
+    expect(info?.status).toBe("disabled");
+  });
+
+  // 错误隔离：shutdown 中单个插件 deactivate 失败不影响其他插件
+  it("shutdown 中单个插件 deactivate 失败不影响其他插件", async () => {
+    // Create one normal and one throwing plugin
+    const throwDir = path.join(tmpDir, "plugin-throw-shutdown");
+    fs.mkdirSync(throwDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(throwDir, "package.json"),
+      JSON.stringify({
+        name: "plugin-throw-shutdown",
+        version: "1.0.0",
+        workbox: {
+          name: "Plugin throw-shutdown",
+          permissions: [],
+          entry: { main: "./index.js" }
+        }
+      })
+    );
+    fs.writeFileSync(
+      path.join(throwDir, "index.js"),
+      `module.exports = {
+        default: {
+          name: "plugin-throw-shutdown",
+          activate: async (ctx) => {},
+          deactivate: async () => { throw new Error("shutdown deactivate boom"); }
+        }
+      };`
+    );
+    createTestPlugin(tmpDir, "plugin-normal", { hasDeactivate: true });
+
+    const pm = new PluginManager(mockServices);
+    await pm.loadAll([tmpDir]);
+    // shutdown should not throw even if one plugin's deactivate throws
+    await expect(pm.shutdown()).resolves.toBeUndefined();
+    const list = pm.getPluginList();
+    expect(list.every((p) => p.status === "unloaded")).toBe(true);
+  });
 });

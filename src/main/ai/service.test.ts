@@ -164,7 +164,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("Hello world")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -186,7 +186,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter, model: "gpt-4o" });
       const conv = service.createConversation();
@@ -207,7 +207,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("Reply")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -228,7 +228,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -265,7 +265,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const externalId = "external-conv-id-not-in-db";
@@ -293,7 +293,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const events: StreamEvent[] = [];
@@ -330,14 +330,16 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter, maxContextMessages: 10 });
       await service.chat("conv-1", "New message", () => {});
 
       // 验证传给 streamText 的 messages 不超过 maxContextMessages + 1（含新用户消息）
       const callArgs = mockStreamText.mock.calls[0]![0];
-      expect((callArgs as Record<string, unknown[]>).messages.length).toBeLessThanOrEqual(11);
+      expect(
+        (callArgs as unknown as Record<string, unknown[]>).messages.length
+      ).toBeLessThanOrEqual(11);
     });
   });
 
@@ -354,7 +356,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("OK")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -386,7 +388,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -410,7 +412,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -436,7 +438,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       const conv = service.createConversation();
@@ -508,7 +510,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("New reply")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       // 确保 conversation 存在
@@ -586,7 +588,7 @@ describe("createAIService", () => {
           };
         })(),
         text: Promise.resolve("")
-      } as ReturnType<typeof streamText>);
+      } as unknown as ReturnType<typeof streamText>);
 
       const service = createAIService({ crud, adapter });
       await service.regenerate("conv-1", () => {});

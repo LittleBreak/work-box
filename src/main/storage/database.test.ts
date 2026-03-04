@@ -54,12 +54,12 @@ describe("Database", () => {
   describe("Schema 一致性", () => {
     // 验证 database.ts 建表 SQL 与 schema.ts Drizzle schema 的列名一致
     it("实际数据库列名与 Drizzle schema 列名一致", () => {
-      const schemaMap: Record<string, Record<string, unknown>> = {
+      const schemaMap = {
         conversations: schema.conversations,
         messages: schema.messages,
         plugin_storage: schema.pluginStorage,
         settings: schema.settings
-      };
+      } as unknown as Record<string, Record<string, unknown>>;
 
       for (const [tableName, drizzleTable] of Object.entries(schemaMap)) {
         // 获取实际数据库的列名

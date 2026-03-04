@@ -40,10 +40,12 @@ export function createToolRouter(): ToolRouter {
     getToolsForAISDK() {
       const tools: Record<string, unknown> = {};
       for (const [name, toolDef] of registry) {
-        tools[name] = tool({
+        const schema = jsonSchema(toolDef.parameters as Parameters<typeof jsonSchema>[0]);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tools[name] = (tool as any)({
           description: toolDef.description,
-          parameters: jsonSchema(toolDef.parameters as Parameters<typeof jsonSchema>[0]),
-          execute: async (params) => {
+          parameters: schema,
+          execute: async (params: unknown) => {
             return toolDef.handler(params as Record<string, unknown>);
           }
         });
