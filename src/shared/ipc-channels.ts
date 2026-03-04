@@ -61,6 +61,9 @@ export const IPC_CHANNELS = {
     diff: "git:diff",
     log: "git:log"
   },
+  log: {
+    write: "log:write"
+  },
   fileExplorer: {
     getRootPath: "fileExplorer:getRootPath",
     listDir: "fileExplorer:listDir",

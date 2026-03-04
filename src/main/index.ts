@@ -8,9 +8,16 @@ import { createAIService, createProviderAdapter } from "./ai";
 import { createSettingsHandler } from "./ipc/settings.handler";
 import { PluginManager } from "./plugin/manager";
 import { createSystemServices } from "./plugin/services";
+import { initLogger, createLogger, installGlobalErrorHandlers } from "./logger";
 import type { Crud } from "./storage/crud";
 import type { AIService } from "./ai";
 import icon from "../../resources/icon.png?asset";
+
+// Initialize logging system early
+initLogger();
+const logger = createLogger("main");
+installGlobalErrorHandlers(logger);
+logger.info("Application starting");
 
 let pluginManager: PluginManager | undefined;
 
@@ -68,7 +75,9 @@ app.whenReady().then(() => {
   pluginManager = new PluginManager(services);
   const pluginsDir = join(__dirname, "../../plugins");
   pluginManager.loadAll([pluginsDir]).catch((err) => {
-    console.error("[Plugin] Failed to load plugins:", err);
+    logger.error("Failed to load plugins", {
+      error: err instanceof Error ? err.message : String(err)
+    });
   });
 
   /** 弹出文件选择对话框 */
@@ -91,7 +100,9 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   pluginManager?.shutdown().catch((err) => {
-    console.error("[Plugin] Failed to shutdown plugins:", err);
+    logger.error("Failed to shutdown plugins", {
+      error: err instanceof Error ? err.message : String(err)
+    });
   });
   if (process.platform !== "darwin") {
     app.quit();
@@ -125,7 +136,9 @@ function initAIService(crud: Crud): AIService | undefined {
 
     return createAIService({ crud, adapter, model: aiModel, showSaveDialog });
   } catch (err) {
-    console.error("[AI] Failed to initialize AI service:", err);
+    logger.error("Failed to initialize AI service", {
+      error: err instanceof Error ? err.message : String(err)
+    });
     return undefined;
   }
 }

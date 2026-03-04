@@ -6,9 +6,11 @@ import { setupSettingsHandlers } from "./settings.handler";
 import { setupClipboardHandlers } from "./clipboard.handler";
 import { setupWorkspaceHandlers } from "./workspace.handler";
 import { createAIHandler } from "./ai.handler";
+import { createLogger } from "../logger";
 import type { Crud } from "../storage/crud";
 import type { PluginManager } from "../plugin/manager";
 import type { AIService } from "../ai/service";
+import type { LogEntry } from "@shared/types";
 
 let registered = false;
 
@@ -134,6 +136,14 @@ export function registerIPCHandlers(options?: RegisterIPCOptions): void {
     ipcMain.handle(IPC_CHANNELS.settings.update, notImplemented);
     ipcMain.handle(IPC_CHANNELS.settings.reset, notImplemented);
   }
+
+  // log 领域（Task 6.5 实现）— 接收渲染进程日志并写入主进程日志系统
+  const rendererLogger = createLogger("renderer");
+  ipcMain.handle(IPC_CHANNELS.log.write, async (_event, entry: LogEntry) => {
+    const logger = entry.scope ? createLogger(entry.scope) : rendererLogger;
+    const method = logger[entry.level] || logger.info;
+    method(entry.message, entry.meta);
+  });
 
   registered = true;
 }

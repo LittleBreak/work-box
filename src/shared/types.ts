@@ -1,5 +1,19 @@
 /** 主进程/渲染进程共享类型定义 */
 
+// ---- 日志系统 ----
+
+/** 日志级别 */
+export type LogLevel = "error" | "warn" | "info" | "debug";
+
+/** 结构化日志条目（渲染进程通过 IPC 发送到主进程） */
+export interface LogEntry {
+  level: LogLevel;
+  scope: string;
+  message: string;
+  timestamp: string;
+  meta?: Record<string, unknown>;
+}
+
 /** Shell 命令执行结果 */
 export interface ExecResult {
   stdout: string;

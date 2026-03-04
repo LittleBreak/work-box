@@ -39,6 +39,18 @@ interface WorkboxAPI {
     onData(callback: (sessionId: string, data: string) => void): () => void;
     onExit(callback: (sessionId: string, exitCode: number) => void): () => void;
   };
+  log?: {
+    write(entry: {
+      level: string;
+      scope: string;
+      message: string;
+      timestamp: string;
+      meta?: Record<string, unknown>;
+    }): void;
+  };
+  /** Dynamic plugin-registered APIs (e.g., fileExplorer, git) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
 declare global {

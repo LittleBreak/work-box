@@ -152,6 +152,10 @@ const workboxAPI = {
     deleteItem: (targetPath: string): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.fileExplorer.deleteItem, targetPath)
   },
+  log: {
+    write: (entry: import("@shared/types").LogEntry): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.log.write, entry)
+  },
   terminal: {
     create: (options?: import("@shared/types").TerminalCreateOptions): Promise<string> =>
       ipcRenderer.invoke(IPC_CHANNELS.terminal.create, options),
