@@ -304,7 +304,7 @@ await this.ctx.shell.exec(`rm -rf "${targetPath}"`); // 可注入
 
 ---
 
-### Task S.6：环境变量敏感关键词过滤补充
+### ~~Task S.6：环境变量敏感关键词过滤补充~~ ✅ 已完成
 
 **TDD 策略**：A 类（严格 Red-Green-Refactor）
 
@@ -325,7 +325,7 @@ await this.ctx.shell.exec(`rm -rf "${targetPath}"`); // 可注入
 **执行步骤**：
 
 1. 编写测试（Red）
-   - [ ] `src/main/ipc/shell.handler.test.ts` — 新增敏感变量过滤测试：
+   - [x] `src/main/ipc/shell.handler.test.ts` — 新增敏感变量过滤测试：
      - 测试 1：`PRIVATE_KEY` 被过滤
      - 测试 2：`JWT_SECRET` 被过滤
      - 测试 3：`GH_TOKEN`、`GITHUB_TOKEN` 被过滤
@@ -333,45 +333,23 @@ await this.ctx.shell.exec(`rm -rf "${targetPath}"`); // 可注入
      - 测试 5：`AUTH_TOKEN`、`AUTHORIZATION` 被过滤
      - 测试 6：`OPENAI_API_KEY`、`ANTHROPIC_API_KEY` 被过滤
      - 测试 7：非敏感变量（如 `HOME`、`PATH`、`LANG`）不被过滤
-   - [ ] 运行 `pnpm test` 确认新增测试 FAIL
+   - [x] 运行 `pnpm test` 确认新增测试 FAIL
 
 2. 编写实现（Green）
-   - [ ] 更新 `SENSITIVE_ENV_KEYWORDS` 数组：
-     ```typescript
-     const SENSITIVE_ENV_KEYWORDS = [
-       "KEY",
-       "SECRET",
-       "TOKEN",
-       "PASSWORD",
-       "CREDENTIAL",
-       "PRIVATE",
-       "JWT",
-       "AUTH",
-       "CERT",
-       "GITHUB",
-       "GITLAB",
-       "NPM",
-       "DOCKER",
-       "API",
-       "OPENAI",
-       "ANTHROPIC",
-       "WEBHOOK",
-       "ENDPOINT"
-     ];
-     ```
-   - [ ] 注意：新增 `API` 关键词可能过度过滤，需评估是否影响正常变量（如 `API_VERSION`）。若影响过大，改为仅匹配 `*_API_KEY` 模式
-   - [ ] 运行 `pnpm test` 确认全部 PASS
+   - [x] 更新 `SENSITIVE_ENV_KEYWORDS` 数组为 9 个关键词（+PRIVATE, AUTH, CERT, JWT）
+   - [x] 评估过度过滤风险：未添加 API/ENDPOINT/DOCKER 等可能误过滤的关键词。GH_TOKEN/GITHUB_TOKEN/NPM_TOKEN 已被 TOKEN 覆盖，OPENAI_API_KEY 已被 KEY 覆盖。
+   - [x] 运行 `pnpm test` 确认全部 PASS
 
 3. 重构（Refactor）
-   - [ ] 检查是否需要支持精确匹配和模式匹配两种过滤方式
-   - [ ] 运行 `pnpm test` 最终确认全部 PASS
+   - [x] 评估后决定不需要精确匹配+模式匹配两种方式，当前 includes 匹配足够且简洁
+   - [x] 运行 `pnpm test` 最终确认全部 PASS
 
 **验收标准**：
 
-- [ ] 所有常见敏感环境变量被过滤
-- [ ] 非敏感变量不受影响
-- [ ] `filterEnv()` 的 JSDoc 注释更新反映新增关键词
-- [ ] 测试全部通过
+- [x] 所有常见敏感环境变量被过滤
+- [x] 非敏感变量不受影响
+- [x] `filterEnv()` 的 JSDoc 注释更新反映新增关键词
+- [x] 测试全部通过
 
 ---
 
@@ -383,4 +361,10 @@ await this.ctx.shell.exec(`rm -rf "${targetPath}"`); // 可注入
 
 ## 已完成
 
-（当前无）
+### Task S.6：环境变量敏感关键词过滤补充 ✅
+
+- [x] 新增 7 个敏感变量过滤测试（PRIVATE、JWT、GH/GITHUB、NPM、AUTH、OPENAI/ANTHROPIC、非敏感变量）
+- [x] SENSITIVE_ENV_KEYWORDS 扩展为 9 个关键词（+PRIVATE, AUTH, CERT, JWT）
+- [x] filterEnv() JSDoc 注释已更新
+- [x] 所有 26 个 shell.handler 测试通过
+- [x] 全量测试无新增失败

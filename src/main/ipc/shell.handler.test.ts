@@ -120,6 +120,89 @@ describe("shell.handler", () => {
       expect(env.CUSTOM).toBe("value");
       expect(env).not.toHaveProperty("API_KEY");
     });
+
+    it("过滤 PRIVATE_KEY 相关变量", () => {
+      const env = filterEnv({
+        PRIVATE_KEY: "rsa-key",
+        RSA_PRIVATE_KEY: "rsa-key-2",
+        HOME: "/home/user"
+      });
+      expect(env).not.toHaveProperty("PRIVATE_KEY");
+      expect(env).not.toHaveProperty("RSA_PRIVATE_KEY");
+      expect(env.HOME).toBe("/home/user");
+    });
+
+    it("过滤 JWT_SECRET 相关变量", () => {
+      const env = filterEnv({
+        JWT_SECRET: "jwt-secret-val",
+        PATH: "/usr/bin"
+      });
+      expect(env).not.toHaveProperty("JWT_SECRET");
+      expect(env.PATH).toBe("/usr/bin");
+    });
+
+    it("过滤 GH_TOKEN 和 GITHUB_TOKEN", () => {
+      const env = filterEnv({
+        GH_TOKEN: "ghp_xxx",
+        GITHUB_TOKEN: "ghp_yyy",
+        LANG: "en_US.UTF-8"
+      });
+      expect(env).not.toHaveProperty("GH_TOKEN");
+      expect(env).not.toHaveProperty("GITHUB_TOKEN");
+      expect(env.LANG).toBe("en_US.UTF-8");
+    });
+
+    it("过滤 NPM_TOKEN 和 NPM_AUTHTOKEN", () => {
+      const env = filterEnv({
+        NPM_TOKEN: "npm-tok",
+        NPM_AUTHTOKEN: "npm-auth",
+        HOME: "/home/user"
+      });
+      expect(env).not.toHaveProperty("NPM_TOKEN");
+      expect(env).not.toHaveProperty("NPM_AUTHTOKEN");
+      expect(env.HOME).toBe("/home/user");
+    });
+
+    it("过滤 AUTH_TOKEN 和 AUTHORIZATION", () => {
+      const env = filterEnv({
+        AUTH_TOKEN: "auth-tok",
+        AUTHORIZATION: "Bearer xxx",
+        PATH: "/usr/bin"
+      });
+      expect(env).not.toHaveProperty("AUTH_TOKEN");
+      expect(env).not.toHaveProperty("AUTHORIZATION");
+      expect(env.PATH).toBe("/usr/bin");
+    });
+
+    it("过滤 OPENAI_API_KEY 和 ANTHROPIC_API_KEY", () => {
+      const env = filterEnv({
+        OPENAI_API_KEY: "sk-xxx",
+        ANTHROPIC_API_KEY: "sk-ant-xxx",
+        HOME: "/home/user"
+      });
+      expect(env).not.toHaveProperty("OPENAI_API_KEY");
+      expect(env).not.toHaveProperty("ANTHROPIC_API_KEY");
+      expect(env.HOME).toBe("/home/user");
+    });
+
+    it("不过滤非敏感变量 HOME/PATH/LANG/EDITOR/SHELL", () => {
+      const env = filterEnv({
+        HOME: "/home/user",
+        PATH: "/usr/bin",
+        LANG: "en_US.UTF-8",
+        EDITOR: "vim",
+        SHELL: "/bin/zsh",
+        NODE_ENV: "production",
+        TERM: "xterm-256color"
+      });
+      expect(env.HOME).toBe("/home/user");
+      expect(env.PATH).toBe("/usr/bin");
+      expect(env.LANG).toBe("en_US.UTF-8");
+      expect(env.EDITOR).toBe("vim");
+      expect(env.SHELL).toBe("/bin/zsh");
+      expect(env.NODE_ENV).toBe("production");
+      expect(env.TERM).toBe("xterm-256color");
+    });
   });
 
   describe("isDangerousCommand", () => {

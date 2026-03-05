@@ -8,9 +8,21 @@ import type { ExecResult, ExecOptions } from "@shared/types";
 export const DEFAULT_TIMEOUT = 30000;
 
 /**
- * 敏感环境变量名关键词（大小写不敏感匹配）
+ * 敏感环境变量名关键词（大小写不敏感匹配）。
+ * 变量名中包含以下任一关键词即被视为敏感变量并过滤：
+ * KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, PRIVATE, AUTH, CERT, JWT
  */
-const SENSITIVE_ENV_KEYWORDS = ["KEY", "SECRET", "TOKEN", "PASSWORD", "CREDENTIAL"];
+const SENSITIVE_ENV_KEYWORDS = [
+  "KEY",
+  "SECRET",
+  "TOKEN",
+  "PASSWORD",
+  "CREDENTIAL",
+  "PRIVATE",
+  "AUTH",
+  "CERT",
+  "JWT"
+];
 
 /**
  * 危险命令正则列表（词边界匹配，避免子串误判）
@@ -38,7 +50,7 @@ export function isDangerousCommand(command: string): boolean {
 // ---- Environment Variable Filtering ----
 
 /**
- * 过滤环境变量：移除名称中含 KEY/SECRET/TOKEN/PASSWORD/CREDENTIAL 的变量。
+ * 过滤环境变量：移除名称中含敏感关键词的变量（见 SENSITIVE_ENV_KEYWORDS）。
  * 若 extraEnv 存在则合并覆盖到过滤后结果。
  */
 export function filterEnv(
