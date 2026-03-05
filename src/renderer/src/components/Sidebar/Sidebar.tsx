@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Home, MessageSquare, Puzzle, Settings, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAppStore, type PageId } from "../../stores/app.store";
 import { usePluginStore } from "../../stores/plugin.store";
-import { PLUGIN_PANELS } from "../../features/plugins/plugin-panels";
+import { resolvePluginIcon } from "../../features/plugins/icon-resolver";
 import { cn } from "../../lib/utils";
 
 interface NavItem {
@@ -33,13 +33,13 @@ export function Sidebar(): React.JSX.Element {
     fetchPlugins();
   }, [fetchPlugins]);
 
-  // Build plugin nav items from active plugins that have UI and are registered
+  // Build plugin nav items from active plugins that have UI
   const pluginNavItems: NavItem[] = plugins
-    .filter((p) => p.status === "active" && p.hasUI && PLUGIN_PANELS[p.id])
+    .filter((p) => p.status === "active" && p.hasUI)
     .map((p) => ({
       id: `plugin:${p.id}` as PageId,
       label: p.name,
-      icon: PLUGIN_PANELS[p.id].icon
+      icon: resolvePluginIcon(p.icon)
     }));
 
   const hasPluginItems = pluginNavItems.length > 0;

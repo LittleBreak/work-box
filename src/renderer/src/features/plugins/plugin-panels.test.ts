@@ -1,33 +1,27 @@
 import { describe, it, expect } from "vitest";
-import { PLUGIN_PANELS, getPluginPanel } from "./plugin-panels";
+import { getPluginPanel, getDiscoveredPluginIds } from "./plugin-panels";
 
-describe("plugin-panels", () => {
-  it("注册了 3 个内置插件", () => {
-    expect(Object.keys(PLUGIN_PANELS)).toHaveLength(3);
+describe("plugin-panels (auto-discovery)", () => {
+  it("自动发现所有 5 个插件 UI 组件", () => {
+    const ids = getDiscoveredPluginIds();
+    expect(ids).toHaveLength(5);
+    expect(ids).toContain("@workbox/plugin-terminal");
+    expect(ids).toContain("@workbox/plugin-file-explorer");
+    expect(ids).toContain("@workbox/plugin-git-helper");
+    expect(ids).toContain("@workbox/plugin-json-formatter");
+    expect(ids).toContain("@workbox/plugin-regex-tester");
   });
 
-  it("Terminal 插件已注册", () => {
-    const entry = getPluginPanel("@workbox/plugin-terminal");
-    expect(entry).toBeDefined();
-    expect(entry!.component).toBeDefined();
-    expect(entry!.icon).toBeDefined();
+  it("每个插件有可用的 component", () => {
+    const ids = getDiscoveredPluginIds();
+    for (const id of ids) {
+      const entry = getPluginPanel(id);
+      expect(entry).toBeDefined();
+      expect(typeof entry!.component).toBe("function");
+    }
   });
 
-  it("File Explorer 插件已注册", () => {
-    const entry = getPluginPanel("@workbox/plugin-file-explorer");
-    expect(entry).toBeDefined();
-    expect(entry!.component).toBeDefined();
-    expect(entry!.icon).toBeDefined();
-  });
-
-  it("Git Helper 插件已注册", () => {
-    const entry = getPluginPanel("@workbox/plugin-git-helper");
-    expect(entry).toBeDefined();
-    expect(entry!.component).toBeDefined();
-    expect(entry!.icon).toBeDefined();
-  });
-
-  it("不存在的插件返回 undefined", () => {
+  it("未知 ID 返回 undefined", () => {
     expect(getPluginPanel("nonexistent")).toBeUndefined();
   });
 });

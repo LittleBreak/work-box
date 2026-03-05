@@ -29,6 +29,7 @@ export default defineWorkspace([
     }
   },
   {
+    plugins: [react()],
     resolve: {
       alias: {
         "@renderer": resolve(__dirname, "src/renderer/src"),

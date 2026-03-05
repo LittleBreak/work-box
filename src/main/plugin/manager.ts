@@ -88,6 +88,7 @@ export class PluginManager {
         status: instance.status,
         permissions: instance.parsed.config.permissions,
         hasUI: !!instance.parsed.config.entry.ui,
+        icon: instance.parsed.config.icon,
         error: instance.error
       });
     }

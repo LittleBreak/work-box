@@ -8,6 +8,7 @@
   "workbox": {
     "name": "Regex Tester",
     "description": "正则表达式测试工具，支持实时匹配高亮、匹配组提取、常用模板和 Flag 切换",
+    "icon": "regex",
     "permissions": [
       "clipboard"
     ],

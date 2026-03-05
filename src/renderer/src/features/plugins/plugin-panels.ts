@@ -1,29 +1,58 @@
 /**
- * Plugin Panel Registry
+ * Plugin Panel Auto-Discovery
  *
- * Static mapping from plugin IDs to their React UI components and sidebar icons.
- * Only built-in plugins bundled in the monorepo are registered here.
+ * Uses import.meta.glob to automatically discover plugin UI components
+ * from the plugins directory. Eliminates the need for static registration.
  */
 import type { ElementType } from "react";
-import { Terminal, FolderOpen, GitBranch } from "lucide-react";
-import { TerminalPanel } from "../../../../../plugins/terminal/src/ui/TerminalPanel";
-import { FileExplorerPanel } from "../../../../../plugins/file-explorer/src/ui/FileExplorerPanel";
-import GitPanel from "../../../../../plugins/git-helper/src/ui/GitPanel";
 
 /** Registry entry for a plugin's UI panel */
 export interface PluginPanelEntry {
   component: ElementType;
-  icon: ElementType;
 }
 
-/** Static registry mapping plugin IDs to their panel entries */
-export const PLUGIN_PANELS: Record<string, PluginPanelEntry> = {
-  "@workbox/plugin-terminal": { component: TerminalPanel, icon: Terminal },
-  "@workbox/plugin-file-explorer": { component: FileExplorerPanel, icon: FolderOpen },
-  "@workbox/plugin-git-helper": { component: GitPanel, icon: GitBranch }
-};
+/**
+ * Auto-discover plugin UI panel modules via import.meta.glob.
+ * Matches all *Panel.tsx files in plugin UI directories.
+ */
+const panelModules = import.meta.glob<Record<string, unknown>>(
+  "../../../../../plugins/*/src/ui/*Panel.tsx",
+  { eager: true }
+);
 
-/** Get a plugin's panel entry by ID, or undefined if not registered */
+/** Build registry from glob results: extract plugin dirname → pluginId */
+function buildRegistry(): Record<string, PluginPanelEntry> {
+  const registry: Record<string, PluginPanelEntry> = {};
+
+  for (const [filePath, mod] of Object.entries(panelModules)) {
+    // Extract plugin dirname from path like "../../../../../plugins/terminal/src/ui/TerminalPanel.tsx"
+    const match = filePath.match(/plugins\/([^/]+)\/src\/ui\//);
+    if (!match) continue;
+
+    const dirname = match[1];
+    const pluginId = `@workbox/plugin-${dirname}`;
+
+    // Support both default and named exports
+    const component =
+      (mod.default as ElementType | undefined) ??
+      (Object.values(mod).find((v) => typeof v === "function") as ElementType | undefined);
+
+    if (component) {
+      registry[pluginId] = { component };
+    }
+  }
+
+  return registry;
+}
+
+const DISCOVERED_PANELS = buildRegistry();
+
+/** Get a plugin's panel entry by ID, or undefined if not discovered */
 export function getPluginPanel(pluginId: string): PluginPanelEntry | undefined {
-  return PLUGIN_PANELS[pluginId];
+  return DISCOVERED_PANELS[pluginId];
+}
+
+/** Get all discovered plugin IDs (for testing) */
+export function getDiscoveredPluginIds(): string[] {
+  return Object.keys(DISCOVERED_PANELS);
 }

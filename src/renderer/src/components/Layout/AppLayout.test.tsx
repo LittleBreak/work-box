@@ -6,7 +6,6 @@ import { usePluginStore } from "../../stores/plugin.store";
 
 // Mock plugin panel components to avoid importing real implementations
 vi.mock("../../features/plugins/plugin-panels", () => ({
-  PLUGIN_PANELS: {},
   getPluginPanel: vi.fn()
 }));
 

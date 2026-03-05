@@ -9,6 +9,7 @@
   "workbox": {
     "name": "Git Helper",
     "description": "一键 Git 操作助手，提供 Git 状态查询、提交、分支管理等功能",
+    "icon": "git-branch",
     "permissions": [
       "fs:read",
       "shell:exec"

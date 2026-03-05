@@ -14,7 +14,8 @@ const activePluginsWithUI: PluginInfo[] = [
     version: "1.0.0",
     status: "active",
     permissions: [],
-    hasUI: true
+    hasUI: true,
+    icon: "terminal"
   },
   {
     id: "@workbox/plugin-file-explorer",
@@ -22,7 +23,8 @@ const activePluginsWithUI: PluginInfo[] = [
     version: "1.0.0",
     status: "active",
     permissions: [],
-    hasUI: true
+    hasUI: true,
+    icon: "folder-open"
   }
 ];
 
@@ -117,7 +119,8 @@ describe("Sidebar", () => {
       version: "1.0.0",
       status: "disabled",
       permissions: [],
-      hasUI: true
+      hasUI: true,
+      icon: "terminal"
     };
     mockWorkbox([disabledPlugin]);
     usePluginStore.setState({ plugins: [disabledPlugin] });
@@ -132,7 +135,8 @@ describe("Sidebar", () => {
       version: "1.0.0",
       status: "active",
       permissions: [],
-      hasUI: false
+      hasUI: false,
+      icon: "terminal"
     };
     mockWorkbox([noUIPlugin]);
     usePluginStore.setState({ plugins: [noUIPlugin] });
@@ -161,5 +165,38 @@ describe("Sidebar", () => {
       "data-active",
       "false"
     );
+  });
+
+  // ---- 新增：自动发现相关测试 ----
+
+  it("未在 PLUGIN_PANELS 注册的插件（如 json-formatter）只要 active+hasUI 也能显示", () => {
+    const jsonPlugin: PluginInfo = {
+      id: "@workbox/plugin-json-formatter",
+      name: "JSON Formatter",
+      version: "1.0.0",
+      status: "active",
+      permissions: [],
+      hasUI: true,
+      icon: "braces"
+    };
+    mockWorkbox([jsonPlugin]);
+    usePluginStore.setState({ plugins: [jsonPlugin] });
+    render(<Sidebar />);
+    expect(screen.getByTestId("nav-plugin:@workbox/plugin-json-formatter")).toBeInTheDocument();
+  });
+
+  it("无 icon 字段的插件使用默认图标，不崩溃", () => {
+    const noIconPlugin: PluginInfo = {
+      id: "@workbox/plugin-terminal",
+      name: "Terminal",
+      version: "1.0.0",
+      status: "active",
+      permissions: [],
+      hasUI: true
+    };
+    mockWorkbox([noIconPlugin]);
+    usePluginStore.setState({ plugins: [noIconPlugin] });
+    render(<Sidebar />);
+    expect(screen.getByTestId("nav-plugin:@workbox/plugin-terminal")).toBeInTheDocument();
   });
 });

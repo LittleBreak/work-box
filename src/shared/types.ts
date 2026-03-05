@@ -242,5 +242,6 @@ export interface PluginInfo {
   status: PluginStatus;
   permissions: string[];
   hasUI: boolean;
+  icon?: string;
   error?: string;
 }
