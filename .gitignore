@@ -50,3 +50,4 @@ tsconfig.web.tsbuildinfo
 dist/
 out/
 tsconfig.tsbuildinfo
+.eslintcache
