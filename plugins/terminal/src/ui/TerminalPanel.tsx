@@ -6,13 +6,12 @@ import { TerminalInstance } from "./TerminalInstance";
 /** 终端面板主组件，管理 Tab 列表和终端实例 */
 export function TerminalPanel(): React.JSX.Element {
   const { tabs, activeTabId, createTab, closeTab, setActiveTab } = useTerminalStore();
+  const initFirstTab = useTerminalStore((s) => s.initFirstTab);
 
   // 首次挂载时自动创建一个终端 Tab
   useEffect(() => {
-    if (tabs.length === 0) {
-      createTab();
-    }
-  }, []);
+    initFirstTab();
+  }, [initFirstTab]);
 
   return (
     <div data-testid="terminal-panel" className="flex h-full flex-col">

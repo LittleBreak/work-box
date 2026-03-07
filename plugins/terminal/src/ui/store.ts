@@ -15,6 +15,8 @@ interface TerminalState {
   tabs: TerminalTab[];
   activeTabId: string | null;
 
+  /** 初始化：若无 Tab 则自动创建一个 */
+  initFirstTab: () => Promise<void>;
   /** 创建新终端 Tab */
   createTab: () => Promise<void>;
   /** 关闭指定 Tab */
@@ -29,6 +31,12 @@ interface TerminalState {
 export const useTerminalStore = create<TerminalState>((set, get) => ({
   tabs: [],
   activeTabId: null,
+
+  async initFirstTab() {
+    if (get().tabs.length === 0) {
+      await get().createTab();
+    }
+  },
 
   async createTab() {
     const sessionId = await window.workbox.terminal.create();
