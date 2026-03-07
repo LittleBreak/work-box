@@ -92,6 +92,18 @@ plugins/         # 内置插件
 - 禁止使用 `any` 类型，必须显式定义类型
 - 优先使用 `interface` 而非 `type`（除非需要联合类型或映射类型）
 
+### 质量门禁（强制）
+
+有大的功能变更时，任务结束前**必须**依次执行以下命令，全部通过且**零错误、零 warning** 才可视为任务完成：
+
+```bash
+pnpm test        # 所有测试通过
+pnpm lint        # 无 lint 错误和 warning
+pnpm typecheck   # 无类型错误
+```
+
+如果任一命令输出错误或 warning，**必须修复后重新运行**，直至三项检查全部干净通过。
+
 ## 安全规范
 
 - 渲染进程：`contextIsolation: true` + `nodeIntegration: false`
