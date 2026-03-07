@@ -1,0 +1,30 @@
+{
+  "name": "@workbox/plugin-url-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@workbox/plugin-api": "workspace:*",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5"
+  },
+  "workbox": {
+    "name": "URL Toolkit",
+    "description": "URL 工具箱，支持编解码、Query 参数解析和二维码生成",
+    "icon": "link",
+    "permissions": [
+      "clipboard"
+    ],
+    "entry": {
+      "main": "./src/index.ts",
+      "ui": "./src/ui/UrlToolkitPanel.tsx"
+    },
+    "ai": {
+      "tools": [
+        "url_encode",
+        "url_parse"
+      ]
+    }
+  }
+}
