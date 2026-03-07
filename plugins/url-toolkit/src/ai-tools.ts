@@ -3,8 +3,8 @@
  *
  * 可测试的独立函数，供 activate() 中注册 AI tools 使用。
  */
-import { encodeFullUrl, decodeFullUrl, encodeComponent, decodeComponent } from "./url-codec";
-import { parseUrl } from "./url-parser";
+import { encodeFullUrl, decodeFullUrl, encodeComponent, decodeComponent } from "./url-codec.ts";
+import { parseUrl } from "./url-parser.ts";
 
 /** url_encode handler 参数 */
 interface UrlEncodeParams {

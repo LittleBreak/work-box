@@ -7,11 +7,11 @@
  */
 import { ipcMain, BrowserWindow } from "electron";
 import * as pty from "node-pty";
-import { TERMINAL_CHANNELS } from "./constants";
-import { TerminalSessionManager } from "./session-manager";
-import { CommandExecutor } from "./command-executor";
+import { TERMINAL_CHANNELS } from "./constants.ts";
+import { TerminalSessionManager } from "./session-manager.ts";
+import { CommandExecutor } from "./command-executor.ts";
 import type { PluginContext, PluginDefinition, Disposable } from "@workbox/plugin-api";
-import type { TerminalCreateOptions } from "./constants";
+import type { TerminalCreateOptions } from "./constants.ts";
 
 /** 模块级 SessionManager 引用，供 deactivate 访问 */
 let sessionManager: TerminalSessionManager | null = null;

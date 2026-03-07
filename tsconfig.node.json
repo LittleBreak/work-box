@@ -10,6 +10,8 @@
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "plugins/*/src/ui/**/*"],
   "compilerOptions": {
     "composite": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["electron-vite/node"],
     "baseUrl": ".",
     "paths": {

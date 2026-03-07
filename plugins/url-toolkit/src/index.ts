@@ -5,8 +5,8 @@
  * 纯计算逻辑在渲染进程执行，主进程负责 AI tools 注册。
  */
 import type { PluginDefinition, PluginContext, Disposable } from "@workbox/plugin-api";
-import { handleUrlEncode } from "./ai-tools";
-import { handleUrlParse } from "./ai-tools";
+import { handleUrlEncode } from "./ai-tools.ts";
+import { handleUrlParse } from "./ai-tools.ts";
 
 /** 已注册的 disposable 资源 */
 const disposables: Disposable[] = [];

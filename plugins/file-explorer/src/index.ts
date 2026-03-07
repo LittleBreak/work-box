@@ -6,10 +6,10 @@
  * deactivate() 中清理所有资源。
  */
 import { ipcMain } from "electron";
-import { FILE_EXPLORER_CHANNELS } from "./constants";
-import { FileService } from "./file-service";
+import { FILE_EXPLORER_CHANNELS } from "./constants.ts";
+import { FileService } from "./file-service.ts";
 import type { PluginContext, PluginDefinition } from "@workbox/plugin-api";
-import type { SearchOptions } from "./constants";
+import type { SearchOptions } from "./constants.ts";
 
 /** 模块级 FileService 引用，供 deactivate 访问 */
 let fileService: FileService | null = null;
