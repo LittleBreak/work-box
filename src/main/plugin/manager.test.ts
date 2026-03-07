@@ -48,7 +48,7 @@ function createTestPlugin(
 ): string {
   const pluginDir = path.join(baseDir, name);
   fs.mkdirSync(pluginDir, { recursive: true });
-  const entry: Record<string, string> = { main: "./index.js" };
+  const entry: Record<string, string> = { main: "./index.mjs" };
   if (options?.hasUI) {
     entry.ui = "./ui/Panel.tsx";
   }
@@ -69,13 +69,11 @@ function createTestPlugin(
   const deactivateExport = options?.hasDeactivate !== false ? "deactivate: async () => {}," : "";
 
   fs.writeFileSync(
-    path.join(pluginDir, "index.js"),
-    `module.exports = {
-      default: {
-        name: "${name}",
-        activate: async (ctx) => { ${activateBody} },
-        ${deactivateExport}
-      }
+    path.join(pluginDir, "index.mjs"),
+    `export default {
+      name: "${name}",
+      activate: async (ctx) => { ${activateBody} },
+      ${deactivateExport}
     };`
   );
   return pluginDir;
@@ -236,18 +234,16 @@ describe("PluginManager", () => {
         workbox: {
           name: "Plugin throw-deact",
           permissions: [],
-          entry: { main: "./index.js" }
+          entry: { main: "./index.mjs" }
         }
       })
     );
     fs.writeFileSync(
-      path.join(throwDir, "index.js"),
-      `module.exports = {
-        default: {
-          name: "plugin-throw-deact",
-          activate: async (ctx) => {},
-          deactivate: async () => { throw new Error("deactivate boom"); }
-        }
+      path.join(throwDir, "index.mjs"),
+      `export default {
+        name: "plugin-throw-deact",
+        activate: async (ctx) => {},
+        deactivate: async () => { throw new Error("deactivate boom"); }
       };`
     );
 
@@ -272,18 +268,16 @@ describe("PluginManager", () => {
         workbox: {
           name: "Plugin throw-shutdown",
           permissions: [],
-          entry: { main: "./index.js" }
+          entry: { main: "./index.mjs" }
         }
       })
     );
     fs.writeFileSync(
-      path.join(throwDir, "index.js"),
-      `module.exports = {
-        default: {
-          name: "plugin-throw-shutdown",
-          activate: async (ctx) => {},
-          deactivate: async () => { throw new Error("shutdown deactivate boom"); }
-        }
+      path.join(throwDir, "index.mjs"),
+      `export default {
+        name: "plugin-throw-shutdown",
+        activate: async (ctx) => {},
+        deactivate: async () => { throw new Error("shutdown deactivate boom"); }
       };`
     );
     createTestPlugin(tmpDir, "plugin-normal", { hasDeactivate: true });

@@ -171,10 +171,9 @@ export class PluginManager {
     });
     instance.context = ctx;
 
-    // Load plugin module
+    // Load plugin module (dynamic import supports both ESM and CJS)
     const entryPath = path.resolve(parsed.path, parsed.config.entry.main);
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require(entryPath);
+    const mod = await import(entryPath);
     const definition: PluginDefinition = mod.default || mod;
 
     if (!definition || typeof definition.activate !== "function") {

@@ -67,15 +67,13 @@ function createTerminalPluginCopy(baseDir: string): string {
   entry.main = "./src/index.js";
   fs.writeFileSync(path.join(pluginDir, "package.json"), JSON.stringify(pkgJson, null, 2));
 
-  // 创建可执行的 index.js（模拟 index.ts 编译后的结果）
+  // 创建可执行的 index.js（ESM 格式，匹配 "type": "module"）
   fs.writeFileSync(
     path.join(srcDir, "index.js"),
-    `module.exports = {
-      default: {
-        name: "Terminal",
-        activate: async (ctx) => {},
-        deactivate: async () => {}
-      }
+    `export default {
+      name: "Terminal",
+      activate: async (ctx) => {},
+      deactivate: async () => {}
     };`
   );
 
