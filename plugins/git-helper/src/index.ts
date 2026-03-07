@@ -7,15 +7,15 @@
  * deactivate() 中清理所有资源。
  */
 import { ipcMain, BrowserWindow } from "electron";
-import { GIT_CHANNELS, MAX_DIFF_LENGTH } from "./constants.ts";
-import { GitService } from "./git-service.ts";
+import { GIT_CHANNELS, MAX_DIFF_LENGTH } from "./constants";
+import { GitService } from "./git-service";
 import type {
   PluginContext,
   PluginDefinition,
   Disposable,
   ToolDefinition
 } from "@workbox/plugin-api";
-import type { GitFileStatus, GitCommitInfo } from "./constants.ts";
+import type { GitFileStatus, GitCommitInfo } from "./constants";
 
 /** 模块级 GitService 引用，供 deactivate 访问 */
 let gitService: GitService | null = null;

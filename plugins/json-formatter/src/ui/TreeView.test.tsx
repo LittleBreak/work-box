@@ -12,8 +12,8 @@ const mockClipboard = { writeText: vi.fn(() => Promise.resolve()) };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).workbox = { clipboard: mockClipboard };
 
-import { TreeView } from "./TreeView.tsx";
-import { useJsonFormatterStore, initialJsonFormatterState } from "./store.ts";
+import { TreeView } from "./TreeView";
+import { useJsonFormatterStore, initialJsonFormatterState } from "./store";
 
 describe("TreeView", () => {
   beforeEach(() => {

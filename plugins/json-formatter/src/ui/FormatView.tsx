@@ -5,7 +5,7 @@
  * 提供格式化、压缩和复制输出按钮。
  */
 import { useCallback } from "react";
-import { useJsonFormatterStore } from "./store.ts";
+import { useJsonFormatterStore } from "./store";
 
 /** 格式化视图组件 */
 export function FormatView(): React.JSX.Element {

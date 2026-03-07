@@ -4,7 +4,7 @@
  * 转换模式：JSON↔TS 互转。支持方向切换按钮和复制输出。
  */
 import { useCallback } from "react";
-import { useJsonFormatterStore } from "./store.ts";
+import { useJsonFormatterStore } from "./store";
 
 /** 转换视图组件 */
 export function ConvertView(): React.JSX.Element {

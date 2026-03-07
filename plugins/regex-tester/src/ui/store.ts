@@ -5,9 +5,9 @@
  * 模板选择和剪贴板复制。
  */
 import { create } from "zustand";
-import { executeRegex, validateRegex } from "../regex-engine.ts";
-import type { RegexMatch } from "../regex-engine.ts";
-import type { RegexTemplate } from "../templates.ts";
+import { executeRegex, validateRegex } from "../regex-engine";
+import type { RegexMatch } from "../regex-engine";
+import type { RegexTemplate } from "../templates";
 
 /** Regex Tester UI 状态 */
 interface RegexTesterState {

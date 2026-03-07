@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PluginContext } from "@workbox/plugin-api";
-import { GitService } from "./git-service.ts";
+import { GitService } from "./git-service";
 
 /** Create a mock PluginContext with all methods stubbed */
 function createMockCtx(rootPath = "/workspace/project"): PluginContext {

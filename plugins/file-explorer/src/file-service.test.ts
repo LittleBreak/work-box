@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PluginContext } from "@workbox/plugin-api";
-import { FileService } from "./file-service.ts";
-import { MAX_PREVIEW_SIZE } from "./constants.ts";
+import { FileService } from "./file-service";
+import { MAX_PREVIEW_SIZE } from "./constants";
 
 /** Create a mock PluginContext with all fs methods stubbed */
 function createMockCtx(rootPath = "/workspace/project"): PluginContext {

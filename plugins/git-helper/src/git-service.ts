@@ -5,14 +5,14 @@
  * diff, log) through PluginContext.shell.exec() with command injection prevention.
  */
 import type { PluginContext } from "@workbox/plugin-api";
-import { DEFAULT_LOG_COUNT, MAX_LOG_COUNT, validateBranchName } from "./constants.ts";
+import { DEFAULT_LOG_COUNT, MAX_LOG_COUNT, validateBranchName } from "./constants";
 import type {
   GitFileStatus,
   GitBranch,
   GitCommitInfo,
   GitDiffHunk,
   GitFileDiff
-} from "./constants.ts";
+} from "./constants";
 
 /** Git operations service for the Git Helper plugin */
 export class GitService {

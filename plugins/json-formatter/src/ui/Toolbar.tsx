@@ -4,8 +4,8 @@
  * 模式标签切换组件，支持 Format / Validate / Convert / Diff / Tree 五个模式。
  */
 import { useCallback } from "react";
-import { useJsonFormatterStore } from "./store.ts";
-import type { JsonMode } from "./store.ts";
+import { useJsonFormatterStore } from "./store";
+import type { JsonMode } from "./store";
 
 /** 模式标签定义 */
 interface TabDef {

@@ -6,8 +6,8 @@ import {
   jsonToTypeScript,
   typeScriptToJson,
   diffJson
-} from "../json-ops.ts";
-import type { JsonValidationResult, JsonDiffEntry } from "../json-ops.ts";
+} from "../json-ops";
+import type { JsonValidationResult, JsonDiffEntry } from "../json-ops";
 
 /** JSON Formatter 面板模式 */
 export type JsonMode = "format" | "validate" | "convert" | "diff" | "tree";

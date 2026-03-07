@@ -12,8 +12,8 @@ const mockClipboard = { writeText: vi.fn(() => Promise.resolve()) };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).workbox = { clipboard: mockClipboard };
 
-import RegexTesterPanel from "./RegexTesterPanel.tsx";
-import { useRegexTesterStore, initialRegexTesterState } from "./store.ts";
+import RegexTesterPanel from "./RegexTesterPanel";
+import { useRegexTesterStore, initialRegexTesterState } from "./store";
 
 describe("RegexTesterPanel", () => {
   beforeEach(() => {

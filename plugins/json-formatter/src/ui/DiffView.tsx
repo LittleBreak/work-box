@@ -4,8 +4,8 @@
  * Diff 模式：左右两个 textarea 输入，点击 Diff 按钮后
  * 在下方显示结构化差异列表（颜色编码）。
  */
-import { useJsonFormatterStore } from "./store.ts";
-import type { JsonDiffEntry } from "../json-ops.ts";
+import { useJsonFormatterStore } from "./store";
+import type { JsonDiffEntry } from "../json-ops";
 
 /** 格式化值为显示字符串 */
 function formatValue(value: unknown): string {

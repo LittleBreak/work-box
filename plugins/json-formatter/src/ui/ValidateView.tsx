@@ -4,7 +4,7 @@
  * 校验模式：输入 JSON → 点击校验按钮 → 显示校验结果。
  * 有效 JSON 显示绿色 ✓，无效显示红色错误信息和行列号。
  */
-import { useJsonFormatterStore } from "./store.ts";
+import { useJsonFormatterStore } from "./store";
 
 /** 校验视图组件 */
 export function ValidateView(): React.JSX.Element {

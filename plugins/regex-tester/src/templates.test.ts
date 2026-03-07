@@ -4,8 +4,8 @@
  * 验证模板数据结构完整性：每个模板必须有有效的正则、标志、名称和描述。
  */
 import { describe, it, expect } from "vitest";
-import { REGEX_TEMPLATES } from "./templates.ts";
-import type { RegexTemplate } from "./templates.ts";
+import { REGEX_TEMPLATES } from "./templates";
+import type { RegexTemplate } from "./templates";
 
 describe("REGEX_TEMPLATES", () => {
   it("has at least 10 templates", () => {

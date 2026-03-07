@@ -5,7 +5,7 @@
  * 覆盖：正常匹配、全局匹配、分组捕获、命名分组、无效正则、空输入、ReDoS 防护。
  */
 import { describe, it, expect } from "vitest";
-import { executeRegex, validateRegex, generateHighlightSegments } from "./regex-engine.ts";
+import { executeRegex, validateRegex, generateHighlightSegments } from "./regex-engine";
 
 describe("validateRegex", () => {
   it("returns valid for a correct pattern", () => {

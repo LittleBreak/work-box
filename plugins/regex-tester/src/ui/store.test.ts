@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const mockClipboard = { writeText: vi.fn(() => Promise.resolve()) };
 vi.stubGlobal("window", { workbox: { clipboard: mockClipboard } });
 
-import { useRegexTesterStore, initialRegexTesterState } from "./store.ts";
+import { useRegexTesterStore, initialRegexTesterState } from "./store";
 
 describe("useRegexTesterStore", () => {
   beforeEach(() => {

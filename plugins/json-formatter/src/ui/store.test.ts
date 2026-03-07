@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const mockClipboard = { writeText: vi.fn(() => Promise.resolve()) };
 vi.stubGlobal("window", { workbox: { clipboard: mockClipboard } });
 
-import { useJsonFormatterStore, initialJsonFormatterState } from "./store.ts";
+import { useJsonFormatterStore, initialJsonFormatterState } from "./store";
 
 describe("useJsonFormatterStore", () => {
   beforeEach(() => {

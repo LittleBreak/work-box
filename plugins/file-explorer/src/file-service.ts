@@ -6,13 +6,8 @@
  */
 import * as path from "node:path";
 import type { PluginContext } from "@workbox/plugin-api";
-import {
-  MAX_PREVIEW_SIZE,
-  detectLanguage,
-  isBinaryFile,
-  validatePathSecurity
-} from "./constants.ts";
-import type { FileTreeNode, FilePreviewResult, SearchResult, SearchOptions } from "./constants.ts";
+import { MAX_PREVIEW_SIZE, detectLanguage, isBinaryFile, validatePathSecurity } from "./constants";
+import type { FileTreeNode, FilePreviewResult, SearchResult, SearchOptions } from "./constants";
 
 /** Default maximum search depth */
 const DEFAULT_MAX_DEPTH = 10;

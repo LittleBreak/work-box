@@ -13,7 +13,7 @@ import {
   jsonToTypeScript,
   typeScriptToJson,
   diffJson
-} from "./json-ops.ts";
+} from "./json-ops";
 
 // ============================================================
 // formatJson

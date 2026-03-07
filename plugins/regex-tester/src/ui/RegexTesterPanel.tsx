@@ -5,9 +5,9 @@
  * 测试文本输入、匹配高亮、匹配详情面板。
  */
 import { useCallback } from "react";
-import { useRegexTesterStore } from "./store.ts";
-import { generateHighlightSegments } from "../regex-engine.ts";
-import { REGEX_TEMPLATES } from "../templates.ts";
+import { useRegexTesterStore } from "./store";
+import { generateHighlightSegments } from "../regex-engine";
+import { REGEX_TEMPLATES } from "../templates";
 
 /** 可切换的正则标志位 */
 const FLAGS = ["g", "i", "m", "s", "u"] as const;

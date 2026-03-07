@@ -12,8 +12,8 @@ const mockClipboard = { writeText: vi.fn(() => Promise.resolve()) };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).workbox = { clipboard: mockClipboard };
 
-import JsonFormatterPanel from "./JsonFormatterPanel.tsx";
-import { useJsonFormatterStore, initialJsonFormatterState } from "./store.ts";
+import JsonFormatterPanel from "./JsonFormatterPanel";
+import { useJsonFormatterStore, initialJsonFormatterState } from "./store";
 
 describe("JsonFormatterPanel", () => {
   beforeEach(() => {

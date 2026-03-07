@@ -4,13 +4,13 @@
  * 顶层容器组件，包含模式标签切换工具栏和五个功能视图：
  * Format / Validate / Convert / Diff / Tree。
  */
-import { useJsonFormatterStore } from "./store.ts";
-import { Toolbar } from "./Toolbar.tsx";
-import { FormatView } from "./FormatView.tsx";
-import { ValidateView } from "./ValidateView.tsx";
-import { ConvertView } from "./ConvertView.tsx";
-import { DiffView } from "./DiffView.tsx";
-import { TreeView } from "./TreeView.tsx";
+import { useJsonFormatterStore } from "./store";
+import { Toolbar } from "./Toolbar";
+import { FormatView } from "./FormatView";
+import { ValidateView } from "./ValidateView";
+import { ConvertView } from "./ConvertView";
+import { DiffView } from "./DiffView";
+import { TreeView } from "./TreeView";
 
 /** JSON Formatter 面板主组件 */
 export function JsonFormatterPanel(): React.JSX.Element {

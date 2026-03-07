@@ -6,7 +6,7 @@
  * 默认仅展开第一层，防止大 JSON 卡死 UI。
  */
 import { useState, useCallback } from "react";
-import { useJsonFormatterStore } from "./store.ts";
+import { useJsonFormatterStore } from "./store";
 
 /** 值的类型标签 */
 function getTypeLabel(value: unknown): string {
